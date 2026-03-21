@@ -27,7 +27,19 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     if (!url) return
 
     try {
-      const ws = new WebSocket(url)
+      // Convert https:// to wss:// and http:// to ws://, then append /ws
+      let wsUrl = url
+      if (wsUrl.startsWith("https://")) {
+        wsUrl = "wss://" + wsUrl.slice(8)
+      } else if (wsUrl.startsWith("http://")) {
+        wsUrl = "ws://" + wsUrl.slice(7)
+      }
+      // Append /ws if not already present
+      if (!wsUrl.endsWith("/ws")) {
+        wsUrl = wsUrl.replace(/\/?$/, "/ws")
+      }
+
+      const ws = new WebSocket(wsUrl)
       wsRef.current = ws
       setWebSocket(ws)
 
