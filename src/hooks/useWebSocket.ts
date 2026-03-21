@@ -112,7 +112,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
       }
     },
-    [setPanes, setAuthenticated]
+    [setLayout, setAuthenticated]
   )
 
   const disconnect = useCallback(() => {
