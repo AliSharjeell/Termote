@@ -60,7 +60,7 @@ export function SplitPane() {
   return (
     <div ref={containerRef} className="flex h-full w-full flex-col">
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center gap-3 border-b border-[#444444] bg-[#1E1E1E] px-4 py-2">
+      <div className="flex shrink-0 items-center gap-3 border-b border-[#353535] bg-[#161616] px-4 py-2">
         <button
           onClick={handleAddPane}
           className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200 font-bold text-lg"
@@ -79,15 +79,14 @@ export function SplitPane() {
           display: "grid",
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gridTemplateRows: `repeat(${rows}, 1fr)`,
-          gap: "6px",
-          background: "#1E1E1E",
-          padding: "6px",
+          gap: "1px",
+          background: "#404040",
         }}
       >
         {activePanesData.map((pane) => (
           <div
             key={pane.id}
-            className="overflow-hidden rounded-lg bg-[#0C0C0C] border border-[#333333]"
+            className="overflow-hidden bg-[#0C0C0C]"
           >
             <XtermPane pane={pane} />
           </div>
