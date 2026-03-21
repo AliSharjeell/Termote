@@ -15,9 +15,9 @@ export default function Dashboard() {
 
   const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
 
-  // Determine which view to show based on viewMode and screen size
-  const showTabs = viewMode === "tabs" || (viewMode === "auto" && isMobile)
-  const showPanes = viewMode === "panes" || (viewMode === "auto" && !isMobile)
+  // Determine which view to show based on viewMode
+  const showTabs = viewMode === "tabs"
+  const showPanes = viewMode === "panes"
 
   // Get connection info from sessionStorage
   const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
@@ -94,7 +94,7 @@ export default function Dashboard() {
           <button
             onClick={() => setViewMode("tabs")}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
-              viewMode === "tabs" || (viewMode === "auto" && isMobile)
+              viewMode === "tabs"
                 ? "bg-white text-black shadow-sm"
                 : "text-[#A1A1AA] hover:text-white"
             }`}
@@ -105,24 +105,13 @@ export default function Dashboard() {
           <button
             onClick={() => setViewMode("panes")}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
-              viewMode === "panes" || (viewMode === "auto" && !isMobile)
+              viewMode === "panes"
                 ? "bg-white text-black shadow-sm"
                 : "text-[#A1A1AA] hover:text-white"
             }`}
             title="Panes view"
           >
             Panes
-          </button>
-          <button
-            onClick={() => setViewMode("auto")}
-            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
-              viewMode === "auto"
-                ? "bg-white text-black shadow-sm"
-                : "text-[#A1A1AA] hover:text-white"
-            }`}
-            title="Auto (follow screen)"
-          >
-            Auto
           </button>
         </div>
 
