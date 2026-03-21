@@ -90,13 +90,13 @@ export default function Dashboard() {
         </div>
 
         {/* View mode toggle */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 rounded-full bg-[#27272A] p-1">
           <button
             onClick={() => setViewMode("tabs")}
-            className={`rounded-md px-3 py-1.5 text-xs ${
+            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
               viewMode === "tabs" || (viewMode === "auto" && isMobile)
-                ? "bg-[#0037DA] text-white"
-                : "text-[#808080] hover:text-[#CCCCCC] hover:bg-[#333333]"
+                ? "bg-white text-black shadow-sm"
+                : "text-[#A1A1AA] hover:text-white"
             }`}
             title="Tabs view"
           >
@@ -104,10 +104,10 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setViewMode("panes")}
-            className={`rounded-md px-3 py-1.5 text-xs ${
+            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
               viewMode === "panes" || (viewMode === "auto" && !isMobile)
-                ? "bg-[#0037DA] text-white"
-                : "text-[#808080] hover:text-[#CCCCCC] hover:bg-[#333333]"
+                ? "bg-white text-black shadow-sm"
+                : "text-[#A1A1AA] hover:text-white"
             }`}
             title="Panes view"
           >
@@ -115,23 +115,24 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setViewMode("auto")}
-            className={`rounded-md px-3 py-1.5 text-xs ${
+            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
               viewMode === "auto"
-                ? "bg-[#0037DA] text-white"
-                : "text-[#808080] hover:text-[#CCCCCC] hover:bg-[#333333]"
+                ? "bg-white text-black shadow-sm"
+                : "text-[#A1A1AA] hover:text-white"
             }`}
             title="Auto (follow screen)"
           >
             Auto
           </button>
-          <button
-            onClick={handleSignOut}
-            className="ml-2 rounded-md bg-[#E74856] px-3 py-1.5 text-xs text-white hover:bg-[#ff3b30]"
-            title="Sign out"
-          >
-            Sign Out
-          </button>
         </div>
+
+        <button
+          onClick={handleSignOut}
+          className="ml-2 rounded-full bg-[#E74856] px-3 py-1.5 text-xs text-white hover:bg-[#ff3b30]"
+          title="Sign out"
+        >
+          Sign Out
+        </button>
       </div>
 
       {/* Main content area */}
