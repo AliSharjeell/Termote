@@ -8,7 +8,7 @@ import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User, Maximize2 } from "lucide-react"
+import { User, RefreshCw } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -103,7 +103,7 @@ export default function Dashboard() {
             className="flex items-center gap-1 rounded-full bg-[#27272A] px-2 py-1 text-xs text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors ml-1"
             title="Focus - reset terminal size to this device"
           >
-            <Maximize2 className="h-3 w-3" />
+            <RefreshCw className="h-3 w-3" />
           </button>
         </div>
 
