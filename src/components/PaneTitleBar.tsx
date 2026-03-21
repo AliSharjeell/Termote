@@ -49,7 +49,7 @@ export function PaneTitleBar({ title, onRename, onClose }: PaneTitleBarProps) {
   }
 
   return (
-    <div className="flex h-7 items-center justify-between bg-[#161616] px-2">
+    <div className="flex h-8 items-center justify-between bg-[#161616] px-2">
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {/* Close button */}
         <button
