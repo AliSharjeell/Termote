@@ -9,6 +9,8 @@ interface PaneState {
   ws: WebSocket | null
   isConnected: boolean
   isAuthenticated: boolean
+  // View mode: "auto", "tabs", or "panes"
+  viewMode: "auto" | "tabs" | "panes"
 
   // Actions
   setWebSocket: (ws: WebSocket | null) => void
@@ -22,6 +24,7 @@ interface PaneState {
   moveToFloating: (paneId: string) => void
   moveToActive: (paneId: string) => void
   selectTab: (tabId: string) => void
+  setViewMode: (mode: "auto" | "tabs" | "panes") => void
 }
 
 export const usePaneStore = create<PaneState>((set, get) => ({
@@ -32,6 +35,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   ws: null,
   isConnected: false,
   isAuthenticated: false,
+  viewMode: "auto",
 
   setWebSocket: (ws) => set({ ws }),
 
@@ -86,4 +90,5 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   selectTab: (tabId) => set({ selectedTab: tabId }),
+  setViewMode: (mode) => set({ viewMode: mode }),
 }))

@@ -13,7 +13,11 @@ export default function Dashboard() {
   const isMobile = useIsMobile()
   const [isReady, setIsReady] = useState(false)
 
-  const { isConnected, isAuthenticated } = usePaneStore()
+  const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
+
+  // Determine which view to show based on viewMode and screen size
+  const showTabs = viewMode === "tabs" || (viewMode === "auto" && isMobile)
+  const showPanes = viewMode === "panes" || (viewMode === "auto" && !isMobile)
 
   // Get connection info from sessionStorage
   const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
@@ -77,12 +81,48 @@ export default function Dashboard() {
               : "Disconnected"}
           </span>
         </div>
-        <div className="text-xs text-[#808080]">Termux Web</div>
+
+        {/* View mode toggle */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setViewMode("tabs")}
+            className={`rounded px-2 py-1 text-xs ${
+              viewMode === "tabs" || (viewMode === "auto" && isMobile)
+                ? "bg-[#0037DA] text-white"
+                : "text-[#808080] hover:text-[#CCCCCC]"
+            }`}
+            title="Tabs view"
+          >
+            Tabs
+          </button>
+          <button
+            onClick={() => setViewMode("panes")}
+            className={`rounded px-2 py-1 text-xs ${
+              viewMode === "panes" || (viewMode === "auto" && !isMobile)
+                ? "bg-[#0037DA] text-white"
+                : "text-[#808080] hover:text-[#CCCCCC]"
+            }`}
+            title="Panes view"
+          >
+            Panes
+          </button>
+          <button
+            onClick={() => setViewMode("auto")}
+            className={`rounded px-2 py-1 text-xs ${
+              viewMode === "auto"
+                ? "bg-[#0037DA] text-white"
+                : "text-[#808080] hover:text-[#CCCCCC]"
+            }`}
+            title="Auto (follow screen)"
+          >
+            Auto
+          </button>
+        </div>
       </div>
 
       {/* Main content area */}
       <div className="flex-1 overflow-hidden">
-        {isMobile ? <TabBar /> : <SplitPane />}
+        {showTabs ? <TabBar /> : <SplitPane />}
       </div>
     </div>
   )
