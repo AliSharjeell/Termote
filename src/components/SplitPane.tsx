@@ -80,8 +80,8 @@ export function SplitPane() {
           display: "grid",
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gridTemplateRows: `repeat(${rows}, 1fr)`,
-          gap: "1px",
-          background: "#404040",
+          gap: "2px",
+          background: "#181818",
         }}
       >
         {activePanesData.map((pane) => (
