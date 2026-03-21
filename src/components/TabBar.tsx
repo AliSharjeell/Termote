@@ -53,7 +53,7 @@ export function TabBar() {
             onClick={() => handleTabClick(pane.id)}
           >
             <span className="truncate max-w-[100px]">
-              {pane.shell} ({pane.pid})
+              {pane.name}
             </span>
             <button
               onClick={(e) => {
