@@ -1,8 +1,12 @@
 @import "tailwindcss";
+@import "@xterm/xterm/css/xterm.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0C0C0C;
+  --foreground: #CCCCCC;
+  --terminal-bg: #0C0C0C;
+  --terminal-fg: #CCCCCC;
+  --border-color: #333333;
 }
 
 @theme inline {
@@ -12,15 +16,55 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+/* Xterm.js container styles */
+.xterm {
+  height: 100%;
+  padding: 8px;
+}
+
+.xterm-viewport {
+  overflow-y: auto !important;
+}
+
+/* Allotment split pane styles */
+.split-view-view {
+  overflow: hidden;
+}
+
+.sash {
+  background-color: var(--border-color) !important;
+}
+
+/* Scrollbar styling for terminal */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
 }
