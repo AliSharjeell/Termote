@@ -42,9 +42,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 
   setPanes: (panes) => set((state) => {
-    // Auto-populate activePanes if empty and we have panes
+    // Auto-populate activePanes if empty and we have panes - only add first one
     const newActivePanes = state.activePanes.length === 0 && panes.length > 0
-      ? panes.map(p => p.id)
+      ? [panes[0].id]
       : state.activePanes
     return { panes, activePanes: newActivePanes }
   }),
