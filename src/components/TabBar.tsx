@@ -4,10 +4,11 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { XtermPane } from "./XtermPane"
 
 export function TabBar() {
-  const { panes, floatingPanes, selectedTab, selectTab, moveToActive } =
+  const { panes, activePanes, floatingPanes, selectedTab, selectTab, moveToActive } =
     usePaneStore()
 
-  const floatingPanesData = panes.filter((p) => floatingPanes.includes(p.id))
+  // Show ALL panes (both active and floating) as tabs
+  const allPanesData = panes
   const selectedPane = panes.find((p) => p.id === selectedTab)
 
   const handleTabClick = (paneId: string) => {
@@ -18,7 +19,7 @@ export function TabBar() {
     moveToActive(paneId)
   }
 
-  if (floatingPanesData.length === 0) {
+  if (allPanesData.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
         <div className="text-center text-[#CCCCCC]">
@@ -41,7 +42,7 @@ export function TabBar() {
     <div className="flex h-full w-full flex-col bg-[#0C0C0C]">
       {/* Tab bar */}
       <div className="flex shrink-0 overflow-x-auto bg-[#1E1E1E]">
-        {floatingPanesData.map((pane) => (
+        {allPanesData.map((pane) => (
           <div
             key={pane.id}
             className={`flex cursor-pointer items-center gap-2 border-r border-[#333333] px-4 py-2 text-sm ${
