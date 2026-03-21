@@ -39,7 +39,7 @@ export function SplitPane() {
               console.log("New Terminal clicked, isAuthenticated:", isAuthenticated)
               usePaneStore.getState().spawnPane("powershell")
             }}
-            className="mt-4 rounded-full bg-[#0037DA] px-6 py-2.5 text-sm text-white hover:bg-[#0037DA]/90"
+            className="mt-4 rounded-lg bg-white px-6 py-2.5 text-sm text-black hover:bg-gray-200 font-medium"
           >
             + New Terminal
           </button>
