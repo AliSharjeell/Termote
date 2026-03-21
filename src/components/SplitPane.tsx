@@ -87,7 +87,7 @@ export function SplitPane() {
         {activePanesData.map((pane) => (
           <div
             key={pane.id}
-            className="overflow-hidden rounded-lg bg-[#0C0C0C]"
+            className="overflow-hidden rounded-lg bg-[#0C0C0C] border border-[#333333]"
           >
             <XtermPane pane={pane} />
           </div>
