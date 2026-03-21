@@ -53,19 +53,19 @@ export function PaneTitleBar({ title, onRename, onClose }: PaneTitleBarProps) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="flex h-4 w-4 items-center justify-center rounded-full bg-[#E74856] hover:bg-[#ff3b30] shrink-0"
+          className="flex h-4 w-4 items-center justify-center rounded-full bg-[#ff3b30] hover:bg-[#ff0000] shrink-0"
           title="Close terminal"
         >
-          <span className="text-white text-xs font-bold leading-none">×</span>
+          <span className="text-black text-xs font-bold leading-none">×</span>
         </button>
 
         {/* Rename button */}
         <button
           onClick={handleDoubleClick}
-          className="flex h-4 w-4 items-center justify-center rounded-full bg-[#DCDCAA] hover:bg-[#ffff00] shrink-0"
+          className="flex h-4 w-4 items-center justify-center rounded-full bg-[#ffd700] hover:bg-[#ffaa00] shrink-0"
           title="Rename terminal"
         >
-          <span className="text-[#0C0C0C] text-xs font-bold leading-none">✎</span>
+          <span className="text-black text-xs font-bold leading-none">✎</span>
         </button>
 
         {/* Title */}
