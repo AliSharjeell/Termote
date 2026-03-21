@@ -60,7 +60,7 @@ export function SplitPane() {
   return (
     <div ref={containerRef} className="flex h-full w-full flex-col">
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center gap-3 bg-[#1E1E1E] px-4 py-2">
+      <div className="flex shrink-0 items-center gap-3 border-b border-[#444444] bg-[#1E1E1E] px-4 py-2">
         <button
           onClick={handleAddPane}
           className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200 font-bold text-lg"
