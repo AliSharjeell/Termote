@@ -63,9 +63,10 @@ export function SplitPane() {
       <div className="flex shrink-0 items-center gap-3 border-b border-[#353535] bg-[#161616] px-4 py-2">
         <button
           onClick={handleAddPane}
-          className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-black hover:bg-gray-200 font-bold text-lg"
+          className="flex h-7 items-center justify-center rounded-lg bg-white px-3 text-sm text-black hover:bg-gray-200 font-medium gap-1.5"
         >
-          +
+          <span className="font-normal">+</span>
+          <span>New Terminal</span>
         </button>
         <span className="text-xs text-[#808080]">
           {activePanesData.length} pane{activePanesData.length !== 1 ? "s" : ""} ({cols}x{rows})
