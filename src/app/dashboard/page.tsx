@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { SplitPane } from "@/components/SplitPane"
 import { TabBar } from "@/components/TabBar"
+import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const router = useRouter()
   const isMobile = useIsMobile()
   const [isReady, setIsReady] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
 
@@ -116,11 +118,11 @@ export default function Dashboard() {
         </div>
 
         <button
-          onClick={handleSignOut}
-          className="ml-2 rounded-full bg-[#E74856] px-3 py-1.5 text-xs text-white hover:bg-[#ff3b30]"
-          title="Sign out"
+          onClick={() => setSidebarOpen(true)}
+          className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
+          title="Profile"
         >
-          Sign Out
+          <i className="lni lni-user-4" />
         </button>
       </div>
 
@@ -128,6 +130,17 @@ export default function Dashboard() {
       <div className="flex-1 overflow-hidden">
         {showTabs ? <TabBar /> : <SplitPane />}
       </div>
+
+      {/* Profile Sidebar */}
+      {tunnelUrl && authToken && (
+        <ProfileSidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          tunnelUrl={tunnelUrl}
+          authToken={authToken}
+          onSignOut={handleSignOut}
+        />
+      )}
     </div>
   )
 }
