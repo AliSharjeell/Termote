@@ -88,7 +88,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-md bg-[#0037DA] px-4 py-2 text-sm font-medium text-white hover:bg-[#0037DA]/90 focus:outline-none focus:ring-2 focus:ring-[#3B78FF] focus:ring-offset-2 focus:ring-offset-[#0C0C0C] disabled:opacity-50"
+        className="w-full rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-black hover:bg-gray-200 transition-colors disabled:opacity-50"
       >
         {isLoading ? "Connecting..." : "Connect"}
       </button>
