@@ -96,9 +96,12 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       switch (message.event) {
         case "state_update":
           console.log("state_update received, panes:", message.panes)
+          console.log("current state - panes:", usePaneStore.getState().panes.length, "activePanes:", usePaneStore.getState().activePanes)
           setPanes(message.panes)
+          console.log("after setPanes - panes:", usePaneStore.getState().panes.length, "activePanes:", usePaneStore.getState().activePanes)
           break
         case "output":
+          console.log("OUTPUT event received:", message.pane_id, message.data)
           // This is handled by the individual XtermPane components
           // via a custom event or callback mechanism
           window.dispatchEvent(

@@ -42,10 +42,21 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 
   setPanes: (panes) => set((state) => {
+    console.log("setPanes called with", panes.length, "panes")
     // Auto-populate activePanes if empty and we have panes - only add first one
-    const newActivePanes = state.activePanes.length === 0 && panes.length > 0
-      ? [panes[0].id]
-      : state.activePanes
+    let newActivePanes = state.activePanes
+    if (newActivePanes.length === 0 && panes.length > 0) {
+      newActivePanes = [panes[0].id]
+      console.log("Auto-populated activePanes with first pane:", panes[0].id)
+    } else {
+      // Add any new panes that aren't already in activePanes
+      const panesToAdd = panes.filter(p => !newActivePanes.includes(p.id))
+      if (panesToAdd.length > 0) {
+        console.log("Adding new panes to activePanes:", panesToAdd.map(p => p.id))
+        newActivePanes = [...newActivePanes, ...panesToAdd.map(p => p.id)]
+      }
+    }
+    console.log("Final activePanes:", newActivePanes)
     return { panes, activePanes: newActivePanes }
   }),
 
