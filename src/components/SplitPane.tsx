@@ -65,7 +65,7 @@ export function SplitPane() {
           onClick={handleAddPane}
           className="flex h-7 items-center justify-center rounded-lg bg-white px-3 text-sm text-black hover:bg-gray-200 font-medium gap-1.5"
         >
-          <span className="font-normal">+</span>
+          <span>+</span>
           <span>New Terminal</span>
         </button>
         <span className="text-xs text-[#808080]">
