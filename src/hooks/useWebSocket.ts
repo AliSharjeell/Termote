@@ -79,7 +79,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       }
 
       ws.onerror = (error) => {
-        console.error("WebSocket error:", error)
+        console.error("WebSocket error:", error, "URL:", wsUrl, "readyState:", ws.readyState)
       }
     } catch (e) {
       console.error("Failed to create WebSocket:", e)
