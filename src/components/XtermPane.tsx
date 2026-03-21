@@ -45,6 +45,8 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const terminalInstanceRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
+  const lastSentDimsRef = useRef<{ cols: number; rows: number } | null>(null)
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const { sendInput, sendResize, killPane, renamePane } = usePaneStore()
 
@@ -57,14 +59,30 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
   const handleResize = useCallback(() => {
     if (fitAddonRef.current) {
-      fitAddonRef.current.fit()
-      const { cols, rows } = fitAddonRef.current.proposeDimensions() || {
-        cols: pane.cols,
-        rows: pane.rows,
+      const dims = fitAddonRef.current.proposeDimensions()
+      if (!dims) return
+
+      // Only resize if dimensions actually changed
+      if (lastSentDimsRef.current &&
+          lastSentDimsRef.current.cols === dims.cols &&
+          lastSentDimsRef.current.rows === dims.rows) {
+        return
       }
-      sendResize(pane.id, cols, rows)
+
+      // Debounce resize requests
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+
+      resizeTimeoutRef.current = setTimeout(() => {
+        if (fitAddonRef.current) {
+          fitAddonRef.current.fit()
+          lastSentDimsRef.current = { cols: dims.cols, rows: dims.rows }
+          sendResize(pane.id, dims.cols, dims.rows)
+        }
+      }, 200)
     }
-  }, [pane.id, pane.cols, pane.rows, sendResize])
+  }, [pane.id, sendResize])
 
   // Initialize terminal
   useEffect(() => {
@@ -93,12 +111,17 @@ export function XtermPane({ pane }: XtermPaneProps) {
     })
     resizeObserverRef.current.observe(terminalRef.current!)
 
-    // Send initial resize
-    sendResize(pane.id, terminal.cols, terminal.rows)
+    // Send initial resize with actual dimensions
+    const initialDims = fitAddon.proposeDimensions() || { cols: terminal.cols, rows: terminal.rows }
+    lastSentDimsRef.current = initialDims
+    sendResize(pane.id, initialDims.cols, initialDims.rows)
 
     return () => {
       terminal.dispose()
       resizeObserverRef.current?.disconnect()
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
     }
   }, [pane.id, handleData, handleResize, sendResize])
 
