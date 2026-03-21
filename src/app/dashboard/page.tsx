@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { SplitPane } from "@/components/SplitPane"
 import { TabBar } from "@/components/TabBar"
 import { ProfileSidebar } from "@/components/ProfileSidebar"
@@ -12,6 +12,7 @@ import { User, RefreshCw } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const isMobile = useIsMobile()
   const [isReady, setIsReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -22,13 +23,29 @@ export default function Dashboard() {
   const showTabs = viewMode === "tabs"
   const showPanes = viewMode === "panes"
 
-  // Get connection info from sessionStorage
+  // Get connection info from sessionStorage or URL params
   const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
   const [authToken, setAuthToken] = useState<string | null>(null)
 
   useEffect(() => {
-    const url = sessionStorage.getItem("tunnelUrl")
-    const token = sessionStorage.getItem("authToken")
+    // First check URL params (from QR code /launch link)
+    const urlParam = searchParams.get("tunnel")
+    const tokenParam = searchParams.get("token")
+
+    let url = urlParam
+    let token = tokenParam
+
+    // Fall back to sessionStorage
+    if (!url || !token) {
+      url = sessionStorage.getItem("tunnelUrl")
+      token = sessionStorage.getItem("authToken")
+    }
+
+    // If we have URL params, save to sessionStorage for future reloads
+    if (urlParam && tokenParam) {
+      sessionStorage.setItem("tunnelUrl", urlParam)
+      sessionStorage.setItem("authToken", tokenParam)
+    }
 
     if (!url || !token) {
       router.push("/")
@@ -38,7 +55,7 @@ export default function Dashboard() {
     setTunnelUrl(url)
     setAuthToken(token)
     setIsReady(true)
-  }, [router])
+  }, [router, searchParams])
 
   // Connect to WebSocket
   const { disconnect } = useWebSocket({

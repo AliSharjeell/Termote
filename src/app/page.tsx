@@ -14,9 +14,13 @@ function AutoLoginHandler() {
     const tokenParam = searchParams.get("token")
 
     if (tunnelParam && tokenParam) {
+      // Save to sessionStorage first, then redirect
       sessionStorage.setItem("tunnelUrl", tunnelParam)
       sessionStorage.setItem("authToken", tokenParam)
-      router.push("/dashboard")
+      // Small delay to ensure sessionStorage is persisted on iOS
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 100)
       return
     }
 
