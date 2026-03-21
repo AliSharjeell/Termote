@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Copy, Check, X, User, Link, Key, LogOut, QrCode } from "lucide-react"
+import { Eye, EyeOff, Copy, Check, X, Link, Key, LogOut, QrCode } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 
 interface ProfileSidebarProps {
@@ -84,12 +84,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
       <div className="fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-[#161616] shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]">
-              <User className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-sm font-medium text-white">Profile</span>
-          </div>
+          <span className="text-sm font-medium text-white">Profile</span>
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
