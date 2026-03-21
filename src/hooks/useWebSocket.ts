@@ -59,7 +59,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
 
       ws.onmessage = (event) => {
         try {
+          console.log("Raw WebSocket message:", event.data)
           const message: ServerMessage = JSON.parse(event.data)
+          console.log("Parsed message:", message)
           handleMessage(message)
         } catch (e) {
           // If not JSON, it might be terminal output directly
@@ -90,8 +92,10 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
 
   const handleMessage = useCallback(
     (message: ServerMessage) => {
+      console.log("handleMessage called with:", message)
       switch (message.event) {
         case "state_update":
+          console.log("state_update received, panes:", message.panes)
           setPanes(message.panes)
           break
         case "output":
