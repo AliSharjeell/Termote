@@ -65,7 +65,7 @@ export function SplitPane() {
           onClick={handleAddPane}
           className="rounded bg-[#0037DA] px-3 py-1 text-sm text-white hover:bg-[#0037DA]/90"
         >
-          + Split
+          + Add
         </button>
         <span className="text-xs text-[#808080]">
           {activePanesData.length} pane{activePanesData.length !== 1 ? "s" : ""} ({cols}x{rows})

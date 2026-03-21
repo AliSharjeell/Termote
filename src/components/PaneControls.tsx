@@ -17,13 +17,13 @@ export function PaneControls({ onClose }: PaneControlsProps) {
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
     >
-      <div className={`rounded bg-[#1E1E1E] px-1 py-0.5 transition-opacity duration-200 ${isVisible ? "opacity-100" : "opacity-40"}`}>
+      <div className={`flex h-5 w-5 items-center justify-center rounded-full bg-[#E74856] transition-all duration-200 ${isVisible ? "opacity-100" : "opacity-0"}`}>
         <button
           onClick={onClose}
-          className="rounded px-1.5 py-0.5 text-xs text-[#E74856] hover:bg-[#E74856] hover:text-white"
+          className="flex h-full w-full items-center justify-center rounded-full hover:bg-[#ff3b30]"
           title="Close terminal"
         >
-          ✕
+          <span className="text-white opacity-80 hover:opacity-100" style={{ fontSize: "10px", lineHeight: 1 }}>×</span>
         </button>
       </div>
     </div>
