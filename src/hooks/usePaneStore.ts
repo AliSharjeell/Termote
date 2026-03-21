@@ -36,7 +36,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   ws: null,
   isConnected: false,
   isAuthenticated: false,
-  viewMode: "auto",
+  viewMode: "panes",
 
   setWebSocket: (ws) => set({ ws }),
 
