@@ -14,99 +14,73 @@ interface PaneState {
   setWebSocket: (ws: WebSocket | null) => void
   setConnected: (connected: boolean) => void
   setAuthenticated: (authenticated: boolean) => void
-  setPanes: (panes: Pane[]) => void
-  addPane: (pane: Pane) => void
-  removePane: (paneId: string) => void
-  selectTab: (paneId: string) => void
-  moveToFloating: (paneId: string) => void
-  moveToActive: (paneId: string) => void
+  setLayout: (panes: Pane[], activePanes: string[], floatingPanes: string[]) => void
   spawnPane: (shell: Shell) => void
   killPane: (paneId: string) => void
   sendInput: (paneId: string, data: string) => void
   sendResize: (paneId: string, cols: number, rows: number) => void
+  moveToFloating: (paneId: string) => void
+  moveToActive: (paneId: string) => void
 }
 
 export const usePaneStore = create<PaneState>((set, get) => ({
-      panes: [],
-      activePanes: [],
-      floatingPanes: [],
-      selectedTab: "",
-      ws: null,
-      isConnected: false,
-      isAuthenticated: false,
+  panes: [],
+  activePanes: [],
+  floatingPanes: [],
+  selectedTab: "",
+  ws: null,
+  isConnected: false,
+  isAuthenticated: false,
 
-      setWebSocket: (ws) => set({ ws }),
+  setWebSocket: (ws) => set({ ws }),
 
-      setConnected: (isConnected) => set({ isConnected }),
+  setConnected: (isConnected) => set({ isConnected }),
 
-      setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+  setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 
-      setPanes: (panes) => set((state) => {
-        console.log("setPanes called with", panes.length, "panes")
-        // Backend is source of truth - show all panes from backend as active
-        const newActivePanes = panes.map(p => p.id)
-        console.log("Setting all panes as active:", newActivePanes)
-        return { panes, activePanes: newActivePanes }
-      }),
+  // Backend is source of truth - just accept what it sends
+  setLayout: (panes, activePanes, floatingPanes) =>
+    set({ panes, activePanes, floatingPanes }),
 
-      addPane: (pane) =>
-        set((state) => ({
-          panes: [...state.panes, pane],
-          activePanes: [...state.activePanes, pane.id],
-        })),
+  spawnPane: (shell) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "spawn", shell }))
+    }
+  },
 
-      removePane: (paneId) =>
-        set((state) => ({
-          panes: state.panes.filter((p) => p.id !== paneId),
-          activePanes: state.activePanes.filter((id) => id !== paneId),
-          floatingPanes: state.floatingPanes.filter((id) => id !== paneId),
-          selectedTab:
-            state.selectedTab === paneId
-              ? state.floatingPanes[0] || state.activePanes[0] || ""
-              : state.selectedTab,
-        })),
+  killPane: (paneId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "kill", pane_id: paneId }))
+    }
+  },
 
-      selectTab: (paneId) => set({ selectedTab: paneId }),
+  sendInput: (paneId, data) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "input", pane_id: paneId, data }))
+    }
+  },
 
-      moveToFloating: (paneId) =>
-        set((state) => ({
-          activePanes: state.activePanes.filter((id) => id !== paneId),
-          floatingPanes: [...state.floatingPanes, paneId],
-          selectedTab: paneId,
-        })),
+  sendResize: (paneId, cols, rows) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "resize", pane_id: paneId, cols, rows }))
+    }
+  },
 
-      moveToActive: (paneId) =>
-        set((state) => ({
-          floatingPanes: state.floatingPanes.filter((id) => id !== paneId),
-          activePanes: [...state.activePanes, paneId],
-        })),
+  moveToFloating: (paneId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "move_to_floating", pane_id: paneId }))
+    }
+  },
 
-      spawnPane: (shell) => {
-        const { ws, isAuthenticated } = get()
-        if (ws && isAuthenticated) {
-          ws.send(JSON.stringify({ action: "spawn", shell }))
-        }
-      },
-
-      killPane: (paneId) => {
-        const { ws, isAuthenticated } = get()
-        if (ws && isAuthenticated) {
-          ws.send(JSON.stringify({ action: "kill", pane_id: paneId }))
-        }
-      },
-
-      sendInput: (paneId, data) => {
-        const { ws, isAuthenticated } = get()
-        if (ws && isAuthenticated) {
-          ws.send(JSON.stringify({ action: "input", pane_id: paneId, data }))
-        }
-      },
-
-      sendResize: (paneId, cols, rows) => {
-        const { ws, isAuthenticated } = get()
-        if (ws && isAuthenticated) {
-          ws.send(JSON.stringify({ action: "resize", pane_id: paneId, cols, rows }))
-        }
-      },
-    })
-)
+  moveToActive: (paneId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "move_to_active", pane_id: paneId }))
+    }
+  },
+}))

@@ -18,9 +18,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     setWebSocket,
     setConnected,
     setAuthenticated,
-    setPanes,
-    addPane,
-    removePane,
+    setLayout,
   } = usePaneStore()
 
   const connect = useCallback(() => {
@@ -95,10 +93,8 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       console.log("handleMessage called with:", message)
       switch (message.event) {
         case "state_update":
-          console.log("state_update received, panes:", message.panes)
-          console.log("current state - panes:", usePaneStore.getState().panes.length, "activePanes:", usePaneStore.getState().activePanes)
-          setPanes(message.panes)
-          console.log("after setPanes - panes:", usePaneStore.getState().panes.length, "activePanes:", usePaneStore.getState().activePanes)
+          console.log("state_update received, panes:", message.panes, "active:", message.active_panes, "floating:", message.floating_panes)
+          setLayout(message.panes, message.active_panes, message.floating_panes)
           break
         case "output":
           console.log("OUTPUT event received:", message.pane_id, message.data)
