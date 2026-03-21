@@ -63,9 +63,9 @@ export function SplitPane() {
       <div className="flex shrink-0 items-center gap-2 bg-[#1E1E1E] px-2 py-1">
         <button
           onClick={handleAddPane}
-          className="rounded bg-[#0037DA] px-3 py-1 text-sm text-white hover:bg-[#0037DA]/90"
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200 font-bold"
         >
-          + Add
+          +
         </button>
         <span className="text-xs text-[#808080]">
           {activePanesData.length} pane{activePanesData.length !== 1 ? "s" : ""} ({cols}x{rows})
