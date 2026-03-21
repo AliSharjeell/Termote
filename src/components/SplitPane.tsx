@@ -50,17 +50,35 @@ export function SplitPane() {
     )
   }
 
-  // Simple layout: if 1 pane, full size. If 2 panes, horizontal split.
-  // For more complex layouts, we'd need to track pane positions in the store
+  const handleAddPane = () => {
+    usePaneStore.getState().spawnPane("powershell")
+  }
+
   return (
-    <div ref={containerRef} className="h-full w-full">
-      <Allotment>
-        {activePanesData.slice(0, 2).map((pane) => (
-          <Allotment.Pane key={pane.id} minSize={200}>
-            <XtermPane pane={pane} />
-          </Allotment.Pane>
-        ))}
-      </Allotment>
+    <div ref={containerRef} className="flex h-full w-full flex-col">
+      {/* Toolbar */}
+      <div className="flex shrink-0 items-center gap-2 bg-[#1E1E1E] px-2 py-1">
+        <button
+          onClick={handleAddPane}
+          className="rounded bg-[#0037DA] px-3 py-1 text-sm text-white hover:bg-[#0037DA]/90"
+        >
+          + Split
+        </button>
+        <span className="text-xs text-[#808080]">
+          {activePanesData.length} pane{activePanesData.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Panes */}
+      <div className="flex-1 overflow-hidden">
+        <Allotment>
+          {activePanesData.map((pane) => (
+            <Allotment.Pane key={pane.id} minSize={150}>
+              <XtermPane pane={pane} />
+            </Allotment.Pane>
+          ))}
+        </Allotment>
+      </div>
     </div>
   )
 }
