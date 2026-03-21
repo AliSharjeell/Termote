@@ -41,7 +41,7 @@ export function TabBar() {
   return (
     <div className="flex h-full w-full flex-col bg-[#0C0C0C]">
       {/* Tab bar */}
-      <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[#333333] bg-[#1E1E1E] px-4 py-2">
+      <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[#333333] bg-[#161616] px-4 py-2">
         {/* Add button */}
         <button
           onClick={() => usePaneStore.getState().spawnPane("powershell")}
@@ -53,7 +53,7 @@ export function TabBar() {
         {allPanesData.map((pane) => (
           <div
             key={pane.id}
-            className={`flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm border border-[#333333] ${
+            className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
               selectedTab === pane.id
                 ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
                 : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
