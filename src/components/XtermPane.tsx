@@ -130,11 +130,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
         className="h-full w-full"
         style={{ padding: "8px" }}
       />
-      <PaneControls
-        paneId={pane.id}
-        shell={pane.shell}
-        onClose={handleClose}
-      />
+      <PaneControls onClose={handleClose} />
     </div>
   )
 }
