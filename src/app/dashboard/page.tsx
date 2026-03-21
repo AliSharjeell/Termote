@@ -69,7 +69,7 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0C0C0C]">
       {/* Connection status bar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-[#333333] bg-[#1E1E1E] px-4 py-2">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#333333] bg-[#1E1E1E] px-4 py-2 rounded-none">
         <div className="flex items-center gap-2">
           <div
             className={`h-2 w-2 rounded-full ${
@@ -93,10 +93,10 @@ export default function Dashboard() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewMode("tabs")}
-            className={`rounded px-2 py-1 text-xs ${
+            className={`rounded-md px-3 py-1.5 text-xs ${
               viewMode === "tabs" || (viewMode === "auto" && isMobile)
                 ? "bg-[#0037DA] text-white"
-                : "text-[#808080] hover:text-[#CCCCCC]"
+                : "text-[#808080] hover:text-[#CCCCCC] hover:bg-[#333333]"
             }`}
             title="Tabs view"
           >
@@ -104,10 +104,10 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setViewMode("panes")}
-            className={`rounded px-2 py-1 text-xs ${
+            className={`rounded-md px-3 py-1.5 text-xs ${
               viewMode === "panes" || (viewMode === "auto" && !isMobile)
                 ? "bg-[#0037DA] text-white"
-                : "text-[#808080] hover:text-[#CCCCCC]"
+                : "text-[#808080] hover:text-[#CCCCCC] hover:bg-[#333333]"
             }`}
             title="Panes view"
           >
@@ -115,10 +115,10 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setViewMode("auto")}
-            className={`rounded px-2 py-1 text-xs ${
+            className={`rounded-md px-3 py-1.5 text-xs ${
               viewMode === "auto"
                 ? "bg-[#0037DA] text-white"
-                : "text-[#808080] hover:text-[#CCCCCC]"
+                : "text-[#808080] hover:text-[#CCCCCC] hover:bg-[#333333]"
             }`}
             title="Auto (follow screen)"
           >
@@ -126,7 +126,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={handleSignOut}
-            className="ml-2 rounded bg-[#E74856] px-2 py-1 text-xs text-white hover:bg-[#ff3b30]"
+            className="ml-2 rounded-md bg-[#E74856] px-3 py-1.5 text-xs text-white hover:bg-[#ff3b30]"
             title="Sign out"
           >
             Sign Out

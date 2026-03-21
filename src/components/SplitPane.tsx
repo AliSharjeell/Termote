@@ -39,7 +39,7 @@ export function SplitPane() {
               console.log("New Terminal clicked, isAuthenticated:", isAuthenticated)
               usePaneStore.getState().spawnPane("powershell")
             }}
-            className="mt-4 rounded bg-[#0037DA] px-4 py-2 text-sm text-white hover:bg-[#0037DA]/90"
+            className="mt-4 rounded-full bg-[#0037DA] px-6 py-2.5 text-sm text-white hover:bg-[#0037DA]/90"
           >
             + New Terminal
           </button>
@@ -60,10 +60,10 @@ export function SplitPane() {
   return (
     <div ref={containerRef} className="flex h-full w-full flex-col">
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center gap-2 bg-[#1E1E1E] px-2 py-1">
+      <div className="flex shrink-0 items-center gap-3 bg-[#1E1E1E] px-4 py-2">
         <button
           onClick={handleAddPane}
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200 font-bold"
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200 font-bold text-lg"
         >
           +
         </button>
@@ -79,15 +79,15 @@ export function SplitPane() {
           display: "grid",
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gridTemplateRows: `repeat(${rows}, 1fr)`,
-          gap: "2px",
-          background: "#333333",
-          padding: "2px",
+          gap: "6px",
+          background: "#1E1E1E",
+          padding: "6px",
         }}
       >
         {activePanesData.map((pane) => (
           <div
             key={pane.id}
-            className="overflow-hidden bg-[#0C0C0C]"
+            className="overflow-hidden rounded-lg bg-[#0C0C0C]"
           >
             <XtermPane pane={pane} />
           </div>
