@@ -50,6 +50,13 @@ export default function Dashboard() {
     }
   }, [disconnect])
 
+  const handleSignOut = () => {
+    sessionStorage.removeItem("tunnelUrl")
+    sessionStorage.removeItem("authToken")
+    disconnect()
+    router.push("/")
+  }
+
   // Show loading state
   if (!isReady) {
     return (
@@ -116,6 +123,13 @@ export default function Dashboard() {
             title="Auto (follow screen)"
           >
             Auto
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="ml-2 rounded bg-[#E74856] px-2 py-1 text-xs text-white hover:bg-[#ff3b30]"
+            title="Sign out"
+          >
+            Sign Out
           </button>
         </div>
       </div>

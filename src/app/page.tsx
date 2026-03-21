@@ -1,8 +1,21 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { LoginForm } from "@/components/LoginForm"
 
 export default function Home() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // If already logged in, redirect to dashboard
+    const url = sessionStorage.getItem("tunnelUrl")
+    const token = sessionStorage.getItem("authToken")
+    if (url && token) {
+      router.push("/dashboard")
+    }
+  }, [router])
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0C0C0C]">
       <div className="w-full max-w-md px-4">
