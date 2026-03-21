@@ -8,7 +8,7 @@ import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User } from "lucide-react"
+import { User, LayoutGrid, LayoutList } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -96,25 +96,27 @@ export default function Dashboard() {
         <div className="flex items-center gap-1 rounded-full bg-[#27272A] p-1">
           <button
             onClick={() => setViewMode("tabs")}
-            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+            className={`rounded-full px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 ${
               viewMode === "tabs"
                 ? "bg-white text-black shadow-sm"
                 : "text-[#A1A1AA] hover:text-white"
             }`}
             title="Tabs view"
           >
-            Tabs
+            <LayoutList className="h-3.5 w-3.5" />
+            <span>Tabs</span>
           </button>
           <button
             onClick={() => setViewMode("panes")}
-            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+            className={`rounded-full px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 ${
               viewMode === "panes"
                 ? "bg-white text-black shadow-sm"
                 : "text-[#A1A1AA] hover:text-white"
             }`}
             title="Panes view"
           >
-            Panes
+            <LayoutGrid className="h-3.5 w-3.5" />
+            <span>Panes</span>
           </button>
         </div>
 
