@@ -60,19 +60,9 @@ export function TabBar() {
             }`}
             onClick={() => handleTabClick(pane.id)}
           >
-            <span className="truncate max-w-[100px]">
+            <span className="truncate max-w-[150px]">
               {pane.name}
             </span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleMoveToGrid(pane.id)
-              }}
-              className="ml-2 rounded-full bg-[#333333] px-2 py-0.5 text-xs text-[#808080] hover:text-[#CCCCCC] hover:bg-[#444444]"
-              title="Move to grid"
-            >
-              Grid
-            </button>
           </div>
         ))}
       </div>
