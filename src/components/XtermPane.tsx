@@ -37,7 +37,7 @@ const terminalOptions = {
   },
   cursorStyle: "block" as const,
   cursorBlink: true,
-  scrollback: 10000,
+  scrollback: 100000,
 }
 
 export function XtermPane({ pane }: XtermPaneProps) {
