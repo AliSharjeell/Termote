@@ -45,8 +45,16 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 
   // Backend is source of truth - just accept what it sends
-  setLayout: (panes, activePanes, floatingPanes) =>
-    set({ panes, activePanes, floatingPanes }),
+  // Auto-select first pane when layout is set
+  setLayout: (panes, activePanes, floatingPanes) => {
+    const state = get()
+    let selectedTab = state.selectedTab
+    // Auto-select first pane if none selected or current selection is gone
+    if (!selectedTab || !panes.find(p => p.id === selectedTab)) {
+      selectedTab = panes.length > 0 ? panes[0].id : ""
+    }
+    set({ panes, activePanes, floatingPanes, selectedTab })
+  },
 
   spawnPane: (shell) => {
     const { ws, isAuthenticated } = get()
