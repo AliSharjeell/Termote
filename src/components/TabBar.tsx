@@ -77,8 +77,8 @@ export function TabBar() {
         ))}
       </div>
 
-      {/* Active pane content with padding */}
-      <div className="flex-1 overflow-hidden p-3">
+      {/* Active pane content */}
+      <div className="flex-1 overflow-hidden">
         {selectedPane && <XtermPane pane={selectedPane} />}
       </div>
     </div>
