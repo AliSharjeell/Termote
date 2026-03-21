@@ -73,6 +73,7 @@ export default function Dashboard() {
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0C0C0C]">
       {/* Connection status bar */}
       <div className="flex shrink-0 items-center justify-between border-b border-[#333333] bg-[#161616] px-4 py-2 rounded-none">
+        {/* Status */}
         <div className="flex items-center gap-2">
           <div
             className={`h-2 w-2 rounded-full ${
@@ -99,7 +100,7 @@ export default function Dashboard() {
           </span>
         </div>
 
-        {/* View mode toggle */}
+        {/* View mode toggle - centered */}
         <div className="flex items-center gap-1 rounded-full bg-[#27272A] p-1">
           <button
             onClick={() => setViewMode("tabs")}
@@ -125,23 +126,25 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Focus button - reloads page to reset dimensions */}
-        <button
-          onClick={() => window.location.reload()}
-          className="flex items-center gap-1.5 rounded-full bg-[#27272A] px-3 py-1.5 text-xs text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors"
-          title="Focus - reset terminal size to this device"
-        >
-          <Maximize2 className="h-3.5 w-3.5" />
-          Focus
-        </button>
+        {/* Focus + Profile */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-1.5 rounded-full bg-[#27272A] px-3 py-1.5 text-xs text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors"
+            title="Focus - reset terminal size to this device"
+          >
+            <Maximize2 className="h-3.5 w-3.5" />
+            Focus
+          </button>
 
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
-          title="Profile"
-        >
-          <User className="h-4 w-4" />
-        </button>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
+            title="Profile"
+          >
+            <User className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Main content area */}
