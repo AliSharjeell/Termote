@@ -45,7 +45,7 @@ export function TabBar() {
         {/* Add button */}
         <button
           onClick={() => usePaneStore.getState().spawnPane("powershell")}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200 font-bold text-lg"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-black hover:bg-gray-200 font-bold text-lg"
         >
           +
         </button>
