@@ -59,6 +59,15 @@ export function PaneTitleBar({ title, onRename, onClose }: PaneTitleBarProps) {
           <span className="text-white text-xs font-bold leading-none">×</span>
         </button>
 
+        {/* Rename button */}
+        <button
+          onClick={handleDoubleClick}
+          className="flex h-4 w-4 items-center justify-center rounded-full bg-[#DCDCAA] hover:bg-[#ffff00] shrink-0"
+          title="Rename terminal"
+        >
+          <span className="text-[#0C0C0C] text-xs font-bold leading-none">✎</span>
+        </button>
+
         {/* Title */}
         {isEditing ? (
           <input
@@ -72,9 +81,8 @@ export function PaneTitleBar({ title, onRename, onClose }: PaneTitleBarProps) {
           />
         ) : (
           <span
-            onDoubleClick={handleDoubleClick}
             className="cursor-pointer truncate text-xs text-[#CCCCCC] hover:text-white"
-            title="Double-click to rename"
+            title="Click rename button to edit"
           >
             {title}
           </span>
