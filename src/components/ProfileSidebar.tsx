@@ -50,7 +50,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
       />
 
       {/* Sidebar */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-[#1E1E1E] shadow-xl">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-[#161616] shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-4">
           <div className="flex items-center gap-3">

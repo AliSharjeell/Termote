@@ -28,7 +28,7 @@ export default function Home() {
         </div>
 
         {/* Login Form */}
-        <div className="rounded-lg border border-[#333333] bg-[#1E1E1E] p-6">
+        <div className="rounded-lg border border-[#252525] bg-[#161616] p-6">
           <LoginForm />
         </div>
 

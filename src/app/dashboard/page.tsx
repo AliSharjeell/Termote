@@ -72,7 +72,7 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0C0C0C]">
       {/* Connection status bar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-[#333333] bg-[#1E1E1E] px-4 py-2 rounded-none">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#333333] bg-[#161616] px-4 py-2 rounded-none">
         <div className="flex items-center gap-2">
           <div
             className={`h-2 w-2 rounded-full ${
