@@ -82,6 +82,13 @@ export default function Dashboard() {
                   : "bg-[#DCDCAA]"
                 : "bg-[#E74856]"
             }`}
+            style={{
+              boxShadow: isConnected
+                ? isAuthenticated
+                  ? "0 0 6px #16C60C"
+                  : "0 0 6px #DCDCAA"
+                : "0 0 6px #E74856"
+            }}
           />
           <span className="text-xs text-[#808080]">
             {isConnected
