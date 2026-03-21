@@ -7,7 +7,8 @@ import { XtermPane } from "./XtermPane"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 export function SplitPane() {
-  const { panes, activePanes } = usePaneStore()
+  // ALL hooks must be at the top - never inside conditionals!
+  const { panes, activePanes, isAuthenticated } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -31,7 +32,6 @@ export function SplitPane() {
   }, [])
 
   if (activePanesData.length === 0) {
-    const { isAuthenticated } = usePaneStore()
     return (
       <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
         <div className="text-center text-[#CCCCCC]">
@@ -39,8 +39,6 @@ export function SplitPane() {
           <button
             onClick={() => {
               console.log("New Terminal clicked, isAuthenticated:", isAuthenticated)
-              const { ws, isAuthenticated: auth } = usePaneStore.getState()
-              console.log("ws state:", ws, "auth:", auth)
               usePaneStore.getState().spawnPane("powershell")
             }}
             className="mt-4 rounded bg-[#0037DA] px-4 py-2 text-sm text-white hover:bg-[#0037DA]/90"
