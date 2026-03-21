@@ -25,6 +25,7 @@ interface PaneState {
   moveToActive: (paneId: string) => void
   selectTab: (tabId: string) => void
   setViewMode: (mode: "auto" | "tabs" | "panes") => void
+  renamePane: (paneId: string, name: string) => void
 }
 
 export const usePaneStore = create<PaneState>((set, get) => ({
@@ -91,4 +92,11 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   selectTab: (tabId) => set({ selectedTab: tabId }),
   setViewMode: (mode) => set({ viewMode: mode }),
+
+  renamePane: (paneId, name) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "rename", pane_id: paneId, name }))
+    }
+  },
 }))

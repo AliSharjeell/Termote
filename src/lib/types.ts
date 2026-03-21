@@ -4,6 +4,7 @@ export interface Pane {
   id: string
   pid: number
   shell: Shell
+  name: string
   cols: number
   rows: number
 }

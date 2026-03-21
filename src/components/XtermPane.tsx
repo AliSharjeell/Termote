@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from "react"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { PaneControls } from "./PaneControls"
+import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
 
 interface XtermPaneProps {
@@ -46,7 +46,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const fitAddonRef = useRef<FitAddon | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
 
-  const { sendInput, sendResize, killPane } = usePaneStore()
+  const { sendInput, sendResize, killPane, renamePane } = usePaneStore()
 
   const handleData = useCallback(
     (data: string) => {
@@ -120,14 +120,22 @@ export function XtermPane({ pane }: XtermPaneProps) {
     killPane(pane.id)
   }, [pane.id, killPane])
 
+  const handleRename = useCallback((newName: string) => {
+    renamePane(pane.id, newName)
+  }, [pane.id, renamePane])
+
   return (
-    <div className="relative h-full w-full bg-[#0C0C0C]">
+    <div className="relative flex h-full w-full flex-col bg-[#0C0C0C]">
+      <PaneTitleBar
+        title={pane.name}
+        onRename={handleRename}
+        onClose={handleClose}
+      />
       <div
         ref={terminalRef}
-        className="h-full w-full"
+        className="flex-1 overflow-hidden"
         style={{ padding: "8px" }}
       />
-      <PaneControls onClose={handleClose} />
     </div>
   )
 }
