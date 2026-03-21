@@ -21,6 +21,7 @@ interface PaneState {
   sendResize: (paneId: string, cols: number, rows: number) => void
   moveToFloating: (paneId: string) => void
   moveToActive: (paneId: string) => void
+  selectTab: (tabId: string) => void
 }
 
 export const usePaneStore = create<PaneState>((set, get) => ({
@@ -83,4 +84,6 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       ws.send(JSON.stringify({ action: "move_to_active", pane_id: paneId }))
     }
   },
+
+  selectTab: (tabId) => set({ selectedTab: tabId }),
 }))
