@@ -1,8 +1,8 @@
 "use client"
 
 interface PaneControlsProps {
-  paneId: string
-  shell: string
+  paneId?: string
+  shell?: string
   onClose: () => void
 }
 
