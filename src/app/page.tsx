@@ -68,10 +68,10 @@ export default function Home() {
           {/* Hero text */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold text-white sm:text-5xl">
-              Termux <span className="text-[#16C60C]">Web</span>
+              Termote <span className="text-[#16C60C]">Web</span>
             </h1>
             <p className="mt-3 text-lg text-[#808080]">
-              Access your Termux terminal from any browser
+              Your terminal, everywhere.
             </p>
           </div>
 
@@ -129,7 +129,7 @@ export default function Home() {
       <div className="border-t border-[#333333] py-6">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <p className="text-xs text-[#808080]">
-            Web-native terminal multiplexer
+            Termote - Web-native terminal multiplexer
           </p>
         </div>
       </div>
