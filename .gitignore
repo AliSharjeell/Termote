@@ -7,3 +7,10 @@ build/
 dist/
 
 .vercel
+
+# Auto-generated
+next-env.d.ts
+
+# Unused artifacts
+lineicons-5.1-free/
+src/styles/
