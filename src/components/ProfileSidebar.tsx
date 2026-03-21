@@ -18,7 +18,6 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const [copiedPassword, setCopiedPassword] = useState(false)
 
   const maskValue = (value: string) => "\u2022".repeat(Math.min(value.length, 20))
-  const truncatedUrl = tunnelUrl.length > 40 ? tunnelUrl.substring(0, 40) + "..." : tunnelUrl
 
   const handleCopyUrl = async () => {
     try {
@@ -76,11 +75,11 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
               <Link className="h-4 w-4" />
               URL
             </label>
-            <div className="flex items-center gap-2 rounded-lg bg-[#0C0C0C] p-3">
-              <span className="flex-1 truncate text-sm text-[#CCCCCC] font-mono">
-                {showUrl ? tunnelUrl : truncatedUrl}
+            <div className="flex flex-col gap-2 rounded-lg bg-[#0C0C0C] p-3">
+              <span className="break-all text-sm text-[#CCCCCC] font-mono leading-relaxed">
+                {showUrl ? tunnelUrl : maskValue(tunnelUrl)}
               </span>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 self-end">
                 <button
                   onClick={() => setShowUrl(!showUrl)}
                   className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
