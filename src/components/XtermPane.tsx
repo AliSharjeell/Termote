@@ -104,9 +104,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
   // Listen for output events
   useEffect(() => {
-    console.log("XtermPane mounted for pane:", pane.id)
     const handleOutput = (event: CustomEvent<{ paneId: string; data: string }>) => {
-      console.log("Output received for", event.detail.paneId, "my pane:", pane.id, "data:", event.detail.data.substring(0, 50))
       if (event.detail.paneId === pane.id && terminalInstanceRef.current) {
         terminalInstanceRef.current.write(event.detail.data)
       }
@@ -114,7 +112,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
     window.addEventListener("terminal-output", handleOutput as EventListener)
     return () => {
-      console.log("XtermPane unmounted for pane:", pane.id)
       window.removeEventListener("terminal-output", handleOutput as EventListener)
     }
   }, [pane.id])

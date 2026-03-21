@@ -57,9 +57,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
 
       ws.onmessage = (event) => {
         try {
-          console.log("Raw WebSocket message:", event.data)
           const message: ServerMessage = JSON.parse(event.data)
-          console.log("Parsed message:", message)
           handleMessage(message)
         } catch (e) {
           // If not JSON, it might be terminal output directly
@@ -93,13 +91,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       console.log("handleMessage called with:", message)
       switch (message.event) {
         case "state_update":
-          console.log("state_update received, panes:", message.panes, "active:", message.active_panes, "floating:", message.floating_panes)
           setLayout(message.panes, message.active_panes, message.floating_panes)
           break
         case "output":
-          console.log("OUTPUT event received:", message.pane_id, message.data)
-          // This is handled by the individual XtermPane components
-          // via a custom event or callback mechanism
           window.dispatchEvent(
             new CustomEvent("terminal-output", {
               detail: {
