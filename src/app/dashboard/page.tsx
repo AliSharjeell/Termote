@@ -8,7 +8,7 @@ import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User } from "lucide-react"
+import { User, Maximize2 } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [isReady, setIsReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
+  const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
 
   // Determine which view to show based on viewMode
   const showTabs = viewMode === "tabs"
@@ -124,6 +124,16 @@ export default function Dashboard() {
             Panes
           </button>
         </div>
+
+        {/* Focus button - reloads page to reset dimensions */}
+        <button
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-1.5 rounded-full bg-[#27272A] px-3 py-1.5 text-xs text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors"
+          title="Focus - reset terminal size to this device"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+          Focus
+        </button>
 
         <button
           onClick={() => setSidebarOpen(true)}
