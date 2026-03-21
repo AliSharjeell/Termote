@@ -8,6 +8,7 @@ import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { User } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -122,7 +123,7 @@ export default function Dashboard() {
           className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
           title="Profile"
         >
-          <i className="lni lni-user-4" />
+          <User className="h-4 w-4" />
         </button>
       </div>
 

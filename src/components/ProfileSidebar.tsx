@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import "./lineicons.css"
+import { Eye, EyeOff, Copy, Check, X, User, Link, Key, LogOut } from "lucide-react"
 
 interface ProfileSidebarProps {
   isOpen: boolean
@@ -17,7 +17,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedPassword, setCopiedPassword] = useState(false)
 
-  const maskValue = (value: string) => "•".repeat(Math.min(value.length, 20))
+  const maskValue = (value: string) => "\u2022".repeat(Math.min(value.length, 20))
   const truncatedUrl = tunnelUrl.length > 40 ? tunnelUrl.substring(0, 40) + "..." : tunnelUrl
 
   const handleCopyUrl = async () => {
@@ -56,7 +56,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]">
-              <i className="lni lni-user-4 text-xl text-white" />
+              <User className="h-5 w-5 text-white" />
             </div>
             <span className="text-sm font-medium text-white">Profile</span>
           </div>
@@ -64,7 +64,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
           >
-            <i className="lni lni-xmark text-lg" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -73,7 +73,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
           {/* URL Field */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
-              <i className="lni lni-link-2-angular-right" />
+              <Link className="h-4 w-4" />
               URL
             </label>
             <div className="flex items-center gap-2 rounded-lg bg-[#0C0C0C] p-3">
@@ -86,14 +86,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
                   className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
                   title={showUrl ? "Hide" : "Show"}
                 >
-                  <i className="lni lni-eye text-sm" />
+                  {showUrl ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={handleCopyUrl}
                   className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
                   title="Copy"
                 >
-                  <i className={`lni lni-copy-ai text-sm ${copiedUrl ? "text-[#16C60C]" : ""}`} />
+                  {copiedUrl ? <Check className="h-4 w-4 text-[#16C60C]" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -102,7 +102,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
           {/* Password Field */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
-              <i className="lni lni-key-1" />
+              <Key className="h-4 w-4" />
               Password
             </label>
             <div className="flex items-center gap-2 rounded-lg bg-[#0C0C0C] p-3">
@@ -115,14 +115,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
                   className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
                   title={showPassword ? "Hide" : "Show"}
                 >
-                  <i className="lni lni-eye text-sm" />
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={handleCopyPassword}
                   className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
                   title="Copy"
                 >
-                  <i className={`lni lni-copy-ai text-sm ${copiedPassword ? "text-[#16C60C]" : ""}`} />
+                  {copiedPassword ? <Check className="h-4 w-4 text-[#16C60C]" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -135,7 +135,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
             onClick={onSignOut}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#E74856] px-4 py-3 text-sm font-medium text-white hover:bg-[#ff3b30] transition-colors"
           >
-            <i className="lni lni-exit" />
+            <LogOut className="h-4 w-4" />
             Sign Out
           </button>
         </div>
