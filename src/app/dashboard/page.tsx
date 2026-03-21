@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { SplitPane } from "@/components/SplitPane"
 import { TabBar } from "@/components/TabBar"
@@ -10,7 +10,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { User, RefreshCw } from "lucide-react"
 
-export default function Dashboard() {
+function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
@@ -176,5 +176,17 @@ export default function Dashboard() {
         />
       )}
     </div>
+  )
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-[#0C0C0C]">
+        <div className="text-[#CCCCCC]">Loading...</div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   )
 }
