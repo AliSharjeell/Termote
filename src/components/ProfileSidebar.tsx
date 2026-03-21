@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Copy, Check, X, User, Link, Key, LogOut } from "lucide-react"
+import { Eye, EyeOff, Copy, Check, X, User, Link, Key, LogOut, QrCode } from "lucide-react"
+import { QRCodeSVG } from "qrcode.react"
 
 interface ProfileSidebarProps {
   isOpen: boolean
@@ -16,6 +17,9 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const [showUrl, setShowUrl] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedPassword, setCopiedPassword] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
+
+  const mobileUrl = `https://termux-web-frontend.vercel.app/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
 
   const maskValue = (value: string) => "\u2022".repeat(Math.min(value.length, 20))
 
@@ -48,6 +52,33 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
         className="fixed inset-0 z-40 bg-black/50"
         onClick={onClose}
       />
+
+      {/* QR Modal */}
+      {showQRModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="flex flex-col items-center rounded-2xl bg-[#161616] p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between w-full">
+              <span className="text-sm font-medium text-white">Scan to Connect</span>
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="rounded-xl bg-white p-4">
+              <QRCodeSVG
+                value={mobileUrl}
+                size={200}
+                level="M"
+              />
+            </div>
+            <p className="mt-4 text-xs text-[#808080] text-center max-w-[220px]">
+              Scan this QR code with your mobile device to instantly connect and auto-login
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Sidebar */}
       <div className="fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-[#161616] shadow-xl">
@@ -129,7 +160,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#333333] p-4">
+        <div className="border-t border-[#333333] p-4 space-y-2">
+          <button
+            onClick={() => setShowQRModal(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
+          >
+            <QrCode className="h-4 w-4" />
+            Connect to Mobile
+          </button>
           <button
             onClick={onSignOut}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#E74856] px-4 py-3 text-sm font-medium text-white hover:bg-[#ff3b30] transition-colors"
