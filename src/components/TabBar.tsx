@@ -24,7 +24,10 @@ export function TabBar() {
         <div className="text-center text-[#CCCCCC]">
           <p className="text-lg">No active panes</p>
           <button
-            onClick={() => usePaneStore.getState().spawnPane("powershell")}
+            onClick={() => {
+              console.log("New Terminal clicked, isAuthenticated:", usePaneStore.getState().isAuthenticated)
+              usePaneStore.getState().spawnPane("powershell")
+            }}
             className="mt-4 rounded bg-[#0037DA] px-4 py-2 text-sm text-white hover:bg-[#0037DA]/90"
           >
             + New Terminal

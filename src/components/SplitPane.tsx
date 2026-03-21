@@ -31,12 +31,18 @@ export function SplitPane() {
   }, [])
 
   if (activePanesData.length === 0) {
+    const { isAuthenticated } = usePaneStore()
     return (
       <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
         <div className="text-center text-[#CCCCCC]">
           <p className="text-lg">No active panes</p>
           <button
-            onClick={() => usePaneStore.getState().spawnPane("powershell")}
+            onClick={() => {
+              console.log("New Terminal clicked, isAuthenticated:", isAuthenticated)
+              const { ws, isAuthenticated: auth } = usePaneStore.getState()
+              console.log("ws state:", ws, "auth:", auth)
+              usePaneStore.getState().spawnPane("powershell")
+            }}
             className="mt-4 rounded bg-[#0037DA] px-4 py-2 text-sm text-white hover:bg-[#0037DA]/90"
           >
             + New Terminal
