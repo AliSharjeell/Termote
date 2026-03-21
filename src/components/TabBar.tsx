@@ -41,7 +41,15 @@ export function TabBar() {
   return (
     <div className="flex h-full w-full flex-col bg-[#0C0C0C]">
       {/* Tab bar */}
-      <div className="flex shrink-0 overflow-x-auto bg-[#1E1E1E]">
+      <div className="flex shrink-0 items-center overflow-x-auto bg-[#1E1E1E]">
+        {/* Add button */}
+        <button
+          onClick={() => usePaneStore.getState().spawnPane("powershell")}
+          className="shrink-0 rounded bg-[#0037DA] px-3 py-2 text-sm text-white hover:bg-[#0037DA]/90"
+        >
+          + Add
+        </button>
+
         {allPanesData.map((pane) => (
           <div
             key={pane.id}
