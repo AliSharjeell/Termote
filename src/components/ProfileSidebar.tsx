@@ -19,7 +19,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const [copiedPassword, setCopiedPassword] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
 
-  const mobileUrl = `https://termux-web-frontend.vercel.app/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
+  const mobileUrl = `https://termote.vercel.app/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
 
   const maskValue = (value: string) => "\u2022".repeat(Math.min(value.length, 20))
 
