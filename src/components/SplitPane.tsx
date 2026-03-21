@@ -1,8 +1,6 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
-import { Allotment } from "allotment"
-import "allotment/dist/style.css"
 import { XtermPane } from "./XtermPane"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
@@ -54,6 +52,11 @@ export function SplitPane() {
     usePaneStore.getState().spawnPane("powershell")
   }
 
+  // Auto-balancing 2D grid: optimal square-ish layout
+  const count = activePanesData.length
+  const cols = Math.ceil(Math.sqrt(count))
+  const rows = Math.ceil(count / cols)
+
   return (
     <div ref={containerRef} className="flex h-full w-full flex-col">
       {/* Toolbar */}
@@ -65,19 +68,30 @@ export function SplitPane() {
           + Split
         </button>
         <span className="text-xs text-[#808080]">
-          {activePanesData.length} pane{activePanesData.length !== 1 ? "s" : ""}
+          {activePanesData.length} pane{activePanesData.length !== 1 ? "s" : ""} ({cols}x{rows})
         </span>
       </div>
 
-      {/* Panes */}
-      <div className="flex-1 overflow-hidden">
-        <Allotment>
-          {activePanesData.map((pane) => (
-            <Allotment.Pane key={pane.id} minSize={150}>
-              <XtermPane pane={pane} />
-            </Allotment.Pane>
-          ))}
-        </Allotment>
+      {/* Auto-balancing grid */}
+      <div
+        className="flex-1 overflow-hidden"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
+          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          gap: "2px",
+          background: "#333333",
+          padding: "2px",
+        }}
+      >
+        {activePanesData.map((pane) => (
+          <div
+            key={pane.id}
+            className="overflow-hidden bg-[#0C0C0C]"
+          >
+            <XtermPane pane={pane} />
+          </div>
+        ))}
       </div>
     </div>
   )
