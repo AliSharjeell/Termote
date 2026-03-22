@@ -99,7 +99,7 @@ function DashboardContent() {
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0C0C0C]">
       {/* Connection status bar */}
-      <div className={`relative flex shrink-0 items-center border-b border-[#333333] bg-[#161616] ${isMobile ? "px-4 py-2" : "px-4 py-2"}`}>
+      <div className="relative flex shrink-0 items-center border-b border-[#333333] bg-[#161616] px-4 py-2">
         {/* Status + Focus - left side */}
         <div className="flex items-center gap-2">
           <div
@@ -134,8 +134,8 @@ function DashboardContent() {
           </button>
         </div>
 
-        {/* View mode toggle - centered with absolute positioning on mobile */}
-        <div className={`flex items-center gap-1 rounded-full bg-[#27272A] p-1 ${isMobile ? "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" : ""}`}>
+        {/* View mode toggle - centered */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded-full bg-[#27272A] p-1">
           <button
             onClick={() => setViewMode("tabs")}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
