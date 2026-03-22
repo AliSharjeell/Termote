@@ -125,11 +125,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
       return true
     })
 
-    // Also natively listen for right-click context menu pastes
-    terminal.onPaste((data) => {
-      sendInput(pane.id, data)
-    })
-
     terminal.loadAddon(fitAddon)
     terminal.open(terminalRef.current)
     fitAddon.fit()
