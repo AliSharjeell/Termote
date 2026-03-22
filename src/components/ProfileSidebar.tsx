@@ -25,7 +25,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
 
   const handleCopyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(tunnelUrl)
+      await navigator.clipboard.writeText(mobileUrl)
       setCopiedUrl(true)
       setTimeout(() => setCopiedUrl(false), 2000)
     } catch {
@@ -157,11 +157,18 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
         {/* Footer */}
         <div className="border-t border-[#333333] p-4 space-y-2">
           <button
+            onClick={handleCopyUrl}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#16C60C] px-4 py-3 text-sm font-medium text-black hover:bg-[#13A10E] transition-colors"
+          >
+            {copiedUrl ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copiedUrl ? "Link Copied!" : "Copy Link"}
+          </button>
+          <button
             onClick={() => setShowQRModal(true)}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
           >
             <QrCode className="h-4 w-4" />
-            Connect to Mobile
+            Open in Mobile
           </button>
           <button
             onClick={onSignOut}
