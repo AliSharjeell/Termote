@@ -1,23 +1,23 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { LoginForm } from "@/components/LoginForm"
-import { Terminal, Zap, Shield, Smartphone } from "lucide-react"
+import { Terminal, Zap, Shield, Smartphone, Loader2 } from "lucide-react"
 
 function AutoLoginHandler() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
     const tunnelParam = searchParams.get("tunnel")
     const tokenParam = searchParams.get("token")
 
     if (tunnelParam && tokenParam) {
-      // Save to sessionStorage first, then redirect
+      setIsRedirecting(true)
       sessionStorage.setItem("tunnelUrl", tunnelParam)
       sessionStorage.setItem("authToken", tokenParam)
-      // Small delay to ensure sessionStorage is persisted on iOS
       setTimeout(() => {
         router.push("/dashboard")
       }, 100)
@@ -30,6 +30,15 @@ function AutoLoginHandler() {
       router.push("/dashboard")
     }
   }, [router, searchParams])
+
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-3">
+        <Loader2 className="h-8 w-8 text-[#16C60C] animate-spin" />
+        <p className="text-sm text-[#808080]">Connecting to your tunnel...</p>
+      </div>
+    )
+  }
 
   return <LoginForm />
 }
