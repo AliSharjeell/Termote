@@ -112,16 +112,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
         return true
       }
 
-      // Handle Ctrl+V (Paste)
-      if (arg.ctrlKey && arg.code === "KeyV") {
-        navigator.clipboard.readText().then((text) => {
-          sendInput(pane.id, text)
-        }).catch((err) => {
-          console.error("Clipboard read permission denied:", err)
-        })
-        return false // Prevent default xterm behavior
-      }
-
+      // Let xterm handle Ctrl+V naturally via onData - don't intercept
       return true
     })
 
