@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
+import { WebLinksAddon } from "@xterm/addon-web-links"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
@@ -117,6 +118,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
     })
 
     terminal.loadAddon(fitAddon)
+    terminal.loadAddon(new WebLinksAddon())
     terminal.open(terminalRef.current)
     fitAddon.fit()
 
