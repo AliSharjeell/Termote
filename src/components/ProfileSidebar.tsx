@@ -158,7 +158,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
         <div className="border-t border-[#333333] p-4 space-y-2">
           <button
             onClick={handleCopyUrl}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#16C60C] px-4 py-3 text-sm font-medium text-black hover:bg-[#13A10E] transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
           >
             {copiedUrl ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             {copiedUrl ? "Link Copied!" : "Copy Link"}
