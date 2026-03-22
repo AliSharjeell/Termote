@@ -35,3 +35,7 @@ export function useIsMobile(): boolean {
 export function useIsDesktop(): boolean {
   return useMediaQuery("(min-width: 801px)")
 }
+
+export function useIsLandscape(): boolean {
+  return useMediaQuery("(orientation: landscape)")
+}

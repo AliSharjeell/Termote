@@ -6,7 +6,7 @@ import { SplitPane } from "@/components/SplitPane"
 import { TabBar } from "@/components/TabBar"
 import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { useWebSocket } from "@/hooks/useWebSocket"
-import { useIsMobile } from "@/hooks/useMediaQuery"
+import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { User, RefreshCw } from "lucide-react"
 
@@ -14,10 +14,20 @@ function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
+  const isLandscape = useIsLandscape()
   const [isReady, setIsReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
+
+  // Set default view based on orientation on first load
+  const [defaultSet, setDefaultSet] = useState(false)
+  useEffect(() => {
+    if (!defaultSet && isReady) {
+      setViewMode(isLandscape ? "panes" : "tabs")
+      setDefaultSet(true)
+    }
+  }, [isReady, isLandscape, defaultSet, setViewMode])
 
   // Determine which view to show based on viewMode
   const showTabs = viewMode === "tabs"
@@ -89,8 +99,8 @@ function DashboardContent() {
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0C0C0C]">
       {/* Connection status bar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-[#333333] bg-[#161616] px-4 py-2 rounded-none">
-        {/* Status + Focus */}
+      <div className={`relative flex shrink-0 items-center border-b border-[#333333] bg-[#161616] ${isMobile ? "px-4 py-2" : "px-4 py-2"}`}>
+        {/* Status + Focus - left side */}
         <div className="flex items-center gap-2">
           <div
             className={`h-2 w-2 rounded-full ${
@@ -124,8 +134,8 @@ function DashboardContent() {
           </button>
         </div>
 
-        {/* View mode toggle - centered */}
-        <div className="flex items-center gap-1 rounded-full bg-[#27272A] p-1">
+        {/* View mode toggle - centered with absolute positioning on mobile */}
+        <div className={`flex items-center gap-1 rounded-full bg-[#27272A] p-1 ${isMobile ? "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" : ""}`}>
           <button
             onClick={() => setViewMode("tabs")}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
@@ -150,10 +160,10 @@ function DashboardContent() {
           </button>
         </div>
 
-        {/* Profile */}
+        {/* Profile - right side */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
+          className="ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
           title="Profile"
         >
           <User className="h-4 w-4" />
