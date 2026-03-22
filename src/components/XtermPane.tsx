@@ -95,6 +95,41 @@ export function XtermPane({ pane }: XtermPaneProps) {
     })
     const fitAddon = new FitAddon()
 
+    // Smart Clipboard: Ctrl+C = Copy if text selected, SIGINT if not
+    terminal.attachCustomKeyEventHandler((arg) => {
+      // Only handle keydown events
+      if (arg.type !== "keydown") return true
+
+      // Handle Ctrl+C (Copy vs SIGINT)
+      if (arg.ctrlKey && arg.code === "KeyC") {
+        const selection = terminal.getSelection()
+        if (selection) {
+          // Text is highlighted: Copy to clipboard and prevent SIGINT
+          navigator.clipboard.writeText(selection)
+          return false
+        }
+        // No text highlighted: Let it pass through to send SIGINT to the backend
+        return true
+      }
+
+      // Handle Ctrl+V (Paste)
+      if (arg.ctrlKey && arg.code === "KeyV") {
+        navigator.clipboard.readText().then((text) => {
+          sendInput(pane.id, text)
+        }).catch((err) => {
+          console.error("Clipboard read permission denied:", err)
+        })
+        return false // Prevent default xterm behavior
+      }
+
+      return true
+    })
+
+    // Also natively listen for right-click context menu pastes
+    terminal.onPaste((data) => {
+      sendInput(pane.id, data)
+    })
+
     terminal.loadAddon(fitAddon)
     terminal.open(terminalRef.current)
     fitAddon.fit()
