@@ -149,7 +149,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
                       }
                     }}
                     placeholder="Group name"
-                    className="w-full bg-[#0C0C0C] px-2 py-1 text-xs text-[#CCCCCC] outline-none border border-[#3B78FF] rounded"
+                    className="w-full bg-[#0C0C0C] px-2 py-1 text-xs text-[#CCCCCC] outline-none border border-white rounded"
                   />
                   <div className="flex gap-1">
                     <button
@@ -162,7 +162,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
                           setShowGroupMenu(false)
                         }
                       }}
-                      className="flex-1 bg-[#3B78FF] hover:bg-[#2B68FF] text-white text-xs py-1 rounded"
+                      className="flex-1 bg-white hover:bg-gray-200 text-black text-xs py-1 rounded"
                     >
                       Create
                     </button>
