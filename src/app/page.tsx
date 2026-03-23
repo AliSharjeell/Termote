@@ -326,7 +326,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <InstallButton />
               <a href="https://github.com/AliSharjeell/Termote" target="_blank" rel="noopener noreferrer"
-                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-zinc-100 text-zinc-900 font-semibold text-sm hover:bg-zinc-200 transition-colors">
+                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-zinc-100 text-zinc-900 text-sm hover:bg-zinc-200 transition-colors">
                 <Star className="h-4 w-4" />
                 Star on GitHub
               </a>
@@ -339,12 +339,7 @@ export default function Home() {
       <footer className="border-t border-zinc-900 py-12 px-4">
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 border border-zinc-800">
-                <span className="font-mono text-xs text-zinc-400">&gt;_</span>
-              </div>
-              <span className="text-sm font-medium text-zinc-400">Termote</span>
-            </div>
+            <span className="text-sm font-medium text-zinc-400">Termote</span>
 
             <div className="flex items-center gap-6 text-sm text-zinc-500">
               <a href="https://github.com/AliSharjeell/Termote/issues" target="_blank" rel="noopener noreferrer"
