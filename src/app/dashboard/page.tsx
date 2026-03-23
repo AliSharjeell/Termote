@@ -52,8 +52,10 @@ function DashboardContent() {
     }
 
     // If we have URL params, save to sessionStorage for future reloads
+    // Decode the tunnel URL since it's sent URL-encoded from the landing page
     if (urlParam && tokenParam) {
-      sessionStorage.setItem("tunnelUrl", urlParam)
+      const decodedUrl = decodeURIComponent(urlParam)
+      sessionStorage.setItem("tunnelUrl", decodedUrl)
       sessionStorage.setItem("authToken", tokenParam)
     }
 
