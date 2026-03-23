@@ -4,6 +4,7 @@ import type { Pane, PaneGroup, Shell } from "@/lib/types"
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
 const GROUPS_KEY = "termote-pane-groups"
+const PANE_GROUPS_KEY = "termote-pane-groups-map"
 
 const GROUP_COLORS = [
   "#E44", // red
@@ -54,7 +55,7 @@ interface PaneState {
   setPaneGroup: (paneId: string, groupId: string | null) => void
   selectGroup: (groupId: string | null) => void
   // Persistence helpers
-  loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes" }
+  loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes"; groups: PaneGroup[]; paneGroupMap: Record<string, string> }
 }
 
 // Load persisted state from localStorage
@@ -63,13 +64,15 @@ function loadPersistedState() {
     const pinnedJson = localStorage.getItem(STORAGE_KEY)
     const viewModeJson = localStorage.getItem(VIEW_MODE_KEY)
     const groupsJson = localStorage.getItem(GROUPS_KEY)
+    const paneGroupsJson = localStorage.getItem(PANE_GROUPS_KEY)
     return {
       pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
       viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
       groups: groupsJson ? JSON.parse(groupsJson) : [],
+      paneGroupMap: paneGroupsJson ? JSON.parse(paneGroupsJson) : {},
     }
   } catch {
-    return { pinnedPaneIds: [], viewMode: "panes" as const, groups: [] }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, groups: [], paneGroupMap: {} }
   }
 }
 
@@ -100,6 +103,15 @@ function saveGroups(groups: PaneGroup[]) {
   }
 }
 
+// Save pane group map to localStorage
+function savePaneGroupMap(paneGroupMap: Record<string, string>) {
+  try {
+    localStorage.setItem(PANE_GROUPS_KEY, JSON.stringify(paneGroupMap))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 export const usePaneStore = create<PaneState>((set, get) => ({
   panes: [],
   activePanes: [],
@@ -123,16 +135,14 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setLayout: (panes, activePanes, floatingPanes) => {
     const state = get()
     let selectedTab = state.selectedTab
-    // Load persisted pinned pane IDs
+    // Load persisted pinned pane IDs and pane group map
     const persisted = loadPersistedState()
     const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
-    // Build map of existing groupIds
-    const paneGroupMap = new Map(state.panes.map(p => [p.id, p.groupId]))
-    // Apply pinned state from localStorage and preserve groupId
+    // Apply pinned state from localStorage and preserve groupId from localStorage
     const updatedPanes = panes.map(p => ({
       ...p,
       pinned: pinnedPaneIdSet.has(p.id),
-      groupId: paneGroupMap.get(p.id) ?? p.groupId ?? null,
+      groupId: persisted.paneGroupMap[p.id] ?? p.groupId ?? null,
     }))
     // Auto-select first pane if none selected or current selection is gone
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
@@ -243,7 +253,16 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const updatedPanes = panes.map(p =>
       p.groupId === groupId ? { ...p, groupId: null } : p
     )
+    // Clean up pane group map
+    const persisted = loadPersistedState()
+    const paneGroupMap = { ...persisted.paneGroupMap }
+    updatedPanes.forEach(p => {
+      if (p.groupId === null) {
+        delete paneGroupMap[p.id]
+      }
+    })
     saveGroups(updatedGroups)
+    savePaneGroupMap(paneGroupMap)
     set({
       groups: updatedGroups,
       panes: updatedPanes,
@@ -265,6 +284,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const updatedPanes = panes.map(p =>
       p.id === paneId ? { ...p, groupId } : p
     )
+    // Save pane group to localStorage
+    const persisted = loadPersistedState()
+    const paneGroupMap = { ...persisted.paneGroupMap }
+    if (groupId) {
+      paneGroupMap[paneId] = groupId
+    } else {
+      delete paneGroupMap[paneId]
+    }
+    savePaneGroupMap(paneGroupMap)
     set({ panes: updatedPanes })
   },
 

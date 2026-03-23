@@ -24,7 +24,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
 
   // Filter by selected group
   const groupFilteredPanes = selectedGroupId
-    ? filteredPanes.filter((p) => p.groupId === selectedGroupId)
+    ? filteredPanes.filter((p) => p.groupId != null && p.groupId === selectedGroupId)
     : filteredPanes
 
   // Sort: pinned panes first, then by original order
