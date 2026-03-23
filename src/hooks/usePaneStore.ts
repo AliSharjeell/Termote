@@ -157,22 +157,26 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Load persisted pinned pane IDs
     const persisted = loadPersistedState()
     const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
-    // Apply pinned state from localStorage, use groupId from backend
+    // Apply pinned state from localStorage, use groupId from backend or localStorage
     const updatedPanes = panes.map(p => ({
       ...p,
       pinned: pinnedPaneIdSet.has(p.id),
+      // Restore groupId from localStorage if backend doesn't provide it
+      groupId: p.groupId ?? persisted.paneGroupMap[p.id] ?? null,
     }))
     // Auto-select first pane if none selected or current selection is gone
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
       selectedTab = updatedPanes.length > 0 ? updatedPanes[0].id : ""
     }
     // Use groups from backend if provided, otherwise keep existing
+    // Also preserve existing groups if backend sends empty array (backend might not persist groups)
+    const hasGroups = groups && groups.length > 0
     set({
       panes: updatedPanes,
       activePanes,
       floatingPanes,
       selectedTab,
-      groups: groups ?? state.groups
+      groups: hasGroups ? groups : state.groups
     })
   },
 
@@ -319,6 +323,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       p.id === paneId ? { ...p, groupId } : p
     )
     set({ panes: updatedPanes })
+    // Persist pane-group association to localStorage
+    const persisted = loadPersistedState()
+    const paneGroupMap = { ...persisted.paneGroupMap }
+    if (groupId) {
+      paneGroupMap[paneId] = groupId
+    } else {
+      delete paneGroupMap[paneId]
+    }
+    savePaneGroupMap(paneGroupMap)
   },
 
   selectGroup: (groupId) => {
@@ -345,6 +358,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       panes: updatedPanes,
       selectedGroupId: selectedGroupId === groupId ? null : selectedGroupId,
     })
+    // Update localStorage - remove all panes in this group from the map
+    const persisted = loadPersistedState()
+    const paneGroupMap = { ...persisted.paneGroupMap }
+    for (const paneId of Object.keys(paneGroupMap)) {
+      if (paneGroupMap[paneId] === groupId) {
+        delete paneGroupMap[paneId]
+      }
+    }
+    savePaneGroupMap(paneGroupMap)
   },
 
   handleGroupRenamed: (groupId, name) => {
@@ -361,6 +383,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       p.id === paneId ? { ...p, groupId } : p
     )
     set({ panes: updatedPanes })
+    // Sync to localStorage
+    const persisted = loadPersistedState()
+    const paneGroupMap = { ...persisted.paneGroupMap }
+    if (groupId) {
+      paneGroupMap[paneId] = groupId
+    } else {
+      delete paneGroupMap[paneId]
+    }
+    savePaneGroupMap(paneGroupMap)
   },
 
   loadPersistedState: () => loadPersistedState(),
