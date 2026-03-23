@@ -62,10 +62,11 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       ws.onmessage = (event) => {
         try {
           const message: ServerMessage = JSON.parse(event.data)
+          console.log("[Termote WS] Received:", message.event, message)
           handleMessage(message)
         } catch (e) {
           // If not JSON, it might be terminal output directly
-          console.error("Failed to parse message:", e)
+          console.error("[Termote WS] Failed to parse message:", e)
         }
       }
 
@@ -92,9 +93,14 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
 
   const handleMessage = useCallback(
     (message: ServerMessage) => {
-      console.log("handleMessage called with:", message)
       switch (message.event) {
         case "state_update":
+          console.log("[Termote] state_update:", {
+            panesCount: message.panes.length,
+            groupsCount: message.groups.length,
+            groups: message.groups,
+            panesWithGroup: message.panes.filter(p => p.groupId).map(p => ({ id: p.id, groupId: p.groupId }))
+          })
           setLayout(message.panes, message.active_panes, message.floating_panes, message.groups)
           break
         case "output":
@@ -110,20 +116,25 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "auth_result":
           if (message.success) {
             setAuthenticated(true)
+            console.log("[Termote] Authenticated!")
           } else {
-            console.error("Authentication failed:", message.message)
+            console.error("[Termote] Authentication failed:", message.message)
           }
           break
         case "group_created":
+          console.log("[Termote] group_created:", message.group)
           handleGroupCreated(message.group)
           break
         case "group_deleted":
+          console.log("[Termote] group_deleted:", message.group_id)
           handleGroupDeleted(message.group_id)
           break
         case "group_renamed":
+          console.log("[Termote] group_renamed:", message.group_id, message.name)
           handleGroupRenamed(message.group_id, message.name)
           break
         case "pane_group_set":
+          console.log("[Termote] pane_group_set:", message.pane_id, message.group_id)
           handlePaneGroupSet(message.pane_id, message.group_id)
           break
       }
