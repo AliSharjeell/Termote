@@ -37,6 +37,22 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
       return 0
     })
 
+  // Keep all active panes mounted for preserving terminal state
+  const allActivePanes = [...panes]
+    .filter((p) => activePanes.includes(p.id))
+    .sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1
+      if (!a.pinned && b.pinned) return 1
+      return 0
+    })
+
+  // Helper to check if a pane is in the current group
+  const isPaneInGroup = (paneId: string) => {
+    if (!selectedGroupId) return true
+    const paneGroupId = getPaneGroupIdFromStorage(paneId)
+    return paneGroupId === selectedGroupId
+  }
+
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -171,10 +187,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             </div>
           </div>
         ) : (
-          sortedActivePanes.map((pane) => (
+          allActivePanes.map((pane) => (
             <div
               key={pane.id}
               className="relative overflow-hidden bg-[#0C0C0C]"
+              style={{ visibility: isPaneInGroup(pane.id) ? "visible" : "hidden" }}
             >
               <div className="h-full w-full">
                 <XtermPane pane={pane} />

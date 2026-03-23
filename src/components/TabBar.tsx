@@ -185,14 +185,22 @@ export function TabBar({ searchQuery }: TabBarProps) {
         })}
       </div>
 
-      {/* Active pane content */}
-      <div className="flex-1 overflow-hidden">
-        {selectedPane ? (
-          <XtermPane pane={selectedPane} />
-        ) : (
+      {/* Active pane content - render all panes but show only selected one */}
+      <div className="flex-1 overflow-hidden relative">
+        {panes.length === 0 ? (
           <div className="flex h-full w-full items-center justify-center text-[#808080]">
             <p className="text-sm">Select a tab to view</p>
           </div>
+        ) : (
+          panes.map((pane) => (
+            <div
+              key={pane.id}
+              className="absolute inset-0"
+              style={{ visibility: pane.id === selectedTab ? "visible" : "hidden" }}
+            >
+              <XtermPane pane={pane} />
+            </div>
+          ))
         )}
       </div>
     </div>
