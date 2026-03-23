@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react"
 import { XtermPane } from "./XtermPane"
-import { usePaneStore, getPaneGroupIdFromStorage } from "@/hooks/usePaneStore"
+import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface SplitPaneProps {
   searchQuery?: string
@@ -23,8 +23,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   // Filter by selected group
   const groupFilteredPanes = selectedGroupId
     ? filteredPanes.filter((p) => {
-        const paneGroupId = getPaneGroupIdFromStorage(p.id)
-        return paneGroupId != null && paneGroupId === selectedGroupId
+        return p.groupId != null && p.groupId === selectedGroupId
       })
     : filteredPanes
 
@@ -49,8 +48,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   // Helper to check if a pane is in the current group
   const isPaneInGroup = (paneId: string) => {
     if (!selectedGroupId) return true
-    const paneGroupId = getPaneGroupIdFromStorage(paneId)
-    return paneGroupId === selectedGroupId
+    const pane = panes.find(p => p.id === paneId)
+    return pane?.groupId === selectedGroupId
   }
 
   useEffect(() => {
