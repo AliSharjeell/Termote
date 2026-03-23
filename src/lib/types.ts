@@ -7,6 +7,7 @@ export interface Pane {
   name: string
   cols: number
   rows: number
+  pinned?: boolean
 }
 
 // Client -> Server messages

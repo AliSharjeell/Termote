@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Pencil } from "lucide-react"
+import { Pencil, Pin, PinOff } from "lucide-react"
 
 interface PaneTitleBarProps {
   title: string
+  pinned?: boolean
   onRename: (newTitle: string) => void
   onClose: () => void
+  onPin?: () => void
 }
 
-export function PaneTitleBar({ title, onRename, onClose }: PaneTitleBarProps) {
+export function PaneTitleBar({ title, pinned, onRename, onClose, onPin }: PaneTitleBarProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -68,6 +70,23 @@ export function PaneTitleBar({ title, onRename, onClose }: PaneTitleBarProps) {
         >
           <Pencil className="h-4 w-4 text-white" />
         </button>
+
+        {/* Pin button */}
+        {onPin && (
+          <button
+            onClick={onPin}
+            className={`flex h-6 w-6 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0 ${
+              pinned ? "text-[#DCDCAA]" : "text-[#808080]"
+            }`}
+            title={pinned ? "Unpin" : "Pin"}
+          >
+            {pinned ? (
+              <Pin className="h-4 w-4 fill-current" />
+            ) : (
+              <PinOff className="h-4 w-4" />
+            )}
+          </button>
+        )}
 
         {/* Title */}
         {isEditing ? (

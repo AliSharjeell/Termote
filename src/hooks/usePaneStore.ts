@@ -51,11 +51,14 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setLayout: (panes, activePanes, floatingPanes) => {
     const state = get()
     let selectedTab = state.selectedTab
+    // Preserve pinned state from existing panes
+    const pinnedMap = new Map(state.panes.filter(p => p.pinned).map(p => [p.id, true]))
+    const updatedPanes = panes.map(p => ({ ...p, pinned: pinnedMap.get(p.id) || false }))
     // Auto-select first pane if none selected or current selection is gone
-    if (!selectedTab || !panes.find(p => p.id === selectedTab)) {
-      selectedTab = panes.length > 0 ? panes[0].id : ""
+    if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
+      selectedTab = updatedPanes.length > 0 ? updatedPanes[0].id : ""
     }
-    set({ panes, activePanes, floatingPanes, selectedTab })
+    set({ panes: updatedPanes, activePanes, floatingPanes, selectedTab })
   },
 
   spawnPane: (shell) => {
@@ -127,5 +130,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "rename", pane_id: paneId, name }))
     }
+  },
+
+  togglePin: (paneId) => {
+    const { panes } = get()
+    const updatedPanes = panes.map(p =>
+      p.id === paneId ? { ...p, pinned: !p.pinned } : p
+    )
+    set({ panes: updatedPanes })
   },
 }))

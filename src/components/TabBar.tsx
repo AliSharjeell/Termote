@@ -3,12 +3,25 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { XtermPane } from "./XtermPane"
 
-export function TabBar() {
+interface TabBarProps {
+  searchQuery?: string
+}
+
+export function TabBar({ searchQuery }: TabBarProps) {
   const { panes, activePanes, floatingPanes, selectedTab, selectTab, moveToActive } =
     usePaneStore()
 
-  // Show ALL panes (both active and floating) as tabs
-  const allPanesData = panes
+  // Show ALL panes (both active and floating) as tabs, sorted with pinned first
+  const allPanesData = searchQuery
+    ? panes.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : panes
+
+  // Sort: pinned panes first, then by original order
+  const sortedPanes = [...allPanesData].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
+    return 0
+  })
   const selectedPane = panes.find((p) => p.id === selectedTab)
 
   const handleTabClick = (paneId: string) => {
@@ -50,10 +63,10 @@ export function TabBar() {
           +
         </button>
 
-        {allPanesData.map((pane) => (
+        {sortedPanes.map((pane) => (
           <div
             key={pane.id}
-            className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
+            className={`group flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
               selectedTab === pane.id
                 ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
                 : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"

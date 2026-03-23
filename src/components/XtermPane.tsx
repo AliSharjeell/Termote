@@ -49,7 +49,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const lastSentDimsRef = useRef<{ cols: number; rows: number } | null>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { sendInput, sendResize, killPane, renamePane } = usePaneStore()
+  const { sendInput, sendResize, killPane, renamePane, togglePin } = usePaneStore()
 
   const handleData = useCallback(
     (data: string) => {
@@ -170,12 +170,18 @@ export function XtermPane({ pane }: XtermPaneProps) {
     renamePane(pane.id, newName)
   }, [pane.id, renamePane])
 
+  const handlePin = useCallback(() => {
+    togglePin(pane.id)
+  }, [pane.id, togglePin])
+
   return (
     <div className="relative flex h-full w-full flex-col bg-[#0C0C0C]">
       <PaneTitleBar
         title={pane.name}
+        pinned={pane.pinned}
         onRename={handleRename}
         onClose={handleClose}
+        onPin={handlePin}
       />
       <div
         ref={terminalRef}

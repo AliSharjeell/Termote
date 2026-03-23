@@ -4,13 +4,28 @@ import { useRef, useEffect, useState } from "react"
 import { XtermPane } from "./XtermPane"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
-export function SplitPane() {
+interface SplitPaneProps {
+  searchQuery?: string
+}
+
+export function SplitPane({ searchQuery }: SplitPaneProps) {
   // ALL hooks must be at the top - never inside conditionals!
   const { panes, activePanes, isAuthenticated } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
-  const activePanesData = panes.filter((p) => activePanes.includes(p.id))
+  const filteredPanes = searchQuery
+    ? panes.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : panes
+
+  // Sort: pinned panes first, then by original order
+  const sortedActivePanes = [...filteredPanes]
+    .filter((p) => activePanes.includes(p.id))
+    .sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1
+      if (!a.pinned && b.pinned) return 1
+      return 0
+    })
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -29,7 +44,7 @@ export function SplitPane() {
     return () => observer.disconnect()
   }, [])
 
-  if (activePanesData.length === 0) {
+  if (sortedActivePanes.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
         <div className="text-center text-[#CCCCCC]">
@@ -53,7 +68,7 @@ export function SplitPane() {
   }
 
   // Auto-balancing 2D grid: optimal square-ish layout
-  const count = activePanesData.length
+  const count = sortedActivePanes.length
   const cols = Math.ceil(Math.sqrt(count))
   const rows = Math.ceil(count / cols)
 
@@ -69,7 +84,7 @@ export function SplitPane() {
           <span>New Terminal</span>
         </button>
         <span className="text-xs text-[#808080]">
-          {activePanesData.length} pane{activePanesData.length !== 1 ? "s" : ""} ({cols}x{rows})
+          {sortedActivePanes.length} pane{sortedActivePanes.length !== 1 ? "s" : ""} ({cols}x{rows})
         </span>
       </div>
 
@@ -84,12 +99,14 @@ export function SplitPane() {
           background: "#181818",
         }}
       >
-        {activePanesData.map((pane) => (
+        {sortedActivePanes.map((pane) => (
           <div
             key={pane.id}
-            className="overflow-hidden bg-[#0C0C0C]"
+            className="relative overflow-hidden bg-[#0C0C0C]"
           >
-            <XtermPane pane={pane} />
+            <div className="h-full w-full">
+              <XtermPane pane={pane} />
+            </div>
           </div>
         ))}
       </div>
