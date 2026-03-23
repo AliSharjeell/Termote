@@ -53,7 +53,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     return () => observer.disconnect()
   }, [])
 
-  if (sortedActivePanes.length === 0) {
+  // Show empty state only if there are no panes at all
+  const hasAnyPanes = panes.length > 0
+  const isGroupEmpty = sortedActivePanes.length === 0 && selectedGroupId !== null
+
+  if (sortedActivePanes.length === 0 && !hasAnyPanes) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
         <div className="text-center text-[#CCCCCC]">
@@ -202,22 +206,31 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         className="flex-1 overflow-hidden"
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          gridTemplateColumns: `repeat(${Math.max(cols, 1)}, 1fr)`,
+          gridTemplateRows: `repeat(${Math.max(rows, 1)}, 1fr)`,
           gap: "2px",
           background: "#181818",
         }}
       >
-        {sortedActivePanes.map((pane) => (
-          <div
-            key={pane.id}
-            className="relative overflow-hidden bg-[#0C0C0C]"
-          >
-            <div className="h-full w-full">
-              <XtermPane pane={pane} />
+        {isGroupEmpty ? (
+          <div className="flex items-center justify-center bg-[#0C0C0C]">
+            <div className="text-center text-[#808080]">
+              <p className="text-sm">No panes in this group</p>
+              <p className="text-xs mt-1">Click the folder icon on a pane to add it</p>
             </div>
           </div>
-        ))}
+        ) : (
+          sortedActivePanes.map((pane) => (
+            <div
+              key={pane.id}
+              className="relative overflow-hidden bg-[#0C0C0C]"
+            >
+              <div className="h-full w-full">
+                <XtermPane pane={pane} />
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )
