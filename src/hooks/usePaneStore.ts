@@ -1,6 +1,9 @@
 import { create } from "zustand"
 import type { Pane, Shell } from "@/lib/types"
 
+const STORAGE_KEY = "termote-pinned-panes"
+const VIEW_MODE_KEY = "termote-view-mode"
+
 interface PaneState {
   panes: Pane[]
   activePanes: string[]
@@ -28,6 +31,41 @@ interface PaneState {
   selectTab: (tabId: string) => void
   setViewMode: (mode: "auto" | "tabs" | "panes") => void
   renamePane: (paneId: string, name: string) => void
+  togglePin: (paneId: string) => void
+  // Persistence helpers
+  loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes" }
+}
+
+// Load persisted state from localStorage
+function loadPersistedState() {
+  try {
+    const pinnedJson = localStorage.getItem(STORAGE_KEY)
+    const viewModeJson = localStorage.getItem(VIEW_MODE_KEY)
+    return {
+      pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
+      viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
+    }
+  } catch {
+    return { pinnedPaneIds: [], viewMode: "panes" as const }
+  }
+}
+
+// Save pinned pane IDs to localStorage
+function savePinnedPanes(paneIds: string[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(paneIds))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+// Save view mode to localStorage
+function saveViewMode(mode: "auto" | "tabs" | "panes") {
+  try {
+    localStorage.setItem(VIEW_MODE_KEY, mode)
+  } catch {
+    // Storage full or unavailable
+  }
 }
 
 export const usePaneStore = create<PaneState>((set, get) => ({
@@ -51,9 +89,14 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setLayout: (panes, activePanes, floatingPanes) => {
     const state = get()
     let selectedTab = state.selectedTab
-    // Preserve pinned state from existing panes
-    const pinnedMap = new Map(state.panes.filter(p => p.pinned).map(p => [p.id, true]))
-    const updatedPanes = panes.map(p => ({ ...p, pinned: pinnedMap.get(p.id) || false }))
+    // Load persisted pinned pane IDs
+    const persisted = loadPersistedState()
+    const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
+    // Apply pinned state from localStorage
+    const updatedPanes = panes.map(p => ({
+      ...p,
+      pinned: pinnedPaneIdSet.has(p.id),
+    }))
     // Auto-select first pane if none selected or current selection is gone
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
       selectedTab = updatedPanes.length > 0 ? updatedPanes[0].id : ""
@@ -123,7 +166,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   selectTab: (tabId) => set({ selectedTab: tabId }),
-  setViewMode: (mode) => set({ viewMode: mode }),
+  setViewMode: (mode) => {
+    saveViewMode(mode)
+    set({ viewMode: mode })
+  },
 
   renamePane: (paneId, name) => {
     const { ws, isAuthenticated } = get()
@@ -137,6 +183,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const updatedPanes = panes.map(p =>
       p.id === paneId ? { ...p, pinned: !p.pinned } : p
     )
+    // Save pinned pane IDs to localStorage
+    const pinnedPaneIds = updatedPanes.filter(p => p.pinned).map(p => p.id)
+    savePinnedPanes(pinnedPaneIds)
     set({ panes: updatedPanes })
   },
+
+  loadPersistedState: () => loadPersistedState(),
 }))
+
+// Initialize view mode from localStorage
+const initialPersisted = loadPersistedState()
+usePaneStore.setState({ viewMode: initialPersisted.viewMode })

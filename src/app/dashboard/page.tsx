@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { SplitPane } from "@/components/SplitPane"
 import { TabBar } from "@/components/TabBar"
@@ -22,14 +22,14 @@ function DashboardContent() {
 
   const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
 
-  // Set default view based on orientation on first load
-  const [defaultSet, setDefaultSet] = useState(false)
+  // Set default view based on orientation on first load only
+  const initialLoadRef = useRef(false)
   useEffect(() => {
-    if (!defaultSet && isReady) {
+    if (!initialLoadRef.current && isReady) {
+      initialLoadRef.current = true
       setViewMode(isLandscape ? "panes" : "tabs")
-      setDefaultSet(true)
     }
-  }, [isReady, isLandscape, defaultSet, setViewMode])
+  }, [isReady, isLandscape, setViewMode])
 
   // Determine which view to show based on viewMode
   const showTabs = viewMode === "tabs"
@@ -47,18 +47,18 @@ function DashboardContent() {
     let url = urlParam
     let token = tokenParam
 
-    // Fall back to sessionStorage
+    // Fall back to localStorage for persistence across reloads
     if (!url || !token) {
-      url = sessionStorage.getItem("tunnelUrl")
-      token = sessionStorage.getItem("authToken")
+      url = localStorage.getItem("tunnelUrl")
+      token = localStorage.getItem("authToken")
     }
 
-    // If we have URL params, save to sessionStorage for future reloads
+    // If we have URL params, save to localStorage for future reloads
     // Decode the tunnel URL since it's sent URL-encoded from the landing page
     if (urlParam && tokenParam) {
       const decodedUrl = decodeURIComponent(urlParam)
-      sessionStorage.setItem("tunnelUrl", decodedUrl)
-      sessionStorage.setItem("authToken", tokenParam)
+      localStorage.setItem("tunnelUrl", decodedUrl)
+      localStorage.setItem("authToken", tokenParam)
     }
 
     if (!url || !token) {
@@ -85,8 +85,8 @@ function DashboardContent() {
   }, [disconnect])
 
   const handleSignOut = () => {
-    sessionStorage.removeItem("tunnelUrl")
-    sessionStorage.removeItem("authToken")
+    localStorage.removeItem("tunnelUrl")
+    localStorage.removeItem("authToken")
     disconnect()
     router.push("/")
   }
