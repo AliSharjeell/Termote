@@ -12,6 +12,7 @@ function ConnectForm({ onCancel }: { onCancel: () => void }) {
   const [token, setToken] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showToken, setShowToken] = useState(false)
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,92 +47,84 @@ function ConnectForm({ onCancel }: { onCancel: () => void }) {
   }
 
   return (
-    <div className="mt-6 w-full max-w-md mx-auto animate-in slide-in-from-top-2 duration-300">
-      <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/95 backdrop-blur-sm shadow-2xl shadow-black/50 overflow-hidden">
-        {/* Terminal-style header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/80">
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
-              <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
-              <div className="h-2.5 w-2.5 rounded-full bg-green-500/80" />
-            </div>
-            <span className="text-xs text-zinc-500 ml-2">Connect to Terminal</span>
-          </div>
-          <button
-            onClick={onCancel}
-            className="p-1 rounded text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
+    <div className="mt-4 w-full max-w-md mx-auto transition-all duration-300 ease-out">
+      <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 space-y-4">
+        {/* Tunnel URL Field */}
+        <div className="space-y-2">
+          <label htmlFor="tunnel-url" className="block text-sm font-medium text-zinc-300">
+            Tunnel URL
+          </label>
+          <input
+            id="tunnel-url"
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="wss://xxxxx-xxxx.devtunnels.ms"
+            autoFocus
+            className="w-full px-4 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50 transition-all text-sm font-mono"
+          />
+          <p className="text-xs text-zinc-600">Paste the full tunnel URL from your terminal</p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleConnect} className="p-5 space-y-4">
-          <div className="space-y-1.5">
-            <label htmlFor="tunnel-url" className="flex items-center gap-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
-              <Link2 className="h-3 w-3" />
-              Tunnel URL
-            </label>
-            <input
-              id="tunnel-url"
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="wss://xxxxx-xxxx.devtunnels.ms"
-              autoFocus
-              className="w-full px-4 py-2.5 rounded-lg bg-zinc-800/80 border border-zinc-700/50 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all text-sm font-mono"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="token" className="flex items-center gap-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
-              <Lock className="h-3 w-3" />
-              Access Token
-            </label>
+        {/* Access Token Field */}
+        <div className="space-y-2">
+          <label htmlFor="token" className="block text-sm font-medium text-zinc-300">
+            Access Token
+          </label>
+          <div className="relative">
             <input
               id="token"
-              type="text"
+              type={showToken ? "text" : "password"}
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              placeholder="Enter your access token"
-              className="w-full px-4 py-2.5 rounded-lg bg-zinc-800/80 border border-zinc-700/50 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all text-sm font-mono"
+              placeholder="••••••"
+              className="w-full px-4 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50 transition-all text-sm font-mono pr-10"
             />
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">
-              {error}
-            </p>
-          )}
-
-          <div className="flex gap-3 pt-1">
             <button
               type="button"
-              onClick={onCancel}
-              className="flex-1 py-2.5 px-4 rounded-lg border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+              onClick={() => setShowToken(!showToken)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 py-2.5 px-4 rounded-lg bg-white text-black font-medium text-sm hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <TerminalSquare className="h-4 w-4" />
-                  Connect
-                </>
-              )}
+              {showToken ? <Lock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
             </button>
           </div>
-        </form>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">
+            {error}
+          </p>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2.5 rounded-lg border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            onClick={handleConnect}
+            className="flex-1 py-2.5 px-4 rounded-lg bg-white text-black font-medium text-sm hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <TerminalSquare className="h-4 w-4" />
+                Establish Connection
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -233,9 +226,11 @@ export function LandingPageContent() {
             </div>
 
             {/* Inline Connect Form */}
-            {showConnectForm && (
-              <ConnectForm onCancel={() => setShowConnectForm(false)} />
-            )}
+            <div className={`grid transition-all duration-300 ease-out ${showConnectForm ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <ConnectForm onCancel={() => setShowConnectForm(false)} />
+              </div>
+            </div>
 
             {/* Hero Visual Placeholder */}
             <div className="mt-16 mx-auto max-w-4xl">
