@@ -35,7 +35,7 @@ interface PaneState {
   setWebSocket: (ws: WebSocket | null) => void
   setConnected: (connected: boolean) => void
   setAuthenticated: (authenticated: boolean) => void
-  setLayout: (panes: Pane[], activePanes: string[], floatingPanes: string[]) => void
+  setLayout: (panes: Pane[], activePanes: string[], floatingPanes: string[], groups?: PaneGroup[]) => void
   spawnPane: (shell: Shell) => void
   killPane: (paneId: string) => void
   sendInput: (paneId: string, data: string) => void
@@ -54,6 +54,11 @@ interface PaneState {
   renameGroup: (groupId: string, name: string) => void
   setPaneGroup: (paneId: string, groupId: string | null) => void
   selectGroup: (groupId: string | null) => void
+  // Backend group event handlers
+  handleGroupCreated: (group: PaneGroup) => void
+  handleGroupDeleted: (groupId: string) => void
+  handleGroupRenamed: (groupId: string, name: string) => void
+  handlePaneGroupSet: (paneId: string, groupId: string | null) => void
   // Persistence helpers
   loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes"; groups: PaneGroup[]; paneGroupMap: Record<string, string> }
 }
@@ -146,23 +151,29 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   // Backend is source of truth - just accept what it sends
   // Auto-select first pane when layout is set
-  setLayout: (panes, activePanes, floatingPanes) => {
+  setLayout: (panes, activePanes, floatingPanes, groups) => {
     const state = get()
     let selectedTab = state.selectedTab
-    // Load persisted pinned pane IDs and pane group map
+    // Load persisted pinned pane IDs
     const persisted = loadPersistedState()
     const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
-    // Apply pinned state from localStorage and preserve groupId from localStorage
+    // Apply pinned state from localStorage, use groupId from backend
     const updatedPanes = panes.map(p => ({
       ...p,
       pinned: pinnedPaneIdSet.has(p.id),
-      groupId: persisted.paneGroupMap[p.id] ?? p.groupId ?? null,
     }))
     // Auto-select first pane if none selected or current selection is gone
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
       selectedTab = updatedPanes.length > 0 ? updatedPanes[0].id : ""
     }
-    set({ panes: updatedPanes, activePanes, floatingPanes, selectedTab })
+    // Use groups from backend if provided, otherwise keep existing
+    set({
+      panes: updatedPanes,
+      activePanes,
+      floatingPanes,
+      selectedTab,
+      groups: groups ?? state.groups
+    })
   },
 
   spawnPane: (shell) => {
@@ -251,32 +262,31 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   createGroup: (name) => {
-    const { groups, panes } = get()
+    const { groups, ws, isAuthenticated } = get()
     const id = `group-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     const color = GROUP_COLORS[groups.length % GROUP_COLORS.length]
+    // Send to backend
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "create_group", id, name, color }))
+    }
+    // Optimistically update local state
     const newGroup: PaneGroup = { id, name, color }
     const updatedGroups = [...groups, newGroup]
-    saveGroups(updatedGroups)
     set({ groups: updatedGroups })
     return id
   },
 
   deleteGroup: (groupId) => {
-    const { groups, panes } = get()
+    const { groups, panes, ws, isAuthenticated } = get()
+    // Send to backend
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "delete_group", group_id: groupId }))
+    }
+    // Optimistically update local state
     const updatedGroups = groups.filter(g => g.id !== groupId)
     const updatedPanes = panes.map(p =>
       p.groupId === groupId ? { ...p, groupId: null } : p
     )
-    // Clean up pane group map
-    const persisted = loadPersistedState()
-    const paneGroupMap = { ...persisted.paneGroupMap }
-    updatedPanes.forEach(p => {
-      if (p.groupId === null) {
-        delete paneGroupMap[p.id]
-      }
-    })
-    saveGroups(updatedGroups)
-    savePaneGroupMap(paneGroupMap)
     set({
       groups: updatedGroups,
       panes: updatedPanes,
@@ -285,30 +295,70 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   renameGroup: (groupId, name) => {
-    const { groups } = get()
+    const { groups, ws, isAuthenticated } = get()
+    // Send to backend
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "rename_group", group_id: groupId, name }))
+    }
+    // Optimistically update local state
     const updatedGroups = groups.map(g =>
       g.id === groupId ? { ...g, name } : g
     )
-    saveGroups(updatedGroups)
     set({ groups: updatedGroups })
   },
 
   setPaneGroup: (paneId, groupId) => {
-    // Save pane group to localStorage only - don't update panes array to avoid re-renders
-    const persisted = loadPersistedState()
-    const paneGroupMap = { ...persisted.paneGroupMap }
-    if (groupId) {
-      paneGroupMap[paneId] = groupId
-    } else {
-      delete paneGroupMap[paneId]
+    const { panes, ws, isAuthenticated } = get()
+    // Send to backend
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "set_pane_group", pane_id: paneId, group_id: groupId }))
     }
-    savePaneGroupMap(paneGroupMap)
-    // Trigger a store update for UI refresh without modifying panes array
-    set({ panes: get().panes })
+    // Optimistically update local state
+    const updatedPanes = panes.map(p =>
+      p.id === paneId ? { ...p, groupId } : p
+    )
+    set({ panes: updatedPanes })
   },
 
   selectGroup: (groupId) => {
     set({ selectedGroupId: groupId })
+  },
+
+  handleGroupCreated: (group) => {
+    const { groups } = get()
+    // Avoid duplicates
+    if (!groups.find(g => g.id === group.id)) {
+      set({ groups: [...groups, group] })
+    }
+  },
+
+  handleGroupDeleted: (groupId) => {
+    const { groups, panes, selectedGroupId } = get()
+    const updatedGroups = groups.filter(g => g.id !== groupId)
+    const updatedPanes = panes.map(p =>
+      p.groupId === groupId ? { ...p, groupId: null } : p
+    )
+    set({
+      groups: updatedGroups,
+      panes: updatedPanes,
+      selectedGroupId: selectedGroupId === groupId ? null : selectedGroupId,
+    })
+  },
+
+  handleGroupRenamed: (groupId, name) => {
+    const { groups } = get()
+    const updatedGroups = groups.map(g =>
+      g.id === groupId ? { ...g, name } : g
+    )
+    set({ groups: updatedGroups })
+  },
+
+  handlePaneGroupSet: (paneId, groupId) => {
+    const { panes } = get()
+    const updatedPanes = panes.map(p =>
+      p.id === paneId ? { ...p, groupId } : p
+    )
+    set({ panes: updatedPanes })
   },
 
   loadPersistedState: () => loadPersistedState(),

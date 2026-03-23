@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react"
 import { usePaneStore } from "./usePaneStore"
-import type { ServerMessage, StateUpdate, OutputEvent, AuthResult } from "@/lib/types"
+import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet } from "@/lib/types"
 
 interface UseWebSocketOptions {
   url: string | null
@@ -19,6 +19,10 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     setConnected,
     setAuthenticated,
     setLayout,
+    handleGroupCreated,
+    handleGroupDeleted,
+    handleGroupRenamed,
+    handlePaneGroupSet,
   } = usePaneStore()
 
   const connect = useCallback(() => {
@@ -91,7 +95,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       console.log("handleMessage called with:", message)
       switch (message.event) {
         case "state_update":
-          setLayout(message.panes, message.active_panes, message.floating_panes)
+          setLayout(message.panes, message.active_panes, message.floating_panes, message.groups)
           break
         case "output":
           window.dispatchEvent(
@@ -109,6 +113,18 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           } else {
             console.error("Authentication failed:", message.message)
           }
+          break
+        case "group_created":
+          handleGroupCreated(message.group)
+          break
+        case "group_deleted":
+          handleGroupDeleted(message.group_id)
+          break
+        case "group_renamed":
+          handleGroupRenamed(message.group_id, message.name)
+          break
+        case "pane_group_set":
+          handlePaneGroupSet(message.pane_id, message.group_id)
           break
       }
     },

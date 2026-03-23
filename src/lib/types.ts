@@ -34,8 +34,13 @@ export type StateUpdate = {
   panes: Pane[]
   active_panes: string[]
   floating_panes: string[]
+  groups: PaneGroup[]
 }
 export type OutputEvent = { event: "output"; pane_id: string; data: string }
 export type AuthResult = { event: "auth_result"; success: boolean; message?: string }
+export type GroupCreated = { event: "group_created"; group: PaneGroup }
+export type GroupDeleted = { event: "group_deleted"; group_id: string }
+export type GroupRenamed = { event: "group_renamed"; group_id: string; name: string }
+export type PaneGroupSet = { event: "pane_group_set"; pane_id: string; group_id: string | null }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet
