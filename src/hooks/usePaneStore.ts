@@ -112,6 +112,20 @@ function savePaneGroupMap(paneGroupMap: Record<string, string>) {
   }
 }
 
+// Get pane groupId from localStorage
+export function getPaneGroupIdFromStorage(paneId: string): string | null {
+  try {
+    const paneGroupsJson = localStorage.getItem(PANE_GROUPS_KEY)
+    if (paneGroupsJson) {
+      const paneGroupMap = JSON.parse(paneGroupsJson)
+      return paneGroupMap[paneId] || null
+    }
+  } catch {
+    // Ignore
+  }
+  return null
+}
+
 export const usePaneStore = create<PaneState>((set, get) => ({
   panes: [],
   activePanes: [],
@@ -280,11 +294,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   setPaneGroup: (paneId, groupId) => {
-    const { panes } = get()
-    const updatedPanes = panes.map(p =>
-      p.id === paneId ? { ...p, groupId } : p
-    )
-    // Save pane group to localStorage
+    // Save pane group to localStorage only - don't update panes array to avoid re-renders
     const persisted = loadPersistedState()
     const paneGroupMap = { ...persisted.paneGroupMap }
     if (groupId) {
@@ -293,7 +303,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       delete paneGroupMap[paneId]
     }
     savePaneGroupMap(paneGroupMap)
-    set({ panes: updatedPanes })
+    // Trigger a store update for UI refresh without modifying panes array
+    set({ panes: get().panes })
   },
 
   selectGroup: (groupId) => {

@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from "react"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import { WebLinksAddon } from "@xterm/addon-web-links"
-import { usePaneStore } from "@/hooks/usePaneStore"
+import { usePaneStore, getPaneGroupIdFromStorage } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
 
@@ -180,7 +180,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
         title={pane.name}
         paneId={pane.id}
         pinned={pane.pinned}
-        groupId={pane.groupId}
+        groupId={getPaneGroupIdFromStorage(pane.id)}
         onRename={handleRename}
         onClose={handleClose}
         onPin={handlePin}

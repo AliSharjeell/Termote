@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { usePaneStore } from "@/hooks/usePaneStore"
+import { usePaneStore, getPaneGroupIdFromStorage } from "@/hooks/usePaneStore"
 import { XtermPane } from "./XtermPane"
 
 interface TabBarProps {
@@ -20,9 +20,9 @@ export function TabBar({ searchQuery }: TabBarProps) {
     : panes
 
   // Split panes into ungrouped and grouped
-  const ungroupedPanes = searchFiltered.filter((p) => !p.groupId)
+  const ungroupedPanes = searchFiltered.filter((p) => !getPaneGroupIdFromStorage(p.id))
   const groupedPanesByGroup = groups.reduce((acc, group) => {
-    const groupPanes = searchFiltered.filter((p) => p.groupId === group.id)
+    const groupPanes = searchFiltered.filter((p) => getPaneGroupIdFromStorage(p.id) === group.id)
     if (groupPanes.length > 0) {
       acc.push({ group, panes: groupPanes })
     }

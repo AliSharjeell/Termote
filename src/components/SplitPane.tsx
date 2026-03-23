@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react"
 import { XtermPane } from "./XtermPane"
-import { usePaneStore } from "@/hooks/usePaneStore"
+import { usePaneStore, getPaneGroupIdFromStorage } from "@/hooks/usePaneStore"
 
 interface SplitPaneProps {
   searchQuery?: string
@@ -22,7 +22,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
 
   // Filter by selected group
   const groupFilteredPanes = selectedGroupId
-    ? filteredPanes.filter((p) => p.groupId != null && p.groupId === selectedGroupId)
+    ? filteredPanes.filter((p) => {
+        const paneGroupId = getPaneGroupIdFromStorage(p.id)
+        return paneGroupId != null && paneGroupId === selectedGroupId
+      })
     : filteredPanes
 
   // Sort: pinned panes first, then by original order
