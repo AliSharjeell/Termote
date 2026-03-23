@@ -1,20 +1,26 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Pencil, Pin, PinOff } from "lucide-react"
+import { Pencil, Pin, PinOff, FolderInput, X } from "lucide-react"
+import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface PaneTitleBarProps {
   title: string
+  paneId: string
   pinned?: boolean
+  groupId?: string | null
   onRename: (newTitle: string) => void
   onClose: () => void
   onPin?: () => void
 }
 
-export function PaneTitleBar({ title, pinned, onRename, onClose, onPin }: PaneTitleBarProps) {
+export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose, onPin }: PaneTitleBarProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
+  const [showGroupMenu, setShowGroupMenu] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const groupMenuRef = useRef<HTMLDivElement>(null)
+  const { groups, setPaneGroup, createGroup } = usePaneStore()
 
   useEffect(() => {
     setEditValue(title)
@@ -26,6 +32,18 @@ export function PaneTitleBar({ title, pinned, onRename, onClose, onPin }: PaneTi
       inputRef.current.select()
     }
   }, [isEditing])
+
+  // Close group menu on outside click
+  useEffect(() => {
+    if (!showGroupMenu) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (groupMenuRef.current && !groupMenuRef.current.contains(e.target as Node)) {
+        setShowGroupMenu(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showGroupMenu])
 
   const handleDoubleClick = () => {
     setIsEditing(true)
@@ -87,6 +105,69 @@ export function PaneTitleBar({ title, pinned, onRename, onClose, onPin }: PaneTi
             )}
           </button>
         )}
+
+        {/* Group button */}
+        <div className="relative" ref={groupMenuRef}>
+          <button
+            onClick={() => setShowGroupMenu(!showGroupMenu)}
+            className={`flex h-6 w-6 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0 ${
+              groupId ? "text-[#4A4]" : "text-[#808080]"
+            }`}
+            title="Add to group"
+          >
+            <FolderInput className="h-4 w-4" />
+          </button>
+          {showGroupMenu && (
+            <div className="absolute top-full left-0 mt-1 w-48 rounded-lg bg-[#27272A] border border-[#3B3B3B] py-1 shadow-lg z-50">
+              {groups.length > 0 && (
+                <>
+                  <div className="px-2 py-1 text-[10px] text-[#808080] uppercase tracking-wider">
+                    Move to group
+                  </div>
+                  {groups.map((group) => (
+                    <button
+                      key={group.id}
+                      onClick={() => {
+                        setPaneGroup(paneId, group.id)
+                        setShowGroupMenu(false)
+                      }}
+                      className={`flex w-full items-center gap-2 px-2 py-1.5 text-xs hover:bg-[#333333] ${
+                        groupId === group.id ? "text-white" : "text-[#CCCCCC]"
+                      }`}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: group.color }}
+                      />
+                      <span className="flex-1 text-left">{group.name}</span>
+                      {groupId === group.id && (
+                        <span className="text-[10px] text-[#808080]">current</span>
+                      )}
+                    </button>
+                  ))}
+                  <div className="my-1 border-t border-[#3B3B3B]" />
+                </>
+              )}
+              {groupId && (
+                <button
+                  onClick={() => {
+                    setPaneGroup(paneId, null)
+                    setShowGroupMenu(false)
+                  }}
+                  className="flex w-full items-center gap-2 px-2 py-1.5 text-xs text-[#CCCCCC] hover:bg-[#333333]"
+                >
+                  <X className="h-3 w-3" />
+                  <span>Remove from group</span>
+                </button>
+              )}
+              {groups.length === 0 && (
+                <div className="px-2 py-2 text-xs text-[#808080] text-center">
+                  No groups yet
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Title */}
         {isEditing ? (
