@@ -136,7 +136,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
                       }`}
                     >
                       <span
-                        className="h-2 w-2 rounded-full"
+                        className="h-2 w-2 rounded"
                         style={{ backgroundColor: group.color }}
                       />
                       <span className="flex-1 text-left">{group.name}</span>

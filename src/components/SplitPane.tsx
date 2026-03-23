@@ -171,7 +171,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               }`}
             >
               <span
-                className="h-2 w-2 rounded-full shrink-0"
+                className="h-2 w-2 rounded shrink-0"
                 style={{ backgroundColor: group.color }}
               />
               <span className="truncate max-w-[120px]">{group.name}</span>
