@@ -96,12 +96,12 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       switch (message.event) {
         case "state_update":
           console.log("[Termote] state_update:", {
-            panesCount: message.panes.length,
-            groupsCount: message.groups.length,
+            panesCount: message.panes?.length,
+            groupsCount: message.groups?.length,
             groups: message.groups,
-            panesWithGroup: message.panes.filter(p => p.groupId).map(p => ({ id: p.id, groupId: p.groupId }))
+            panesWithGroup: message.panes?.filter(p => p.groupId).map(p => ({ id: p.id, groupId: p.groupId }))
           })
-          setLayout(message.panes, message.active_panes, message.floating_panes, message.groups)
+          setLayout(message.panes, message.active_panes, message.floating_panes, message.groups ?? [])
           break
         case "output":
           window.dispatchEvent(
