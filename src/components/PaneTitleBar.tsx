@@ -149,7 +149,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
                       }
                     }}
                     placeholder="Group name"
-                    className="w-full bg-[#0C0C0C] px-2 py-1 text-xs text-[#CCCCCC] outline-none border border-white rounded"
+                    className="w-full bg-[#0C0C0C] px-2 py-1 text-xs text-[#CCCCCC] outline-none focus:outline-none border border-white rounded"
                   />
                   <div className="flex gap-1">
                     <button
@@ -247,7 +247,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleSubmit}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-[#0C0C0C] px-1 py-0 text-xs text-[#CCCCCC] outline-none border border-[#3B78FF] rounded"
+            className="flex-1 bg-[#0C0C0C] px-1 py-0 text-xs text-[#CCCCCC] outline-none focus:outline-none border border-white rounded"
           />
         ) : (
           <span
