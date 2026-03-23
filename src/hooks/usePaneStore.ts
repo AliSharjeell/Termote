@@ -277,6 +277,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   deleteGroup: (groupId) => {
+    console.log("[Termote Store] deleteGroup called with:", groupId)
     const { groups, panes, ws, isAuthenticated } = get()
     // Send to backend
     if (ws && isAuthenticated) {
@@ -321,6 +322,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   selectGroup: (groupId) => {
+    console.log("[Termote Store] selectGroup called with:", groupId)
     set({ selectedGroupId: groupId })
   },
 
