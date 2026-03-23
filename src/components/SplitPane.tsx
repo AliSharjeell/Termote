@@ -136,7 +136,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         ) : (
           <button
             onClick={() => setIsCreatingGroup(true)}
-            className="flex h-7 items-center justify-center rounded-lg bg-[#27272A] px-3 text-xs text-[#CCCCCC] hover:bg-[#333333] font-medium gap-1.5 shrink-0"
+            className="flex h-7 items-center justify-center rounded-lg bg-[#27272A] px-3 text-sm text-[#CCCCCC] hover:bg-[#333333] font-medium gap-1.5 shrink-0"
           >
             <span>+</span>
             <span>New Group</span>
