@@ -11,12 +11,7 @@ export function Navbar() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700">
-              <span className="font-mono text-sm text-zinc-300">&gt;_</span>
-            </div>
-            <span className="text-lg font-semibold text-zinc-100">Termote</span>
-          </div>
+          <span className="text-lg font-semibold text-zinc-100">Termote</span>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
