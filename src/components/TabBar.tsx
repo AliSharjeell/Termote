@@ -167,19 +167,19 @@ export function TabBar({ searchQuery }: TabBarProps) {
                 />
                 <span className="truncate max-w-[100px]">{group.name}</span>
                 <span className="text-[10px] text-[#606060]">({groupPanes.length})</span>
+                {hoveredGroupId === group.id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteGroup(group.id)
+                    }}
+                    className="ml-1 h-4 w-4 rounded-full bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[10px] font-bold leading-none"
+                    title="Delete group"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
-              {hoveredGroupId === group.id && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteGroup(group.id)
-                  }}
-                  className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[10px] font-bold leading-none"
-                  title="Delete group"
-                >
-                  ×
-                </button>
-              )}
             </div>
           )
         })}
