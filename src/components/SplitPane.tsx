@@ -147,10 +147,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {/* Group tabs */}
         <button
           onClick={() => selectGroup(null)}
-          className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+          className={`shrink-0 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
             selectedGroupId === null
-              ? "bg-[#333333] text-white"
-              : "text-[#808080] hover:text-white hover:bg-[#27272A]"
+              ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
+              : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
           }`}
         >
           All Panes
@@ -164,17 +164,17 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           >
             <button
               onClick={() => selectGroup(group.id)}
-              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              className={`rounded-lg px-4 py-2 text-sm border border-[#333333] flex items-center gap-2 ${
                 selectedGroupId === group.id
-                  ? "bg-[#333333] text-white"
-                  : "text-[#808080] hover:text-white hover:bg-[#27272A]"
+                  ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
+                  : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
               }`}
             >
               <span
-                className="h-2 w-2 rounded-full"
+                className="h-2 w-2 rounded-full shrink-0"
                 style={{ backgroundColor: group.color }}
               />
-              {group.name}
+              <span className="truncate max-w-[120px]">{group.name}</span>
             </button>
             {hoveredGroupId === group.id && (
               <button
