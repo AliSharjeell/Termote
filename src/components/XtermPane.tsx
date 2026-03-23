@@ -178,7 +178,9 @@ export function XtermPane({ pane }: XtermPaneProps) {
     <div className="relative flex h-full w-full flex-col bg-[#0C0C0C]">
       <PaneTitleBar
         title={pane.name}
+        paneId={pane.id}
         pinned={pane.pinned}
+        groupId={pane.groupId}
         onRename={handleRename}
         onClose={handleClose}
         onPin={handlePin}
