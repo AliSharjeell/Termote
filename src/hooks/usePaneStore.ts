@@ -1,8 +1,20 @@
 import { create } from "zustand"
-import type { Pane, Shell } from "@/lib/types"
+import type { Pane, PaneGroup, Shell } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
+const GROUPS_KEY = "termote-pane-groups"
+
+const GROUP_COLORS = [
+  "#E44", // red
+  "#4A4", // green
+  "#44A", // blue
+  "#AA4", // yellow
+  "#A4A", // purple
+  "#4AA", // cyan
+  "#FA0", // orange
+  "#0AF", // light blue
+]
 
 interface PaneState {
   panes: Pane[]
@@ -14,6 +26,9 @@ interface PaneState {
   isAuthenticated: boolean
   // View mode: "auto", "tabs", or "panes"
   viewMode: "auto" | "tabs" | "panes"
+  // Pane groups
+  groups: PaneGroup[]
+  selectedGroupId: string | null
 
   // Actions
   setWebSocket: (ws: WebSocket | null) => void
@@ -32,6 +47,12 @@ interface PaneState {
   setViewMode: (mode: "auto" | "tabs" | "panes") => void
   renamePane: (paneId: string, name: string) => void
   togglePin: (paneId: string) => void
+  // Group actions
+  createGroup: (name: string) => string
+  deleteGroup: (groupId: string) => void
+  renameGroup: (groupId: string, name: string) => void
+  setPaneGroup: (paneId: string, groupId: string | null) => void
+  selectGroup: (groupId: string | null) => void
   // Persistence helpers
   loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes" }
 }
@@ -41,12 +62,14 @@ function loadPersistedState() {
   try {
     const pinnedJson = localStorage.getItem(STORAGE_KEY)
     const viewModeJson = localStorage.getItem(VIEW_MODE_KEY)
+    const groupsJson = localStorage.getItem(GROUPS_KEY)
     return {
       pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
       viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
+      groups: groupsJson ? JSON.parse(groupsJson) : [],
     }
   } catch {
-    return { pinnedPaneIds: [], viewMode: "panes" as const }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, groups: [] }
   }
 }
 
@@ -68,6 +91,15 @@ function saveViewMode(mode: "auto" | "tabs" | "panes") {
   }
 }
 
+// Save groups to localStorage
+function saveGroups(groups: PaneGroup[]) {
+  try {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(groups))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 export const usePaneStore = create<PaneState>((set, get) => ({
   panes: [],
   activePanes: [],
@@ -77,6 +109,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   isConnected: false,
   isAuthenticated: false,
   viewMode: "panes",
+  groups: [],
+  selectedGroupId: null,
 
   setWebSocket: (ws) => set({ ws }),
 
@@ -92,10 +126,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Load persisted pinned pane IDs
     const persisted = loadPersistedState()
     const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
-    // Apply pinned state from localStorage
+    // Build map of existing groupIds
+    const paneGroupMap = new Map(state.panes.map(p => [p.id, p.groupId]))
+    // Apply pinned state from localStorage and preserve groupId
     const updatedPanes = panes.map(p => ({
       ...p,
       pinned: pinnedPaneIdSet.has(p.id),
+      groupId: paneGroupMap.get(p.id) ?? p.groupId ?? null,
     }))
     // Auto-select first pane if none selected or current selection is gone
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
@@ -189,9 +226,55 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     set({ panes: updatedPanes })
   },
 
+  createGroup: (name) => {
+    const { groups, panes } = get()
+    const id = `group-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const color = GROUP_COLORS[groups.length % GROUP_COLORS.length]
+    const newGroup: PaneGroup = { id, name, color }
+    const updatedGroups = [...groups, newGroup]
+    saveGroups(updatedGroups)
+    set({ groups: updatedGroups })
+    return id
+  },
+
+  deleteGroup: (groupId) => {
+    const { groups, panes } = get()
+    const updatedGroups = groups.filter(g => g.id !== groupId)
+    const updatedPanes = panes.map(p =>
+      p.groupId === groupId ? { ...p, groupId: null } : p
+    )
+    saveGroups(updatedGroups)
+    set({
+      groups: updatedGroups,
+      panes: updatedPanes,
+      selectedGroupId: get().selectedGroupId === groupId ? null : get().selectedGroupId,
+    })
+  },
+
+  renameGroup: (groupId, name) => {
+    const { groups } = get()
+    const updatedGroups = groups.map(g =>
+      g.id === groupId ? { ...g, name } : g
+    )
+    saveGroups(updatedGroups)
+    set({ groups: updatedGroups })
+  },
+
+  setPaneGroup: (paneId, groupId) => {
+    const { panes } = get()
+    const updatedPanes = panes.map(p =>
+      p.id === paneId ? { ...p, groupId } : p
+    )
+    set({ panes: updatedPanes })
+  },
+
+  selectGroup: (groupId) => {
+    set({ selectedGroupId: groupId })
+  },
+
   loadPersistedState: () => loadPersistedState(),
 }))
 
-// Initialize view mode from localStorage
+// Initialize view mode and groups from localStorage
 const initialPersisted = loadPersistedState()
-usePaneStore.setState({ viewMode: initialPersisted.viewMode })
+usePaneStore.setState({ viewMode: initialPersisted.viewMode, groups: initialPersisted.groups })
