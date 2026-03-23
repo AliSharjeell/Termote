@@ -10,11 +10,9 @@ interface SplitPaneProps {
 
 export function SplitPane({ searchQuery }: SplitPaneProps) {
   // ALL hooks must be at the top - never inside conditionals!
-  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectGroup, createGroup, deleteGroup } = usePaneStore()
+  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectGroup, deleteGroup } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
-  const [isCreatingGroup, setIsCreatingGroup] = useState(false)
-  const [newGroupName, setNewGroupName] = useState("")
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
 
   // Filter by group if a group is selected
@@ -80,14 +78,6 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     usePaneStore.getState().spawnPane("powershell")
   }
 
-  const handleCreateGroup = () => {
-    if (newGroupName.trim()) {
-      createGroup(newGroupName.trim())
-      setNewGroupName("")
-      setIsCreatingGroup(false)
-    }
-  }
-
   // Auto-balancing 2D grid: optimal square-ish layout
   const count = sortedActivePanes.length
   const cols = Math.ceil(Math.sqrt(count))
@@ -104,48 +94,6 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <span>+</span>
           <span>New Terminal</span>
         </button>
-        {isCreatingGroup ? (
-          <div className="flex items-center gap-2 shrink-0">
-            <input
-              type="text"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreateGroup()
-                if (e.key === "Escape") {
-                  setIsCreatingGroup(false)
-                  setNewGroupName("")
-                }
-              }}
-              placeholder="Group name"
-              className="h-7 rounded bg-[#0C0C0C] px-2 text-xs text-[#CCCCCC] outline-none border border-[#3B78FF]"
-              autoFocus
-            />
-            <button
-              onClick={handleCreateGroup}
-              className="h-7 rounded bg-[#3B78FF] px-2 text-xs text-white hover:bg-[#2B68FF]"
-            >
-              Create
-            </button>
-            <button
-              onClick={() => {
-                setIsCreatingGroup(false)
-                setNewGroupName("")
-              }}
-              className="h-7 rounded bg-[#27272A] px-2 text-xs text-[#CCCCCC] hover:bg-[#333333]"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setIsCreatingGroup(true)}
-            className="flex h-7 items-center justify-center rounded-lg bg-[#27272A] px-3 text-sm text-[#CCCCCC] hover:bg-[#333333] font-medium gap-1.5 shrink-0"
-          >
-            <span>+</span>
-            <span>New Group</span>
-          </button>
-        )}
         {/* Separator */}
         <div className="h-4 w-px bg-[#353535] shrink-0" />
         {/* Group tabs */}

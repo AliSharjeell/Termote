@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Pencil, Pin, PinOff, FolderInput, X } from "lucide-react"
+import { Pencil, Pin, PinOff, FolderInput, X, Plus } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface PaneTitleBarProps {
@@ -18,9 +18,18 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
   const [showGroupMenu, setShowGroupMenu] = useState(false)
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false)
+  const [newGroupName, setNewGroupName] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
   const groupMenuRef = useRef<HTMLDivElement>(null)
+  const newGroupInputRef = useRef<HTMLInputElement>(null)
   const { groups, setPaneGroup, createGroup } = usePaneStore()
+
+  useEffect(() => {
+    if (isCreatingGroup && newGroupInputRef.current) {
+      newGroupInputRef.current.focus()
+    }
+  }, [isCreatingGroup])
 
   useEffect(() => {
     setEditValue(title)
@@ -119,51 +128,111 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
           </button>
           {showGroupMenu && (
             <div className="absolute top-full left-0 mt-1 w-48 rounded-lg bg-[#27272A] border border-[#3B3B3B] py-1 shadow-lg z-50">
-              {groups.length > 0 && (
-                <>
-                  <div className="px-2 py-1 text-[10px] text-[#808080] uppercase tracking-wider">
-                    Move to group
-                  </div>
-                  {groups.map((group) => (
+              {isCreatingGroup ? (
+                <div className="flex flex-col gap-1 px-2 py-1.5">
+                  <input
+                    ref={newGroupInputRef}
+                    type="text"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newGroupName.trim()) {
+                        const newGroupId = createGroup(newGroupName.trim())
+                        setPaneGroup(paneId, newGroupId)
+                        setNewGroupName("")
+                        setIsCreatingGroup(false)
+                        setShowGroupMenu(false)
+                      }
+                      if (e.key === "Escape") {
+                        setIsCreatingGroup(false)
+                        setNewGroupName("")
+                      }
+                    }}
+                    placeholder="Group name"
+                    className="w-full bg-[#0C0C0C] px-2 py-1 text-xs text-[#CCCCCC] outline-none border border-[#3B78FF] rounded"
+                  />
+                  <div className="flex gap-1">
                     <button
-                      key={group.id}
                       onClick={() => {
-                        setPaneGroup(paneId, group.id)
+                        if (newGroupName.trim()) {
+                          const newGroupId = createGroup(newGroupName.trim())
+                          setPaneGroup(paneId, newGroupId)
+                          setNewGroupName("")
+                          setIsCreatingGroup(false)
+                          setShowGroupMenu(false)
+                        }
+                      }}
+                      className="flex-1 bg-[#3B78FF] hover:bg-[#2B68FF] text-white text-xs py-1 rounded"
+                    >
+                      Create
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsCreatingGroup(false)
+                        setNewGroupName("")
+                      }}
+                      className="flex-1 bg-[#27272A] hover:bg-[#333333] text-[#CCCCCC] text-xs py-1 rounded"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {groups.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] text-[#808080] uppercase tracking-wider">
+                        Move to group
+                      </div>
+                      {groups.map((group) => (
+                        <button
+                          key={group.id}
+                          onClick={() => {
+                            setPaneGroup(paneId, group.id)
+                            setShowGroupMenu(false)
+                          }}
+                          className={`flex w-full items-center gap-2 px-2 py-1.5 text-xs hover:bg-[#333333] ${
+                            groupId === group.id ? "text-white" : "text-[#CCCCCC]"
+                          }`}
+                        >
+                          <span
+                            className="h-2 w-2 rounded"
+                            style={{ backgroundColor: group.color }}
+                          />
+                          <span className="flex-1 text-left">{group.name}</span>
+                          {groupId === group.id && (
+                            <span className="text-[10px] text-[#808080]">current</span>
+                          )}
+                        </button>
+                      ))}
+                      <div className="my-1 border-t border-[#3B3B3B]" />
+                    </>
+                  )}
+                  {groupId && (
+                    <button
+                      onClick={() => {
+                        setPaneGroup(paneId, null)
                         setShowGroupMenu(false)
                       }}
-                      className={`flex w-full items-center gap-2 px-2 py-1.5 text-xs hover:bg-[#333333] ${
-                        groupId === group.id ? "text-white" : "text-[#CCCCCC]"
-                      }`}
+                      className="flex w-full items-center gap-2 px-2 py-1.5 text-xs text-[#CCCCCC] hover:bg-[#333333]"
                     >
-                      <span
-                        className="h-2 w-2 rounded"
-                        style={{ backgroundColor: group.color }}
-                      />
-                      <span className="flex-1 text-left">{group.name}</span>
-                      {groupId === group.id && (
-                        <span className="text-[10px] text-[#808080]">current</span>
-                      )}
+                      <X className="h-3 w-3" />
+                      <span>Remove from group</span>
                     </button>
-                  ))}
-                  <div className="my-1 border-t border-[#3B3B3B]" />
+                  )}
+                  <button
+                    onClick={() => setIsCreatingGroup(true)}
+                    className="flex w-full items-center gap-2 px-2 py-1.5 text-xs text-[#CCCCCC] hover:bg-[#333333]"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>New Group</span>
+                  </button>
+                  {groups.length === 0 && (
+                    <div className="px-2 py-2 text-xs text-[#808080] text-center">
+                      No groups yet
+                    </div>
+                  )}
                 </>
-              )}
-              {groupId && (
-                <button
-                  onClick={() => {
-                    setPaneGroup(paneId, null)
-                    setShowGroupMenu(false)
-                  }}
-                  className="flex w-full items-center gap-2 px-2 py-1.5 text-xs text-[#CCCCCC] hover:bg-[#333333]"
-                >
-                  <X className="h-3 w-3" />
-                  <span>Remove from group</span>
-                </button>
-              )}
-              {groups.length === 0 && (
-                <div className="px-2 py-2 text-xs text-[#808080] text-center">
-                  No groups yet
-                </div>
               )}
             </div>
           )}
