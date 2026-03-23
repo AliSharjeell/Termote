@@ -61,12 +61,13 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
 
       ws.onmessage = (event) => {
         try {
+          console.log("[Termote WS] Raw message:", event.data)
           const message: ServerMessage = JSON.parse(event.data)
           console.log("[Termote WS] Received:", message.event, message)
           handleMessage(message)
         } catch (e) {
           // If not JSON, it might be terminal output directly
-          console.error("[Termote WS] Failed to parse message:", e)
+          console.error("[Termote WS] Failed to parse message:", e, "Raw:", event.data)
         }
       }
 
