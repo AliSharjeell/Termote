@@ -2,11 +2,11 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Terminal, Zap, Shield, Smartphone, LayoutGrid, CheckCircle2, Star, QrCode, Link2, Server, Lock, Globe, Github, X, Loader2 } from "lucide-react"
+import { Terminal, Zap, Shield, Smartphone, LayoutGrid, CheckCircle2, Star, QrCode, Link2, Server, Lock, Globe, Github, X, Loader2, TerminalSquare } from "lucide-react"
 import { Navbar } from "@/components/Navbar"
 import { InstallButton } from "@/components/InstallButton"
 
-function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function ConnectForm({ onCancel }: { onCancel: () => void }) {
   const router = useRouter()
   const [url, setUrl] = useState("")
   const [token, setToken] = useState("")
@@ -29,7 +29,6 @@ function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     setIsLoading(true)
 
     try {
-      // Decode the URL if it's already URL-encoded (e.g., from query string)
       let tunnelUrl = url.trim()
       try {
         tunnelUrl = decodeURIComponent(tunnelUrl)
@@ -37,10 +36,8 @@ function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
         // Already decoded, use as-is
       }
 
-      // Navigate to dashboard with credentials
       const encodedUrl = encodeURIComponent(tunnelUrl)
       router.push(`/dashboard?tunnel=${encodedUrl}&token=${encodeURIComponent(token.trim())}`)
-      onClose()
     } catch {
       setError("Failed to connect. Please check your URL and token.")
     } finally {
@@ -48,30 +45,32 @@ function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     }
   }
 
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-zinc-800">
-          <h2 className="text-lg font-semibold text-white">Connect to Terminal</h2>
+    <div className="mt-6 w-full max-w-md mx-auto animate-in slide-in-from-top-2 duration-300">
+      <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/95 backdrop-blur-sm shadow-2xl shadow-black/50 overflow-hidden">
+        {/* Terminal-style header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/80">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+              <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
+              <div className="h-2.5 w-2.5 rounded-full bg-green-500/80" />
+            </div>
+            <span className="text-xs text-zinc-500 ml-2">Connect to Terminal</span>
+          </div>
           <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            onClick={onCancel}
+            className="p-1 rounded text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleConnect} className="p-6 space-y-4">
-          <div>
-            <label htmlFor="tunnel-url" className="block text-sm font-medium text-zinc-300 mb-2">
+        <form onSubmit={handleConnect} className="p-5 space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="tunnel-url" className="flex items-center gap-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
+              <Link2 className="h-3 w-3" />
               Tunnel URL
             </label>
             <input
@@ -80,15 +79,14 @@ function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="wss://xxxxx-xxxx.devtunnels.ms"
-              className="w-full px-4 py-2.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
+              autoFocus
+              className="w-full px-4 py-2.5 rounded-lg bg-zinc-800/80 border border-zinc-700/50 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all text-sm font-mono"
             />
-            <p className="mt-1.5 text-xs text-zinc-500">
-              Paste the full tunnel URL from your terminal
-            </p>
           </div>
 
-          <div>
-            <label htmlFor="token" className="block text-sm font-medium text-zinc-300 mb-2">
+          <div className="space-y-1.5">
+            <label htmlFor="token" className="flex items-center gap-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
+              <Lock className="h-3 w-3" />
               Access Token
             </label>
             <input
@@ -97,28 +95,42 @@ function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="Enter your access token"
-              className="w-full px-4 py-2.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
+              className="w-full px-4 py-2.5 rounded-lg bg-zinc-800/80 border border-zinc-700/50 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all text-sm font-mono"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-400">{error}</p>
+            <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">
+              {error}
+            </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-2.5 px-4 rounded-lg bg-white text-black font-medium text-sm hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              "Connect"
-            )}
-          </button>
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 py-2.5 px-4 rounded-lg border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 py-2.5 px-4 rounded-lg bg-white text-black font-medium text-sm hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <TerminalSquare className="h-4 w-4" />
+                  Connect
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -173,7 +185,7 @@ function UseCaseItem({ title, description, reverse = false }: {
 export function LandingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [showLogin, setShowLogin] = useState(false)
+  const [showConnectForm, setShowConnectForm] = useState(false)
 
   // Handle direct URL with tunnel and token params (e.g., from shared link)
   useEffect(() => {
@@ -212,13 +224,18 @@ export function LandingPageContent() {
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <InstallButton />
               <button
-                onClick={() => setShowLogin(true)}
+                onClick={() => setShowConnectForm(!showConnectForm)}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-700 text-zinc-300 text-sm hover:border-zinc-500 hover:text-zinc-100 transition-colors"
               >
                 <Link2 className="h-4 w-4" />
                 Connect to Terminal
               </button>
             </div>
+
+            {/* Inline Connect Form */}
+            {showConnectForm && (
+              <ConnectForm onCancel={() => setShowConnectForm(false)} />
+            )}
 
             {/* Hero Visual Placeholder */}
             <div className="mt-16 mx-auto max-w-4xl">
@@ -475,9 +492,6 @@ export function LandingPageContent() {
           </div>
         </div>
       </footer>
-
-      {/* Login Modal */}
-      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     </div>
   )
 }
