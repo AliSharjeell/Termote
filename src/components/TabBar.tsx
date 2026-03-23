@@ -108,7 +108,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
             return (
               <div key={group.id} className="flex items-center gap-1 shrink-0">
                 <div
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm border border-[#3B78FF] bg-[#0C0C0C] text-[#CCCCCC] shrink-0`}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm border border-[#3B78FF] bg-[#0C0C0C] text-[#CCCCCC] shrink-0 relative`}
                 >
                   <span
                     className="h-2 w-2 rounded shrink-0"
@@ -118,9 +118,10 @@ export function TabBar({ searchQuery }: TabBarProps) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      toggleGroupExpand(group.id)
+                      deleteGroup(group.id)
                     }}
-                    className="ml-1 text-[#808080] hover:text-white"
+                    className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[10px] font-bold leading-none"
+                    title="Delete group"
                   >
                     ×
                   </button>
