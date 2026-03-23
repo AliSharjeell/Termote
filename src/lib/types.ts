@@ -1,5 +1,11 @@
 export type Shell = "powershell" | "cmd" | "wsl"
 
+export interface PaneGroup {
+  id: string
+  name: string
+  color: string
+}
+
 export interface Pane {
   id: string
   pid: number
@@ -8,6 +14,7 @@ export interface Pane {
   cols: number
   rows: number
   pinned?: boolean
+  groupId?: string | null
 }
 
 // Client -> Server messages
