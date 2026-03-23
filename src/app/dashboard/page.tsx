@@ -59,6 +59,8 @@ function DashboardContent() {
       const decodedUrl = decodeURIComponent(urlParam)
       localStorage.setItem("tunnelUrl", decodedUrl)
       localStorage.setItem("authToken", tokenParam)
+      // Clear URL params for security - don't expose token in address bar
+      window.history.replaceState({}, "", "/dashboard")
     }
 
     if (!url || !token) {
@@ -106,6 +108,7 @@ function DashboardContent() {
       <div className="relative flex shrink-0 items-center border-b border-[#333333] bg-[#161616] px-4 py-2">
         {/* Status + Focus - left side */}
         <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-[#CCCCCC] tracking-wide">Termote</span>
           <div
             className={`h-2 w-2 rounded-full ${
               isConnected
@@ -122,13 +125,6 @@ function DashboardContent() {
                 : "0 0 6px #E74856"
             }}
           />
-          <span className="text-xs text-[#808080]">
-            {isConnected
-              ? isAuthenticated
-                ? "Connected"
-                : "Authenticating..."
-              : "Disconnected"}
-          </span>
           <button
             onClick={() => window.location.reload()}
             className="flex items-center gap-1 rounded-full bg-[#27272A] px-2 py-1 text-xs text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors ml-1"
