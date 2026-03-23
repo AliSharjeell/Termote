@@ -8,7 +8,7 @@ import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User, RefreshCw } from "lucide-react"
+import { User, RefreshCw, Search } from "lucide-react"
 
 function DashboardContent() {
   const router = useRouter()
@@ -17,6 +17,8 @@ function DashboardContent() {
   const isLandscape = useIsLandscape()
   const [isReady, setIsReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
 
@@ -162,19 +164,45 @@ function DashboardContent() {
           </button>
         </div>
 
-        {/* Profile - right side */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
-          title="Profile"
-        >
-          <User className="h-4 w-4" />
-        </button>
+        {/* Search + Profile - right side */}
+        <div className="ml-auto flex items-center gap-2">
+          {searchOpen ? (
+            <div className="relative flex items-center">
+              <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#808080]" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                className="h-8 w-48 rounded-full bg-[#27272A] pl-8 pr-3 text-xs text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
+                onBlur={() => {
+                  if (!searchQuery) setSearchOpen(false)
+                }}
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors"
+              title="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
+            title="Profile"
+          >
+            <User className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Main content area */}
       <div className="flex-1 overflow-hidden">
-        {showTabs ? <TabBar /> : <SplitPane />}
+        {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
       </div>
 
       {/* Profile Sidebar */}
