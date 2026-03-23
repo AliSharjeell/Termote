@@ -51,7 +51,7 @@ function ConnectForm({ onCancel }: { onCancel: () => void }) {
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 space-y-4">
         {/* Tunnel URL Field */}
         <div className="space-y-2">
-          <label htmlFor="tunnel-url" className="block text-sm font-medium text-zinc-300 text-left">
+          <label htmlFor="tunnel-url" className="block text-sm font-medium text-zinc-300 text-left pl-1">
             Tunnel URL
           </label>
           <input
@@ -67,7 +67,7 @@ function ConnectForm({ onCancel }: { onCancel: () => void }) {
 
         {/* Access Token Field */}
         <div className="space-y-2">
-          <label htmlFor="token" className="block text-sm font-medium text-zinc-300 text-left">
+          <label htmlFor="token" className="block text-sm font-medium text-zinc-300 text-left pl-1">
             Access Token
           </label>
           <div className="relative">
