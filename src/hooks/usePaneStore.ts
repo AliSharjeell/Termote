@@ -3,7 +3,6 @@ import type { Pane, PaneGroup, Shell } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
-const GROUPS_KEY = "termote-pane-groups"
 const PANE_GROUPS_KEY = "termote-pane-groups-map"
 
 const GROUP_COLORS = [
@@ -60,7 +59,7 @@ interface PaneState {
   handleGroupRenamed: (groupId: string, name: string) => void
   handlePaneGroupSet: (paneId: string, groupId: string | null) => void
   // Persistence helpers
-  loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes"; groups: PaneGroup[]; paneGroupMap: Record<string, string> }
+  loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes"; paneGroupMap: Record<string, string> }
 }
 
 // Load persisted state from localStorage
@@ -68,16 +67,14 @@ function loadPersistedState() {
   try {
     const pinnedJson = localStorage.getItem(STORAGE_KEY)
     const viewModeJson = localStorage.getItem(VIEW_MODE_KEY)
-    const groupsJson = localStorage.getItem(GROUPS_KEY)
     const paneGroupsJson = localStorage.getItem(PANE_GROUPS_KEY)
     return {
       pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
       viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
-      groups: groupsJson ? JSON.parse(groupsJson) : [],
       paneGroupMap: paneGroupsJson ? JSON.parse(paneGroupsJson) : {},
     }
   } catch {
-    return { pinnedPaneIds: [], viewMode: "panes" as const, groups: [], paneGroupMap: {} }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {} }
   }
 }
 
@@ -94,15 +91,6 @@ function savePinnedPanes(paneIds: string[]) {
 function saveViewMode(mode: "auto" | "tabs" | "panes") {
   try {
     localStorage.setItem(VIEW_MODE_KEY, mode)
-  } catch {
-    // Storage full or unavailable
-  }
-}
-
-// Save groups to localStorage
-function saveGroups(groups: PaneGroup[]) {
-  try {
-    localStorage.setItem(GROUPS_KEY, JSON.stringify(groups))
   } catch {
     // Storage full or unavailable
   }
@@ -397,6 +385,6 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   loadPersistedState: () => loadPersistedState(),
 }))
 
-// Initialize view mode and groups from localStorage
+// Initialize view mode from localStorage
 const initialPersisted = loadPersistedState()
-usePaneStore.setState({ viewMode: initialPersisted.viewMode, groups: initialPersisted.groups })
+usePaneStore.setState({ viewMode: initialPersisted.viewMode })
