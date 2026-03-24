@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, Calendar, Clock, Terminal, Globe, LayoutGrid } from "lucide-react"
+import { Calendar, Clock, Terminal, Globe, LayoutGrid } from "lucide-react"
 import { posts, categories, getFeaturedPost, getNonFeaturedPosts } from "@/lib/posts"
+import { Navbar } from "@/components/Navbar"
 
 export const metadata: Metadata = {
   title: "Blog - Termote News, Tips & Tutorials",
@@ -19,16 +20,7 @@ export default function BlogIndexPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
-          <Link href="/" className="text-lg font-semibold text-white">Termote</Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="pt-16 pb-20">
         {/* Hero */}
