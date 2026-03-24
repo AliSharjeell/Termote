@@ -113,7 +113,7 @@ export default function BlogIndexPage() {
         <section className="py-10 px-4">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">All Posts</h2>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {allPosts.map((post) => (
                 <Link key={post.slug} href={`/blog/${post.slug}`}>
                   <article className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all cursor-pointer">
