@@ -41,7 +41,7 @@ export default function RemoteAccessIndex() {
           </div>
 
           <div className="mx-auto max-w-4xl">
-            <div className="space-y-8">
+            <div className="space-y-10">
               {posts.map((post) => (
                 <Link key={post.slug} href={`/blog/${post.slug}`}>
                   <article className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all cursor-pointer">
