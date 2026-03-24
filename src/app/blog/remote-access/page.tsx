@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Globe, Calendar, Clock } from "lucide-react"
+import { ArrowLeft, Globe, Calendar, Clock } from "lucide-react"
 import { getPostsByCategory } from "@/lib/posts"
 import { Navbar } from "@/components/Navbar"
 
@@ -21,7 +21,16 @@ export default function RemoteAccessIndex() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <Navbar />
 
-      <main className="pt-16 pb-20">
+      <main className="pt-16 pb-24">
+        {/* Back Button */}
+        <div className="px-4 py-4">
+          <div className="mx-auto max-w-4xl">
+            <Link href="/blog" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Blog
+            </Link>
+          </div>
+        </div>
         <section className="py-20 px-4">
           <div className="mx-auto max-w-4xl text-center mb-12">
             <div className="inline-flex p-3 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 mb-4">
