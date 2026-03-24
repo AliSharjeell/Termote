@@ -119,8 +119,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   verification: {
-    google: "google-site-verification-code", // Replace with actual code
-    yandex: "yandex-site-verification-code", // Replace with actual code
+    google: "google20d370399c9772c8",
+    yandex: "yandex-site-verification-code", // Replace with actual code if using Yandex
   },
   category: "software",
   classification: "Developer Tools",
