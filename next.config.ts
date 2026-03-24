@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   trailingSlash: true,
-  siteUrl: "https://termote.vercel.app",
   // Ensure proper headers for SEO
   async headers() {
     return [

@@ -91,9 +91,6 @@ export const metadata: Metadata = {
         alt: "Termote - Web Terminal",
       },
     ],
-    siteAliases: {
-      "en-US": "https://termote.vercel.app",
-    },
   },
   twitter: {
     card: "summary_large_image",
