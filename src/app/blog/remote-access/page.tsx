@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, Globe } from "lucide-react"
+import { ArrowLeft, Globe, Calendar, Clock } from "lucide-react"
+import { getPostsByCategory } from "@/lib/posts"
 
 export const metadata: Metadata = {
   title: "Remote Access - SSH Alternatives & Browser-Based Terminal",
@@ -12,30 +13,9 @@ export const metadata: Metadata = {
   },
 }
 
-const posts = [
-  { slug: "access-computer-remotely-without-ssh-vpn", title: "How to Access Your Computer Remotely Without SSH or VPN" },
-  { slug: "port-22-blocked-ways-to-access-server", title: "Port 22 Blocked? 7 Ways to Access Your Server Anyway" },
-  { slug: "best-ssh-alternatives-2026", title: "Best SSH Alternatives in 2026 (Tested & Compared)" },
-  { slug: "access-pc-from-phone-no-apps", title: "How to Access Your PC From Your Phone (No Apps Required)" },
-  { slug: "why-ssh-fails-corporate-networks", title: "Why SSH Fails on Corporate Networks (And How to Fix It)" },
-  { slug: "remote-terminal-access-without-port-forwarding", title: "Remote Terminal Access Without Port Forwarding (Beginner Guide)" },
-  { slug: "use-browser-as-full-terminal", title: "How to Use Your Browser as a Full Terminal (Step-by-Step)" },
-  { slug: "tmux-vs-modern-web-terminals", title: "tmux vs Modern Web Terminals: Do You Still Need tmux?" },
-  { slug: "access-localhost-from-anywhere-without-ngrok", title: "Access Your Localhost From Anywhere (Without Ngrok)" },
-  { slug: "best-remote-development-tools-2026", title: "Best Remote Development Tools for Developers (2026)" },
-  { slug: "bypass-firewalls-legally-development-work", title: "How to Bypass Firewalls Legally for Development Work" },
-  { slug: "ssh-vs-https-tunnels-reliability", title: "SSH vs HTTPS Tunnels: What's More Reliable?" },
-  { slug: "run-terminal-commands-on-pc-from-anywhere", title: "Run Terminal Commands on Your PC From Anywhere" },
-  { slug: "monitor-long-running-jobs-remotely", title: "How to Monitor Long-Running Jobs Remotely" },
-  { slug: "no-vpn-no-ssh-simplest-remote-access", title: "No VPN, No SSH: The Simplest Remote Access Setup Ever" },
-  { slug: "why-mobile-ssh-clients-are-terrible", title: "Why Mobile SSH Clients Are Terrible (And What to Use Instead)" },
-  { slug: "secure-remote-access-without-opening-ports", title: "How to Secure Remote Access Without Opening Ports" },
-  { slug: "access-home-server-from-anywhere-behind-nat", title: "Access Your Home Server From Anywhere (Even Behind NAT)" },
-  { slug: "best-tools-control-pc-from-anywhere", title: "Best Tools to Control Your PC From Anywhere" },
-  { slug: "fixed-server-from-restaurant-using-phone", title: "How I Fixed My Server From a Restaurant Using My Phone" },
-]
-
 export default function RemoteAccessIndex() {
+  const posts = getPostsByCategory("remote-access")
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
@@ -58,12 +38,39 @@ export default function RemoteAccessIndex() {
             <p className="text-xl text-zinc-400">Guides for accessing your terminal without SSH, VPN, or port forwarding.</p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {posts.map((post) => (
-              <article key={post.slug} className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-all">
-                <h2 className="text-lg font-medium text-zinc-100 hover:text-white">
-                  <Link href={`/blog/remote-access/${post.slug}`}>{post.title}</Link>
+              <article
+                key={post.slug}
+                className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
+              >
+                <div className="flex items-center gap-2 text-xs text-zinc-500 uppercase tracking-wider mb-2">
+                  remote access
+                </div>
+                <h2 className="text-lg font-medium text-zinc-100 hover:text-white transition-colors mb-2">
+                  <Link href={`/blog/${post.slug}`}>{post.title}</Link>
                 </h2>
+                {post.excerpt && (
+                  <p className="text-zinc-400 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
+                )}
+                <div className="flex items-center gap-4 text-xs text-zinc-500">
+                  {post.date && (
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {new Date(post.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  )}
+                  {post.readTime && (
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      {post.readTime}
+                    </span>
+                  )}
+                </div>
               </article>
             ))}
           </div>
