@@ -38,29 +38,31 @@ export default function BlogIndexPage() {
           <section className="py-10 px-4">
             <div className="mx-auto max-w-4xl">
               <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Featured</h2>
-              <article className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-all ring-1 ring-zinc-700">
-                <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-zinc-800 text-zinc-300 mb-3">
-                  Featured
-                </span>
-                <h3 className="text-xl font-semibold text-zinc-100 mb-2 hover:text-white transition-colors">
-                  <Link href={`/blog/${featuredPost.slug}`}>{featuredPost.title}</Link>
-                </h3>
-                <p className="text-zinc-400 mb-4 leading-relaxed">{featuredPost.excerpt}</p>
-                <div className="flex items-center gap-4 text-sm text-zinc-500">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4" />
-                    {featuredPost.date && new Date(featuredPost.date).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+              <Link href={`/blog/${featuredPost.slug}`}>
+                <article className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-all ring-1 ring-zinc-700 cursor-pointer">
+                  <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-zinc-800 text-zinc-300 mb-3">
+                    Featured
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    {featuredPost.readTime}
-                  </span>
-                </div>
-              </article>
+                  <h3 className="text-xl font-semibold text-zinc-100 mb-2">
+                    {featuredPost.title}
+                  </h3>
+                  <p className="text-zinc-400 mb-4 leading-relaxed">{featuredPost.excerpt}</p>
+                  <div className="flex items-center gap-4 text-sm text-zinc-500">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4" />
+                      {featuredPost.date && new Date(featuredPost.date).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4" />
+                      {featuredPost.readTime}
+                    </span>
+                  </div>
+                </article>
+              </Link>
             </div>
           </section>
         )}
@@ -104,38 +106,37 @@ export default function BlogIndexPage() {
             <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">All Posts</h2>
             <div className="space-y-6">
               {allPosts.map((post) => (
-                <article
-                  key={post.slug}
-                  className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
-                >
-                  <div className="flex items-center gap-2 text-xs text-zinc-500 uppercase tracking-wider mb-2">
-                    {post.category.replace("-", " ")}
-                  </div>
-                  <h3 className="text-lg font-medium text-zinc-100 hover:text-white transition-colors mb-2">
-                    <Link href={`/blog/${post.slug}`}>{post.title}</Link>
-                  </h3>
-                  {post.excerpt && (
-                    <p className="text-zinc-400 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-zinc-500">
-                    {post.date && (
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {new Date(post.date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
+                <Link key={post.slug} href={`/blog/${post.slug}`}>
+                  <article className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all cursor-pointer">
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 uppercase tracking-wider mb-2">
+                      {post.category.replace("-", " ")}
+                    </div>
+                    <h3 className="text-lg font-medium text-zinc-100 mb-2">
+                      {post.title}
+                    </h3>
+                    {post.excerpt && (
+                      <p className="text-zinc-400 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
                     )}
-                    {post.readTime && (
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" />
-                        {post.readTime}
-                      </span>
-                    )}
-                  </div>
-                </article>
+                    <div className="flex items-center gap-4 text-xs text-zinc-500">
+                      {post.date && (
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {new Date(post.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      )}
+                      {post.readTime && (
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {post.readTime}
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                </Link>
               ))}
             </div>
           </div>
