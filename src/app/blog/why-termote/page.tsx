@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, Calendar, Clock, ArrowRight } from "lucide-react"
+import { Navbar } from "@/components/Navbar"
 
 export const metadata: Metadata = {
   title: "Why I Built Termote: An SSH Alternative - Termote Blog",
@@ -15,18 +16,18 @@ export const metadata: Metadata = {
 export default function WhyTermotePost() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <Link href="/blog" className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Blog</span>
-          </Link>
-          <Link href="/" className="text-lg font-semibold text-white">Termote</Link>
-        </div>
-      </header>
+      <Navbar />
 
-      <main className="pt-16 pb-20">
+      <main className="pt-16 pb-24">
+        {/* Back Button */}
+        <div className="px-4 py-4">
+          <div className="mx-auto max-w-3xl">
+            <Link href="/blog" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Blog
+            </Link>
+          </div>
+        </div>
         <article className="mx-auto max-w-3xl px-4">
           {/* Post Header */}
           <header className="py-12 text-center">
