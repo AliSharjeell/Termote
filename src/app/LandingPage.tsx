@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Terminal, Zap, Shield, Smartphone, LayoutGrid, CheckCircle2, Star, QrCode, Link2, Server, Lock, Globe, Github, X, Loader2, TerminalSquare } from "lucide-react"
+import { Terminal, Zap, Shield, Smartphone, LayoutGrid, CheckCircle2, Star, QrCode, Link2, Server, Lock, Globe, Github, X, Loader2, TerminalSquare, ZapOff, Users } from "lucide-react"
 import { Navbar } from "@/components/Navbar"
 import { InstallButton } from "@/components/InstallButton"
 
@@ -49,7 +49,6 @@ function ConnectForm({ onCancel }: { onCancel: () => void }) {
   return (
     <div className="mt-4 w-full max-w-md mx-auto transition-all duration-300 ease-out">
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 space-y-4">
-        {/* Tunnel URL Field */}
         <div className="space-y-2">
           <label htmlFor="tunnel-url" className="block text-sm font-medium text-zinc-300 text-left pl-1">
             Tunnel URL
@@ -65,7 +64,6 @@ function ConnectForm({ onCancel }: { onCancel: () => void }) {
           />
         </div>
 
-        {/* Access Token Field */}
         <div className="space-y-2">
           <label htmlFor="token" className="block text-sm font-medium text-zinc-300 text-left pl-1">
             Access Token
@@ -89,14 +87,12 @@ function ConnectForm({ onCancel }: { onCancel: () => void }) {
           </div>
         </div>
 
-        {/* Error Message */}
         {error && (
           <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">
             {error}
           </p>
         )}
 
-        {/* Action Buttons */}
         <div className="flex gap-3 pt-2">
           <button
             type="button"
@@ -156,19 +152,23 @@ function BentoCard({ title, description, icon: Icon, span = "" }: {
   )
 }
 
-function UseCaseItem({ title, description, reverse = false }: {
+function UseCaseItem({ title, description, reverse = false, emoji }: {
   title: string
   description: string
   reverse?: boolean
+  emoji: string
 }) {
   return (
     <div className={`grid md:grid-cols-2 gap-8 items-center ${reverse ? "md:flex-row-reverse" : ""}`}>
       <div className={reverse ? "md:order-2" : ""}>
-        <h3 className="text-xl font-semibold text-zinc-100 mb-3">{title}</h3>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-2xl">{emoji}</span>
+          <h3 className="text-xl font-semibold text-zinc-100">{title}</h3>
+        </div>
         <p className="text-zinc-400 leading-relaxed">{description}</p>
       </div>
       <div className={`bg-zinc-800/50 border border-zinc-800 rounded-2xl aspect-video flex items-center justify-center ${reverse ? "md:order-1" : ""}`}>
-        <span className="text-xs text-zinc-500">Use Case Image</span>
+        <span className="text-xs text-zinc-500">Demo coming soon</span>
       </div>
     </div>
   )
@@ -179,13 +179,11 @@ export function LandingPageContent() {
   const searchParams = useSearchParams()
   const [showConnectForm, setShowConnectForm] = useState(false)
 
-  // Handle direct URL with tunnel and token params (e.g., from shared link)
   useEffect(() => {
     const tunnelParam = searchParams.get("tunnel")
     const tokenParam = searchParams.get("token")
 
     if (tunnelParam && tokenParam) {
-      // Redirect to dashboard with the credentials
       const decodedUrl = decodeURIComponent(tunnelParam)
       const encodedUrl = encodeURIComponent(decodedUrl)
       router.push(`/dashboard?tunnel=${encodedUrl}&token=${encodeURIComponent(tokenParam)}`)
@@ -199,21 +197,20 @@ export function LandingPageContent() {
       <main className="pt-16">
         {/* Hero Section */}
         <section className="relative py-20 sm:py-32 px-4">
-          {/* Background gradient */}
           <div className="absolute inset-0 -z-10">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
           </div>
 
           <div className="mx-auto max-w-4xl text-center">
-            <h1 className="mt-8 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">
-              Your local CLI,<br />anywhere.
+            <h1 className="mt-8 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
+              Your Entire Dev Environment.<br />In a Browser. Anywhere.
             </h1>
 
             <p className="mt-6 text-lg sm:text-xl text-zinc-200 max-w-2xl mx-auto leading-relaxed">
-              Turn any browser into a full-powered, multi-pane terminal for your PC — instantly. No SSH, no tmux, no setup.
+              Turn any browser into a multi-pane command center for your PC. Manage full-stack apps and AI agents in one clean workspace — no SSH, no VPN, no setup.
             </p>
 
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <InstallButton />
               <button
                 onClick={() => setShowConnectForm(!showConnectForm)}
@@ -224,6 +221,12 @@ export function LandingPageContent() {
               </button>
             </div>
 
+            {/* Killer line */}
+            <p className="mt-6 text-sm text-zinc-500 flex items-center justify-center gap-2">
+              <Zap className="h-4 w-4 text-yellow-500" />
+              Works on restricted networks — even when SSH is blocked
+            </p>
+
             {/* Inline Connect Form */}
             <div className={`grid transition-all duration-300 ease-out ${showConnectForm ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
               <div className="overflow-hidden">
@@ -231,7 +234,7 @@ export function LandingPageContent() {
               </div>
             </div>
 
-            {/* Hero Visual Placeholder */}
+            {/* Hero Visual */}
             <div className="mt-16 mx-auto max-w-4xl">
               <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/80 aspect-video shadow-2xl shadow-zinc-950/50 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-zinc-950/50" />
@@ -250,36 +253,152 @@ export function LandingPageContent() {
           </div>
         </section>
 
-        {/* Why Not SSH */}
+        {/* Social Proof */}
+        <section className="py-8 px-4 border-t border-zinc-900/50">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-sm text-zinc-500 mb-4">Built for developers who run AI coding agents</p>
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-zinc-400">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                No account required
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                Free & open source
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                60-second setup
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Problem Section */}
         <section className="py-20 px-4 border-t border-zinc-900">
+          <div className="mx-auto max-w-4xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Your terminal setup is a mess.
+              </h2>
+              <p className="text-lg text-zinc-400">Building modern apps is hard enough without fighting your tools.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                { icon: LayoutGrid, text: "8 terminal windows fighting for space" },
+                { icon: Server, text: "Frontend, backend, logs scattered everywhere" },
+                { icon: Zap, text: "AI agents running… but you can't monitor them remotely" },
+                { icon: ZapOff, text: "SSH blocked exactly when you need it most" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3 p-4 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                  <item.icon className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-zinc-300">{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Solution Section */}
+        <section className="py-20 px-4 bg-zinc-900/30 border-y border-zinc-900">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-sm font-medium text-yellow-500 uppercase tracking-wider mb-4">The Solution</p>
+            <h2 className="text-3xl sm:text-5xl font-bold text-white mb-4">
+              One workspace. Zero chaos.
+            </h2>
+            <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-12">
+              Turn chaos into a beautifully designed, streamlined command center. Termote is a browser-native workspace built to give you total control.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-6 text-left">
+              <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                <LayoutGrid className="h-8 w-8 text-blue-400 mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Organized Workspace</h3>
+                <ul className="space-y-2 text-sm text-zinc-400">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    Multi-pane terminal (no tmux needed)
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    Group tabs by project
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    Rename & search sessions
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                <Globe className="h-8 w-8 text-green-400 mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Access Anywhere</h3>
+                <ul className="space-y-2 text-sm text-zinc-400">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    Works over HTTPS (port 443)
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    No firewall or NAT issues
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    QR code mobile access
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                <Terminal className="h-8 w-8 text-purple-400 mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Built for AI Agents</h3>
+                <ul className="space-y-2 text-sm text-zinc-400">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    Run Claude Code / Codex CLI
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    Monitor logs in real-time
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    Control agents from your phone
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Real-World Use Cases */}
+        <section id="use-cases" className="py-20 px-4">
           <div className="mx-auto max-w-5xl">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center text-zinc-100 mb-4">Why not SSH?</h2>
-            <p className="text-zinc-400 text-center mb-12 max-w-xl mx-auto">Termote solves problems SSH never could — without the headache.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-4">
+              Real-World Use Cases
+            </h2>
+            <p className="text-zinc-400 text-center mb-16 max-w-xl mx-auto">
+              See how developers actually use Termote in the wild.
+            </p>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="p-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 mb-4">
-                  <Shield className="h-6 w-6 text-zinc-300" />
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-100 mb-2">Bypass Firewalls</h3>
-                <p className="text-sm text-zinc-400">Runs over Port 443 (HTTPS/WSS). Slices through aggressive corporate and school networks undetected.</p>
-              </Card>
-
-              <Card className="p-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 mb-4">
-                  <Smartphone className="h-6 w-6 text-zinc-300" />
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-100 mb-2">Browser-Native</h3>
-                <p className="text-sm text-zinc-400">No bulky SSH clients. Control your PC from your phone, iPad, or any browser with a responsive UI.</p>
-              </Card>
-
-              <Card className="p-6 sm:col-span-2 lg:col-span-1">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 mb-4">
-                  <LayoutGrid className="h-6 w-6 text-zinc-300" />
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-100 mb-2">Built-in Multiplexing</h3>
-                <p className="text-sm text-zinc-400">Split, stack, and manage multiple panes directly in the UI. No tmux configuration required.</p>
-              </Card>
+            <div className="space-y-16">
+              <UseCaseItem
+                emoji="🍽️"
+                title="Fix production in 30 seconds — from your phone"
+                description="Your dev server crashes while you're out grabbing dinner. Instead of rushing home, pull out your phone, open Termote, run docker restart, and get right back to your meal."
+              />
+              <UseCaseItem
+                emoji="🧠"
+                title="Control AI agents while you're outside"
+                description="Kick off a heavy Claude Code refactor on your home rig. Head out, monitor the agent's thought process in real-time, give corrections and approve commands from your mobile browser."
+                reverse
+              />
+              <UseCaseItem
+                emoji="🛋️"
+                title="Monitor builds without sitting at your desk"
+                description="Kicked off a massive build or a 4-hour compilation? Grab your tablet, head to the couch, and watch progress in a live pane right next to your Netflix stream."
+              />
             </div>
           </div>
         </section>
@@ -288,10 +407,13 @@ export function LandingPageContent() {
         <section id="setup" className="py-20 px-4 bg-zinc-900/30 border-y border-zinc-900">
           <div className="mx-auto max-w-5xl">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Text */}
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-4">60-Second Setup</h2>
-                <p className="text-zinc-400 mb-8">Zero friction. Go from zero to remote in under a minute.</p>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                  60-Second Setup
+                </h2>
+                <p className="text-lg text-zinc-400 mb-8">
+                  From install → remote access in under 60 seconds.
+                </p>
 
                 <div className="space-y-4">
                   {[
@@ -301,7 +423,7 @@ export function LandingPageContent() {
                     { step: 4, text: "Control your PC from anywhere" },
                   ].map((item) => (
                     <div key={item.step} className="flex items-center gap-4">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-sm font-semibold text-zinc-300">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-sm font-semibold text-white">
                         {item.step}
                       </div>
                       <span className="text-zinc-300">{item.text}</span>
@@ -310,7 +432,6 @@ export function LandingPageContent() {
                 </div>
               </div>
 
-              {/* Terminal Block */}
               <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-zinc-900">
                   <div className="flex gap-1.5">
@@ -322,7 +443,7 @@ export function LandingPageContent() {
                 </div>
                 <div className="p-4">
                   <code className="text-sm text-zinc-300 font-mono block">
-                    powershell -c &quot;irm https://raw.githubusercontent.com/AliSharjeell/Termote/master/install.ps1 | iex&quot;
+                    powershell -c "irm https://raw.githubusercontent.com/AliSharjeell/Termote/master/install.ps1 | iex"
                   </code>
                   <div className="mt-4">
                     <InstallButton />
@@ -333,68 +454,69 @@ export function LandingPageContent() {
           </div>
         </section>
 
-        {/* Core Features - Bento Box */}
-        <section id="features" className="py-20 px-4">
+        {/* Why Not SSH */}
+        <section className="py-20 px-4">
           <div className="mx-auto max-w-5xl">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center text-zinc-100 mb-4">Core Features</h2>
-            <p className="text-zinc-400 text-center mb-12 max-w-xl mx-auto">Everything you need for powerful remote terminal access.</p>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <BentoCard
-                title="Anywhere, Any Network"
-                description="Ditch VPNs and port forwarding. Termote punches through NATs and firewalls for instant access worldwide."
-                icon={Globe}
-                span="sm:col-span-2 lg:row-span-2"
-              />
-              <BentoCard
-                title="Multi-Pane Terminal"
-                description="Split, stack, and manage multiple panes in your browser. Like tmux, but visual."
-                icon={Terminal}
-              />
-              <BentoCard
-                title="Smart Single-Instance"
-                description="Running termote in a new folder? Connects to your existing session."
-                icon={Zap}
-              />
-              <BentoCard
-                title="Zero-Install GUI"
-                description="Any device with a browser becomes your command center."
-                icon={Smartphone}
-              />
-              <BentoCard
-                title="Runs on Your PC"
-                description="Full host machine power with near-zero latency."
-                icon={Server}
-              />
-              <BentoCard
-                title="End-to-End Encrypted"
-                description="HTTPS/WebSockets with Microsoft Dev Tunnels auth."
-                icon={Lock}
-              />
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                SSH wasn't built for today's workflows.
+              </h2>
+              <p className="text-zinc-400 max-w-xl mx-auto">
+                Termote solves problems SSH never could — without the headache.
+              </p>
             </div>
-          </div>
-        </section>
 
-        {/* Real-World Use Cases */}
-        <section id="use-cases" className="py-20 px-4 bg-zinc-900/30 border-y border-zinc-900">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center text-zinc-100 mb-4">Real-World Use Cases</h2>
-            <p className="text-zinc-400 text-center mb-16 max-w-xl mx-auto">See how developers use Termote in everyday scenarios.</p>
+            {/* Comparison Table */}
+            <div className="overflow-hidden rounded-xl border border-zinc-800 mb-12">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-zinc-900">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-zinc-300">Feature</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-zinc-500">SSH</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-white">Termote</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  <tr className="bg-zinc-900/50">
+                    <td className="px-6 py-4 text-sm text-zinc-300">Works on restricted networks</td>
+                    <td className="px-6 py-4 text-center text-lg">❌</td>
+                    <td className="px-6 py-4 text-center text-lg">✅</td>
+                  </tr>
+                  <tr>
+                    <td className="px-6 py-4 text-sm text-zinc-300">Mobile friendly</td>
+                    <td className="px-6 py-4 text-center text-lg">❌</td>
+                    <td className="px-6 py-4 text-center text-lg">✅</td>
+                  </tr>
+                  <tr className="bg-zinc-900/50">
+                    <td className="px-6 py-4 text-sm text-zinc-300">Multi-pane UI built-in</td>
+                    <td className="px-6 py-4 text-center text-lg">❌</td>
+                    <td className="px-6 py-4 text-center text-lg">✅</td>
+                  </tr>
+                  <tr>
+                    <td className="px-6 py-4 text-sm text-zinc-300">Setup time</td>
+                    <td className="px-6 py-4 text-center text-sm text-zinc-500">Painful</td>
+                    <td className="px-6 py-4 text-center text-sm text-green-400">60 sec</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-            <div className="space-y-20">
-              <UseCaseItem
-                title="The Mobile AI Agent Commander"
-                description="Out for coffee but want your home rig working? Open Termote on your phone, spin up AutoGPT, monitor its thought process and give real-time corrections from your mobile browser."
-              />
-              <UseCaseItem
-                title="The 'Dinner Emergency' Server Fix"
-                description="Dev server crashed while you're out? Open Termote on your phone, run docker restart or pm2 reload, go right back to your meal."
-                reverse
-              />
-              <UseCaseItem
-                title="Monitor Heavy Jobs from the Couch"
-                description="Kicked off a 4-hour compilation? Grab your iPad, head to the couch, watch progress in a live pane next to your Netflix stream."
-              />
+            <div className="grid sm:grid-cols-3 gap-6">
+              <Card className="p-6 text-center">
+                <Shield className="h-10 w-10 text-zinc-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-zinc-100 mb-2">Bypass Firewalls</h3>
+                <p className="text-sm text-zinc-400">Runs over Port 443 (HTTPS/WSS). Slices through aggressive networks undetected.</p>
+              </Card>
+              <Card className="p-6 text-center">
+                <Lock className="h-10 w-10 text-zinc-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-zinc-100 mb-2">End-to-End Encrypted</h3>
+                <p className="text-sm text-zinc-400">Auth via Microsoft Dev Tunnels. Your commands never leave your local environment.</p>
+              </Card>
+              <Card className="p-6 text-center">
+                <Zap className="h-10 w-10 text-zinc-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-zinc-100 mb-2">Smart Single-Instance</h3>
+                <p className="text-sm text-zinc-400">Running in a new folder? Connects to your existing session automatically.</p>
+              </Card>
             </div>
           </div>
         </section>
@@ -402,7 +524,7 @@ export function LandingPageContent() {
         {/* Security & Privacy */}
         <section className="py-20 px-4 bg-zinc-900/50">
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-12">Secure by default</h2>
+            <h2 className="text-3xl font-bold text-white mb-12">Secure by default</h2>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="flex flex-col items-center gap-3 p-4">
@@ -428,7 +550,7 @@ export function LandingPageContent() {
         {/* Connecting Devices */}
         <section className="py-20 px-4">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center text-zinc-100 mb-12">Connecting Devices</h2>
+            <h2 className="text-3xl font-bold text-center text-white mb-12">Connecting Devices</h2>
 
             <div className="grid sm:grid-cols-2 gap-6">
               <Card className="p-8 text-center">
@@ -436,7 +558,7 @@ export function LandingPageContent() {
                   <QrCode className="h-7 w-7 text-zinc-300" />
                 </div>
                 <h3 className="text-lg font-semibold text-zinc-100 mb-2">QR Code</h3>
-                <p className="text-sm text-zinc-400">Scan the QR code in the web UI with your phone camera to instantly connect.</p>
+                <p className="text-sm text-zinc-400">Scan the QR code with your phone camera to instantly connect.</p>
               </Card>
 
               <Card className="p-8 text-center">
@@ -444,17 +566,21 @@ export function LandingPageContent() {
                   <Link2 className="h-7 w-7 text-zinc-300" />
                 </div>
                 <h3 className="text-lg font-semibold text-zinc-100 mb-2">Share Link</h3>
-                <p className="text-sm text-zinc-400">Copy your secure tunnel URL and password to share with any device.</p>
+                <p className="text-sm text-zinc-400">Copy your tunnel URL and password to share with any device.</p>
               </Card>
             </div>
           </div>
         </section>
 
-        {/* Star CTA */}
+        {/* Final CTA */}
         <section className="py-20 px-4 border-t border-zinc-900">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-4">Ready to go remote?</h2>
-            <p className="text-zinc-400 mb-8">Install Termote and access your terminal from anywhere.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Stop juggling terminals.<br />Start controlling them.
+            </h2>
+            <p className="text-zinc-400 mb-8">
+              Install Termote and access your terminal from anywhere.
+            </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <InstallButton />
