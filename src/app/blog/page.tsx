@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, Calendar, Clock, Terminal, Globe, LayoutGrid } from "lucide-react"
-import { posts, categories, getFeaturedPost } from "@/lib/posts"
+import { posts, categories, getFeaturedPost, getNonFeaturedPosts } from "@/lib/posts"
 
 export const metadata: Metadata = {
   title: "Blog - Termote News, Tips & Tutorials",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function BlogIndexPage() {
   const featuredPost = getFeaturedPost()
-  const featuredCategory = categories.find((c) => c.slug === featuredPost?.category)
+  const allPosts = getNonFeaturedPosts()
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -106,22 +106,43 @@ export default function BlogIndexPage() {
           </div>
         </section>
 
-        {/* Recent Posts */}
+        {/* All Posts */}
         <section className="py-10 px-4">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">All Posts</h2>
-            <div className="space-y-4">
-              {posts.slice(0, 10).map((post) => (
+            <div className="space-y-6">
+              {allPosts.map((post) => (
                 <article
                   key={post.slug}
-                  className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
+                  className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
                 >
-                  <h3 className="text-lg font-medium text-zinc-100 hover:text-white transition-colors">
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 uppercase tracking-wider mb-2">
+                    {post.category.replace("-", " ")}
+                  </div>
+                  <h3 className="text-lg font-medium text-zinc-100 hover:text-white transition-colors mb-2">
                     <Link href={`/blog/${post.slug}`}>{post.title}</Link>
                   </h3>
-                  <p className="text-sm text-zinc-500 mt-1">
-                    {post.category.replace("-", " ")}
-                  </p>
+                  {post.excerpt && (
+                    <p className="text-zinc-400 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
+                  )}
+                  <div className="flex items-center gap-4 text-xs text-zinc-500">
+                    {post.date && (
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {new Date(post.date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    )}
+                    {post.readTime && (
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        {post.readTime}
+                      </span>
+                    )}
+                  </div>
                 </article>
               ))}
             </div>
