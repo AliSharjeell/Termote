@@ -38,41 +38,43 @@ export default function AICodingAgentsIndex() {
             <p className="text-xl text-zinc-400">Learn how to use and control AI coding agents remotely from any device.</p>
           </div>
 
-          <div className="space-y-6">
-            {posts.map((post) => (
-              <article
-                key={post.slug}
-                className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
-              >
-                <div className="flex items-center gap-2 text-xs text-zinc-500 uppercase tracking-wider mb-2">
-                  ai coding agents
-                </div>
-                <h2 className="text-lg font-medium text-zinc-100 hover:text-white transition-colors mb-2">
-                  <Link href={`/blog/${post.slug}`}>{post.title}</Link>
-                </h2>
-                {post.excerpt && (
-                  <p className="text-zinc-400 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
-                )}
-                <div className="flex items-center gap-4 text-xs text-zinc-500">
-                  {post.date && (
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {new Date(post.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
+          <div className="mx-auto max-w-4xl">
+            <div className="space-y-6">
+              {posts.map((post) => (
+                <article
+                  key={post.slug}
+                  className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
+                >
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 uppercase tracking-wider mb-2">
+                    ai coding agents
+                  </div>
+                  <h2 className="text-lg font-medium text-zinc-100 hover:text-white transition-colors mb-2">
+                    <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                  </h2>
+                  {post.excerpt && (
+                    <p className="text-zinc-400 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
                   )}
-                  {post.readTime && (
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      {post.readTime}
-                    </span>
-                  )}
-                </div>
-              </article>
-            ))}
+                  <div className="flex items-center gap-4 text-xs text-zinc-500">
+                    {post.date && (
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {new Date(post.date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    )}
+                    {post.readTime && (
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        {post.readTime}
+                      </span>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
       </main>
