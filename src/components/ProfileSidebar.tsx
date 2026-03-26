@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Copy, Check, X, Link, Key, LogOut, QrCode, Shield } from "lucide-react"
+import { Eye, EyeOff, Copy, Check, X, Link, Key, LogOut, QrCode, Shield, Bot } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
@@ -22,6 +22,16 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
   const mobileUrl = `https://termote.vercel.app/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
+  const aiCommand = usePaneStore((state) => state.aiCommand)
+  const setAiCommand = usePaneStore((state) => state.setAiCommand)
+
+  const aiOptions = [
+    { value: "claude", label: "Claude Code" },
+    { value: "gemini", label: "Gemini CLI" },
+    { value: "aichat", label: "aichat" },
+    { value: "codex", label: "Codex" },
+    { value: "llm", label: "llm" },
+  ]
 
   const maskValue = (value: string) => "\u2022".repeat(Math.min(value.length, 20))
 
@@ -153,6 +163,46 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* AI CLI Settings */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
+              <Bot className="h-4 w-4" />
+              Default AI CLI
+            </label>
+            <div className="flex flex-col gap-1.5 rounded-lg bg-[#0C0C0C] p-3">
+              {aiOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
+                    aiCommand === option.value
+                      ? "bg-[#27272A] text-white"
+                      : "hover:bg-[#27272A]/50 text-[#808080]"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="ai-cli"
+                    value={option.value}
+                    checked={aiCommand === option.value}
+                    onChange={() => setAiCommand(option.value)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`h-3 w-3 rounded-full border ${
+                      aiCommand === option.value
+                        ? "border-white bg-white"
+                        : "border-[#808080]"
+                    }`}
+                  />
+                  <span className="text-sm">{option.label}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-[10px] text-[#808080]">
+              Quick-launch button in terminal header sends: {aiCommand}
+            </p>
           </div>
         </div>
 
