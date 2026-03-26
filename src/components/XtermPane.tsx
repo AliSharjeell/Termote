@@ -50,7 +50,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isResizingRef = useRef<boolean>(false)
 
-  const { sendInput, sendResize, killPane, renamePane, togglePin, uploadFile } = usePaneStore()
+  const { sendInput, sendResize, killPane, renamePane, togglePin, uploadFile, aiCommand } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
 
   const handleData = useCallback(
@@ -186,6 +186,10 @@ export function XtermPane({ pane }: XtermPaneProps) {
     togglePin(pane.id)
   }, [pane.id, togglePin])
 
+  const handleLaunchAI = useCallback(() => {
+    sendInput(pane.id, `${aiCommand}\r`)
+  }, [pane.id, aiCommand, sendInput])
+
   // Drag and drop handlers for file transfer
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -238,6 +242,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
         onRename={handleRename}
         onClose={handleClose}
         onPin={handlePin}
+        onLaunchAI={handleLaunchAI}
       />
       <div
         ref={terminalRef}
