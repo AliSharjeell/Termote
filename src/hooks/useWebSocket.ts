@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react"
 import { usePaneStore } from "./usePaneStore"
-import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet, DeviceListEvent, DeviceKickedEvent, DeviceBannedEvent, ErrorEvent } from "@/lib/types"
+import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet, DeviceListEvent, DeviceKickedEvent, DeviceBannedEvent, ErrorEvent, FileUploadedEvent } from "@/lib/types"
 
 interface UseWebSocketOptions {
   url: string | null
@@ -26,6 +26,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleDeviceList,
     handleDeviceKicked,
     handleDeviceBanned,
+    handleFileUploaded,
   } = usePaneStore()
 
   const connect = useCallback(() => {
@@ -159,9 +160,13 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "error":
           console.error("[Termote] Error from server:", message.message)
           break
+        case "file_uploaded":
+          console.log("[Termote] file_uploaded:", message.file_name, "to pane", message.pane_id)
+          handleFileUploaded(message.pane_id, message.file_name)
+          break
       }
     },
-    [setLayout, setAuthenticated, handleDeviceList, handleDeviceKicked, handleDeviceBanned]
+    [setLayout, setAuthenticated, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded]
   )
 
   const disconnect = useCallback(() => {
