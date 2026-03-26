@@ -89,7 +89,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     if (selectedGroupId !== null) {
       selectGroup(null)
     }
-    usePaneStore.getState().requestDirectoryPicker("powershell")
+    usePaneStore.getState().openExplorer()
   }
 
   // Auto-balancing 2D grid: optimal square-ish layout

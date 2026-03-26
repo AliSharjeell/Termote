@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react"
 import { usePaneStore } from "./usePaneStore"
-import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet, DeviceListEvent, DeviceKickedEvent, DeviceBannedEvent, ErrorEvent, FileUploadedEvent } from "@/lib/types"
+import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet, DirectoryContentsEvent, DeviceListEvent, DeviceKickedEvent, DeviceBannedEvent, ErrorEvent, FileUploadedEvent } from "@/lib/types"
 
 interface UseWebSocketOptions {
   url: string | null
@@ -23,6 +23,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleGroupDeleted,
     handleGroupRenamed,
     handlePaneGroupSet,
+    handleDirectoryContents,
     handleDeviceList,
     handleDeviceKicked,
     handleDeviceBanned,
@@ -149,6 +150,10 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "directory_picker_cancelled":
           console.log("[Termote] Directory picker cancelled by user")
           break
+        case "directory_contents":
+          console.log("[Termote] directory_contents:", message.path, message.items)
+          handleDirectoryContents(message.path, message.items)
+          break
         case "device_list":
           console.log("[Termote] device_list:", message.devices)
           handleDeviceList(message.devices)
@@ -170,7 +175,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
       }
     },
-    [setLayout, setAuthenticated, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded]
+    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded]
   )
 
   const disconnect = useCallback(() => {

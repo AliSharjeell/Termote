@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { Pane, PaneGroup, Shell, DeviceInfo } from "@/lib/types"
+import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -33,6 +33,10 @@ interface PaneState {
   // Device management
   devices: DeviceInfo[]
   showSecurityModal: boolean
+  // File explorer state
+  explorerOpen: boolean
+  explorerCurrentPath: string
+  explorerContents: DirectoryItem[]
   // AI CLI command
   aiCommand: string
 
@@ -73,6 +77,12 @@ interface PaneState {
   handleDeviceKicked: (deviceId: string) => void
   handleDeviceBanned: (ip: string) => void
   setShowSecurityModal: (show: boolean) => void
+  // File explorer actions
+  openExplorer: () => void
+  closeExplorer: () => void
+  fetchDirectory: (path: string) => void
+  handleDirectoryContents: (path: string, items: DirectoryItem[]) => void
+  spawnAtDirectory: (dir: string) => void
   // File transfer actions
   uploadFile: (paneId: string, fileName: string, data: string) => void
   handleFileUploaded: (paneId: string, fileName: string) => void
@@ -170,6 +180,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   selectedGroupId: null,
   devices: [],
   showSecurityModal: false,
+  explorerOpen: false,
+  explorerCurrentPath: "",
+  explorerContents: [],
   aiCommand: loadAiCommand(),
 
   setWebSocket: (ws) => set({ ws }),
@@ -502,6 +515,42 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Request fresh device list when opening modal
     if (show) {
       get().requestDeviceList()
+    }
+  },
+
+  // File explorer actions
+  openExplorer: () => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      // Reset state and request root/drill contents
+      set({ explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
+      ws.send(JSON.stringify({ action: "list_directory", path: null }))
+    }
+  },
+
+  closeExplorer: () => {
+    set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+  },
+
+  fetchDirectory: (path) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      set({ explorerCurrentPath: path })
+      ws.send(JSON.stringify({ action: "list_directory", path }))
+    }
+  },
+
+  handleDirectoryContents: (path, items) => {
+    set({ explorerCurrentPath: path, explorerContents: items })
+  },
+
+  spawnAtDirectory: (dir) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      // Close explorer first
+      set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+      // Send spawn_at_dir action
+      ws.send(JSON.stringify({ action: "spawn_at_dir", shell: "powershell", dir }))
     }
   },
 

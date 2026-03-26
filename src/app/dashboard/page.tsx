@@ -6,6 +6,7 @@ import { SplitPane } from "@/components/SplitPane"
 import { TabBar } from "@/components/TabBar"
 import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { SecurityModal } from "@/components/SecurityModal"
+import { DirectoryPickerModal } from "@/components/DirectoryPickerModal"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
@@ -215,6 +216,9 @@ function DashboardContent() {
 
       {/* Security Modal */}
       <SecurityModal />
+
+      {/* Directory Picker Modal */}
+      <DirectoryPickerModal />
     </div>
   )
 }
