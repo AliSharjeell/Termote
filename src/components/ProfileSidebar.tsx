@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Eye, EyeOff, Copy, Check, X, Link, Key, LogOut, QrCode, Shield, Bot } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { usePaneStore } from "@/hooks/usePaneStore"
@@ -19,6 +19,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedPassword, setCopiedPassword] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
+  const [customCommand, setCustomCommand] = useState("")
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
   const mobileUrl = `https://termote.vercel.app/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
@@ -31,7 +32,18 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
     { value: "aichat", label: "aichat" },
     { value: "codex", label: "Codex" },
     { value: "llm", label: "llm" },
+    { value: "opencode", label: "OpenCode" },
   ]
+
+  const isCustomCommand = !!aiCommand && !aiOptions.some(o => o.value === aiCommand)
+
+  // Sync custom command when aiCommand loads from localStorage
+  useEffect(() => {
+    const isCustom = !aiOptions.some(o => o.value === aiCommand)
+    if (isCustom && aiCommand) {
+      setCustomCommand(aiCommand)
+    }
+  }, [aiCommand])
 
   const maskValue = (value: string) => "\u2022".repeat(Math.min(value.length, 20))
 
@@ -186,7 +198,10 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
                     name="ai-cli"
                     value={option.value}
                     checked={aiCommand === option.value}
-                    onChange={() => setAiCommand(option.value)}
+                    onChange={() => {
+                      setAiCommand(option.value)
+                      setCustomCommand("")
+                    }}
                     className="sr-only"
                   />
                   <div
@@ -199,6 +214,54 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
                   <span className="text-sm">{option.label}</span>
                 </label>
               ))}
+              {/* Custom command option */}
+              <label
+                className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
+                  isCustomCommand
+                    ? "bg-[#27272A] text-white"
+                    : "hover:bg-[#27272A]/50 text-[#808080]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="ai-cli"
+                  value="__custom__"
+                  checked={isCustomCommand}
+                  onChange={() => {
+                    if (customCommand) {
+                      setAiCommand(customCommand)
+                    }
+                  }}
+                  className="sr-only"
+                />
+                <div
+                  className={`h-3 w-3 rounded-full border ${
+                    isCustomCommand
+                      ? "border-white bg-white"
+                      : "border-[#808080]"
+                  }`}
+                />
+                <span className="text-sm">Custom...</span>
+              </label>
+              {isCustomCommand && (
+                <div className="mt-1 pl-6">
+                  <input
+                    type="text"
+                    value={customCommand}
+                    onChange={(e) => {
+                      setCustomCommand(e.target.value)
+                      setAiCommand(e.target.value)
+                    }}
+                    onBlur={() => {
+                      if (customCommand) {
+                        setAiCommand(customCommand)
+                      }
+                    }}
+                    placeholder="Enter custom CLI command..."
+                    className="w-full bg-[#1a1a1a] px-2 py-1.5 text-xs text-[#CCCCCC] outline-none focus:outline-none border border-[#3B3B3B] rounded focus:border-white"
+                  />
+                </div>
+              )}
             </div>
             <p className="text-[10px] text-[#808080]">
               Quick-launch button in terminal header sends: {aiCommand}
