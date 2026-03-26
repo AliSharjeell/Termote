@@ -48,6 +48,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const lastSentDimsRef = useRef<{ cols: number; rows: number } | null>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isResizingRef = useRef<boolean>(false)
 
   const { sendInput, sendResize, killPane, renamePane, togglePin } = usePaneStore()
 
@@ -59,6 +60,11 @@ export function XtermPane({ pane }: XtermPaneProps) {
   )
 
   const handleResize = useCallback(() => {
+    // Break the ResizeObserver loop: if already resizing, don't recurse
+    if (isResizingRef.current) {
+      return
+    }
+
     if (fitAddonRef.current) {
       const dims = fitAddonRef.current.proposeDimensions()
       if (!dims) return
@@ -77,7 +83,11 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
       resizeTimeoutRef.current = setTimeout(() => {
         if (fitAddonRef.current) {
+          // Set flag to prevent ResizeObserver feedback loop
+          isResizingRef.current = true
           fitAddonRef.current.fit()
+          isResizingRef.current = false
+
           lastSentDimsRef.current = { cols: dims.cols, rows: dims.rows }
           sendResize(pane.id, dims.cols, dims.rows)
         }
@@ -145,6 +155,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current)
       }
+      isResizingRef.current = false
     }
   }, [pane.id, handleData, handleResize, sendResize])
 
