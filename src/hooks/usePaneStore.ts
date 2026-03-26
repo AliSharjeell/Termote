@@ -70,6 +70,9 @@ interface PaneState {
   handleDeviceKicked: (deviceId: string) => void
   handleDeviceBanned: (ip: string) => void
   setShowSecurityModal: (show: boolean) => void
+  // File transfer actions
+  uploadFile: (paneId: string, fileName: string, data: string) => void
+  handleFileUploaded: (paneId: string, fileName: string) => void
   // Persistence helpers
   loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes"; paneGroupMap: Record<string, string> }
 }
@@ -476,6 +479,18 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     if (show) {
       get().requestDeviceList()
     }
+  },
+
+  // File transfer
+  uploadFile: (paneId, fileName, data) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "upload_file", pane_id: paneId, file_name: fileName, data }))
+    }
+  },
+
+  handleFileUploaded: (paneId, fileName) => {
+    console.log(`[Termote] File uploaded: ${fileName} to pane ${paneId}`)
   },
 
   loadPersistedState: () => loadPersistedState(),
