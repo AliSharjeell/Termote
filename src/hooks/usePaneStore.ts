@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { Pane, PaneGroup, Shell } from "@/lib/types"
+import type { Pane, PaneGroup, Shell, DeviceInfo } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -29,6 +29,9 @@ interface PaneState {
   // Pane groups
   groups: PaneGroup[]
   selectedGroupId: string | null
+  // Device management
+  devices: DeviceInfo[]
+  showSecurityModal: boolean
 
   // Actions
   setWebSocket: (ws: WebSocket | null) => void
@@ -59,6 +62,14 @@ interface PaneState {
   handleGroupDeleted: (groupId: string) => void
   handleGroupRenamed: (groupId: string, name: string) => void
   handlePaneGroupSet: (paneId: string, groupId: string | null) => void
+  // Device management actions
+  requestDeviceList: () => void
+  kickDevice: (deviceId: string) => void
+  banDevice: (ip: string) => void
+  handleDeviceList: (devices: DeviceInfo[]) => void
+  handleDeviceKicked: (deviceId: string) => void
+  handleDeviceBanned: (ip: string) => void
+  setShowSecurityModal: (show: boolean) => void
   // Persistence helpers
   loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes"; paneGroupMap: Record<string, string> }
 }
@@ -131,6 +142,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   viewMode: "panes",
   groups: [],
   selectedGroupId: null,
+  devices: [],
+  showSecurityModal: false,
 
   setWebSocket: (ws) => set({ ws }),
 
@@ -418,6 +431,51 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       delete paneGroupMap[paneId]
     }
     savePaneGroupMap(paneGroupMap)
+  },
+
+  // Device management actions
+  requestDeviceList: () => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "get_device_list" }))
+    }
+  },
+
+  kickDevice: (deviceId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "kick_device", device_id: deviceId }))
+    }
+  },
+
+  banDevice: (ip) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "ban_device", ip }))
+    }
+  },
+
+  handleDeviceList: (devices) => {
+    set({ devices })
+  },
+
+  handleDeviceKicked: (deviceId) => {
+    const { devices } = get()
+    set({ devices: devices.filter(d => d.id !== deviceId) })
+  },
+
+  handleDeviceBanned: (ip) => {
+    const { devices } = get()
+    // Remove all devices with this IP
+    set({ devices: devices.filter(d => d.ip !== ip) })
+  },
+
+  setShowSecurityModal: (show) => {
+    set({ showSecurityModal: show })
+    // Request fresh device list when opening modal
+    if (show) {
+      get().requestDeviceList()
+    }
   },
 
   loadPersistedState: () => loadPersistedState(),
