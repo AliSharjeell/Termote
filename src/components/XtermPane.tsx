@@ -24,7 +24,12 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const resizeObserverCallbackRef = useRef<((element: Element) => void) | null>(null)
   const isMountedRef = useRef(false)
 
-  const { sendInput, sendResize, killPane, renamePane, togglePin, uploadFile, aiCommand } = usePaneStore()
+  // Use refs for handlers to avoid recreating callbacks on every render
+  const sendInputRef = useRef(usePaneStore.getState().sendInput)
+  const sendResizeRef = useRef(usePaneStore.getState().sendResize)
+
+  // Keep refs in sync with store state
+  const { killPane, renamePane, togglePin, uploadFile, aiCommand } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
 
   // Smart Clipboard: Ctrl+C = Copy if text selected, SIGINT if not
@@ -56,16 +61,16 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
   const handleData = useCallback(
     (data: string) => {
-      sendInput(pane.id, data)
+      sendInputRef.current(pane.id, data)
     },
-    [pane.id, sendInput]
+    [pane.id]
   )
 
   const handleResize = useCallback(
     (cols: number, rows: number) => {
-      sendResize(pane.id, cols, rows)
+      sendResizeRef.current(pane.id, cols, rows)
     },
-    [pane.id, sendResize]
+    [pane.id]
   )
 
   // Initialize or reuse terminal on mount
@@ -96,7 +101,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
     // Send initial resize
     const dims = instance.fitAddon.proposeDimensions() || { cols: instance.terminal.cols, rows: instance.terminal.rows }
-    sendResize(pane.id, dims.cols, dims.rows)
+    sendResizeRef.current(pane.id, dims.cols, dims.rows)
 
     return () => {
       isMountedRef.current = false
@@ -104,7 +109,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
       // Just disconnect the resize observer - the terminal stays alive in the registry
       disconnectResizeObserver(pane.id)
     }
-  }, [pane.id, pane.cols, pane.rows, handleData, handleResize, sendResize, getKeyHandler])
+  }, [pane.id, pane.cols, pane.rows, handleData, handleResize, getKeyHandler])
 
   // Listen for output events from backend
   useEffect(() => {
@@ -161,8 +166,8 @@ export function XtermPane({ pane }: XtermPaneProps) {
   }, [pane.id, togglePin])
 
   const handleLaunchAI = useCallback(() => {
-    sendInput(pane.id, `${aiCommand}\r`)
-  }, [pane.id, aiCommand, sendInput])
+    sendInputRef.current(pane.id, `${aiCommand}\r`)
+  }, [pane.id, aiCommand])
 
   // Drag and drop handlers for file transfer
   const handleDragOver = useCallback((e: React.DragEvent) => {

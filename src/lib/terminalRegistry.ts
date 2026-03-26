@@ -12,6 +12,7 @@
 import { Terminal, ITerminalOptions } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import { WebLinksAddon } from "@xterm/addon-web-links"
+import { WebglAddon } from "@xterm/addon-webgl"
 
 export interface TerminalInstance {
   terminal: Terminal
@@ -177,6 +178,21 @@ export function openTerminal(
   // Open terminal to element
   instance.terminal.open(element)
   instance.isAttached = true
+
+  // Load WebGL addon for better rendering performance (with fallback)
+  try {
+    const webglAddon = new WebglAddon()
+    webglAddon.onContextLoss(() => {
+      // WebGL context lost - will attempt to restore
+      console.warn(`[TerminalRegistry] WebGL context lost for pane ${paneId}, attempting recovery...`)
+    })
+    instance.terminal.loadAddon(webglAddon)
+    console.log(`[TerminalRegistry] WebGL addon loaded successfully for pane ${paneId}`)
+  } catch (e) {
+    // WebGL initialization can fail in certain browser states (e.g., GPU process crashed)
+    // Fall back to default DOM renderer - this is safe to ignore
+    console.warn(`[TerminalRegistry] WebGL addon failed to load for pane ${paneId}, using DOM renderer:`, e)
+  }
 
   // Schedule fit and refresh after DOM is fully rendered
   scheduleFitAndRefresh(instance)
