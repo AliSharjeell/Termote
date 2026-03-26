@@ -5,13 +5,17 @@ A web-native terminal multiplexer frontend built with Next.js, React, and xterm.
 ## Features
 
 - **Split pane view**: Arrange terminals in a responsive grid
-- **Tabs view**: Switch between terminals in a tabbed interface
+- **Tabs view**: Switch between terminals in a tabed interface
 - **Mobile responsive**: Optimized for phone and tablet browsers
 - **QR code connection**: Scan to connect from mobile devices
 - **Real-time sync**: Instant terminal updates via WebSocket
 - **Auto-reconnect**: Handles network interruptions gracefully
 - **Focus button**: Reset terminal size when switching devices
 - **Dark theme**: Modern, eye-friendly dark interface
+- **Drag-and-drop file transfer**: Drag files into terminal panes to upload them
+- **AI quick-launch**: One-click launch of AI CLI tools (Claude Code, Gemini CLI, etc.)
+- **Pane groups**: Color-code and organize terminals into groups
+- **Security & device management**: View and manage connected devices, ban IPs
 
 ## Architecture
 
@@ -52,9 +56,10 @@ A web-native terminal multiplexer frontend built with Next.js, React, and xterm.
 - **Dashboard**: Main application shell with toolbar and content area
 - **SplitPane**: Grid layout for terminal panes
 - **TabBar**: Tab-based terminal organization
-- **XtermPane**: Individual terminal with xterm.js
-- **PaneTitleBar**: Terminal header with close/rename buttons
-- **ProfileSidebar**: Connection info and mobile QR code
+- **XtermPane**: Individual terminal with xterm.js (includes drag-and-drop file upload)
+- **PaneTitleBar**: Terminal header with close/rename/pin/AI launch buttons
+- **ProfileSidebar**: Connection info, mobile QR code, AI CLI settings, security button
+- **SecurityModal**: View connected devices, kick sessions, manage banned IPs
 - **LoginForm**: Tunnel URL and token entry
 - **ConnectionStatus**: Visual connection indicator
 
@@ -70,6 +75,11 @@ interface PaneState {
   viewMode: "tabs" | "panes"
   isConnected: boolean
   isAuthenticated: boolean
+  groups: PaneGroup[]
+  selectedGroupId: string | null
+  devices: DeviceInfo[]
+  showSecurityModal: boolean
+  aiCommand: string  // Quick-launch AI CLI command
 }
 ```
 
@@ -156,6 +166,8 @@ Individual terminal instance using xterm.js:
 - **Resize circuit breaker**: 200ms debounce, tracks last sent dimensions
 - **Scrollback**: Preserved on reconnection
 - **Input forwarding**: Keystrokes sent to backend
+- **Drag-and-drop upload**: Visual feedback when dragging files over pane, uploads to pane's working directory
+- **AI quick-launch button**: Launches configured AI CLI (Claude Code, Gemini, etc.) with one click
 
 ### ProfileSidebar
 
@@ -164,6 +176,8 @@ Connection management panel:
 - Displays tunnel URL (masked)
 - Displays auth token (masked)
 - "Connect to Mobile" button with QR code
+- **Default AI CLI** selector (Claude Code, Gemini CLI, aichat, Codex, llm)
+- **Security & Devices** button to view/manage connected devices and banned IPs
 - Sign out button
 
 ### Connection Status
@@ -212,6 +226,23 @@ Multi-client sync via broadcast channel:
 
 // Rename
 { action: "rename", pane_id: string, name: string }
+
+// Pane groups
+{ action: "create_group", id?: string, name: string, color: string }
+{ action: "delete_group", group_id: string }
+{ action: "rename_group", group_id: string, name: string }
+{ action: "set_pane_group", pane_id: string, group_id: string | null }
+
+// Directory picker
+{ action: "request_directory_picker", shell: string }
+
+// File transfer
+{ action: "upload_file", pane_id: string, file_name: string, data: string }
+
+// Device management
+{ action: "get_device_list" }
+{ action: "kick_device", device_id: string }
+{ action: "ban_device", ip: string }
 ```
 
 ### Server Messages
@@ -221,10 +252,28 @@ Multi-client sync via broadcast channel:
 { event: "auth_result", success: boolean, message?: string }
 
 // State sync
-{ event: "state_update", panes: Pane[], active_panes: string[], floating_panes: string[] }
+{ event: "state_update", panes: Pane[], active_panes: string[], floating_panes: string[], groups: PaneGroup[] }
 
 // Terminal output
 { event: "output", pane_id: string, data: string }
+
+// Group events
+{ event: "group_created", group: PaneGroup }
+{ event: "group_deleted", group_id: string }
+{ event: "group_renamed", group_id: string, name: string }
+{ event: "pane_group_set", pane_id: string, group_id: string | null }
+
+// Directory picker
+{ event: "directory_picker_cancelled" }
+
+// File transfer
+{ event: "file_uploaded", pane_id: string, file_name: string }
+
+// Device management
+{ event: "device_list", devices: DeviceInfo[] }
+{ event: "device_kicked", device_id: string }
+{ event: "device_banned", ip: string }
+{ event: "error", message: string }
 ```
 
 ## Auto-Reconnect
