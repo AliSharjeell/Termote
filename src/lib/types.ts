@@ -37,8 +37,9 @@ export type RequestDirectoryPickerMessage = { action: "request_directory_picker"
 export type GetDeviceListMessage = { action: "get_device_list" }
 export type KickDeviceMessage = { action: "kick_device"; device_id: string }
 export type BanDeviceMessage = { action: "ban_device"; ip: string }
+export type UploadFileMessage = { action: "upload_file"; pane_id: string; file_name: string; data: string }
 
-export type ClientMessage = SpawnMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage
+export type ClientMessage = SpawnMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -59,5 +60,6 @@ export type DeviceListEvent = { event: "device_list"; devices: DeviceInfo[] }
 export type DeviceKickedEvent = { event: "device_kicked"; device_id: string }
 export type DeviceBannedEvent = { event: "device_banned"; ip: string }
 export type ErrorEvent = { event: "error"; message: string }
+export type FileUploadedEvent = { event: "file_uploaded"; pane_id: string; file_name: string }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent
