@@ -122,6 +122,10 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           if (message.success) {
             setAuthenticated(true)
             console.log("[Termote] Authenticated!")
+            // Request device list after successful authentication
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ action: "get_device_list" }))
+            }
           } else {
             console.error("[Termote] Authentication failed:", message.message)
           }
