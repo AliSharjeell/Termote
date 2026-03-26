@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react"
 import { usePaneStore } from "./usePaneStore"
-import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet } from "@/lib/types"
+import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet, DeviceListEvent, DeviceKickedEvent, DeviceBannedEvent, ErrorEvent } from "@/lib/types"
 
 interface UseWebSocketOptions {
   url: string | null
@@ -23,6 +23,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleGroupDeleted,
     handleGroupRenamed,
     handlePaneGroupSet,
+    handleDeviceList,
+    handleDeviceKicked,
+    handleDeviceBanned,
   } = usePaneStore()
 
   const connect = useCallback(() => {
@@ -141,9 +144,24 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "directory_picker_cancelled":
           console.log("[Termote] Directory picker cancelled by user")
           break
+        case "device_list":
+          console.log("[Termote] device_list:", message.devices)
+          handleDeviceList(message.devices)
+          break
+        case "device_kicked":
+          console.log("[Termote] device_kicked:", message.device_id)
+          handleDeviceKicked(message.device_id)
+          break
+        case "device_banned":
+          console.log("[Termote] device_banned:", message.ip)
+          handleDeviceBanned(message.ip)
+          break
+        case "error":
+          console.error("[Termote] Error from server:", message.message)
+          break
       }
     },
-    [setLayout, setAuthenticated]
+    [setLayout, setAuthenticated, handleDeviceList, handleDeviceKicked, handleDeviceBanned]
   )
 
   const disconnect = useCallback(() => {
