@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Copy, Check, X, Link, Key, LogOut, QrCode } from "lucide-react"
+import { Eye, EyeOff, Copy, Check, X, Link, Key, LogOut, QrCode, Shield } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
+import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface ProfileSidebarProps {
   isOpen: boolean
@@ -18,6 +19,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedPassword, setCopiedPassword] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
+  const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
   const mobileUrl = `https://termote.vercel.app/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
 
@@ -156,6 +158,16 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
 
         {/* Footer */}
         <div className="border-t border-[#333333] p-4 space-y-2">
+          <button
+            onClick={() => {
+              onClose()
+              setShowSecurityModal(true)
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
+          >
+            <Shield className="h-4 w-4" />
+            Security & Devices
+          </button>
           <button
             onClick={handleCopyUrl}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"

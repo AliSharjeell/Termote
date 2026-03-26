@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { SplitPane } from "@/components/SplitPane"
 import { TabBar } from "@/components/TabBar"
 import { ProfileSidebar } from "@/components/ProfileSidebar"
+import { SecurityModal } from "@/components/SecurityModal"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
@@ -211,6 +212,9 @@ function DashboardContent() {
           onSignOut={handleSignOut}
         />
       )}
+
+      {/* Security Modal */}
+      <SecurityModal />
     </div>
   )
 }
