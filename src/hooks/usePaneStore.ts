@@ -185,7 +185,37 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   sendInput: (paneId, data) => {
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
-      ws.send(JSON.stringify({ action: "input", pane_id: paneId, data }))
+      // Windows ConPTY has limited input buffer (~16KB).
+      // Large pastes get truncated if sent as a single chunk.
+      // Chunk into 512-byte pieces with small delays to avoid buffer overflow.
+      const CHUNK_SIZE = 512
+      const CHUNK_DELAY_MS = 5
+
+      if (data.length <= CHUNK_SIZE) {
+        // Small input: send directly
+        ws.send(JSON.stringify({ action: "input", pane_id: paneId, data }))
+      } else {
+        // Large input: chunk and send with delays
+        const chunks: string[] = []
+        for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+          chunks.push(data.slice(i, i + CHUNK_SIZE))
+        }
+
+        // Send first chunk immediately
+        ws.send(JSON.stringify({ action: "input", pane_id: paneId, data: chunks[0] }))
+
+        // Send remaining chunks with small delays
+        let delay = CHUNK_DELAY_MS
+        for (let i = 1; i < chunks.length; i++) {
+          setTimeout(() => {
+            const { ws: wsNow, isAuthenticated: authNow } = get()
+            if (wsNow && authNow) {
+              wsNow.send(JSON.stringify({ action: "input", pane_id: paneId, data: chunks[i] }))
+            }
+          }, delay)
+          delay += CHUNK_DELAY_MS
+        }
+      }
     }
   },
 
