@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Pencil, Pin, PinOff, FolderInput, X, Plus } from "lucide-react"
+import { Pencil, Pin, PinOff, FolderInput, X, Plus, Bot } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface PaneTitleBarProps {
@@ -12,9 +12,10 @@ interface PaneTitleBarProps {
   onRename: (newTitle: string) => void
   onClose: () => void
   onPin?: () => void
+  onLaunchAI?: () => void
 }
 
-export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose, onPin }: PaneTitleBarProps) {
+export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose, onPin, onLaunchAI }: PaneTitleBarProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
   const [showGroupMenu, setShowGroupMenu] = useState(false)
@@ -237,6 +238,17 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
             </div>
           )}
         </div>
+
+        {/* AI Launch button */}
+        {onLaunchAI && (
+          <button
+            onClick={onLaunchAI}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0 text-[#808080] hover:text-white transition-colors"
+            title="Launch AI CLI"
+          >
+            <Bot className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Title */}
         {isEditing ? (
