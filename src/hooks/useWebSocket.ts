@@ -138,6 +138,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           console.log("[Termote] pane_group_set:", message.pane_id, message.group_id)
           handlePaneGroupSet(message.pane_id, message.group_id)
           break
+        case "directory_picker_cancelled":
+          console.log("[Termote] Directory picker cancelled by user")
+          break
       }
     },
     [setLayout, setAuthenticated]

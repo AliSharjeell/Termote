@@ -36,6 +36,7 @@ interface PaneState {
   setAuthenticated: (authenticated: boolean) => void
   setLayout: (panes: Pane[], activePanes: string[], floatingPanes: string[], groups?: PaneGroup[]) => void
   spawnPane: (shell: Shell) => void
+  requestDirectoryPicker: (shell: Shell) => void
   killPane: (paneId: string) => void
   sendInput: (paneId: string, data: string) => void
   sendResize: (paneId: string, cols: number, rows: number) => void
@@ -172,6 +173,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "spawn", shell }))
+    }
+  },
+
+  requestDirectoryPicker: (shell) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "request_directory_picker", shell }))
     }
   },
 

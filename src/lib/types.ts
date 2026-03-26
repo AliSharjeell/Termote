@@ -25,8 +25,9 @@ export type KillMessage = { action: "kill"; pane_id: string }
 export type MoveToFloatingMessage = { action: "move_to_floating"; pane_id: string }
 export type MoveToActiveMessage = { action: "move_to_active"; pane_id: string }
 export type AuthMessage = { action: "auth"; token: string }
+export type RequestDirectoryPickerMessage = { action: "request_directory_picker"; shell: Shell }
 
-export type ClientMessage = SpawnMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage
+export type ClientMessage = SpawnMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -42,5 +43,6 @@ export type GroupCreated = { event: "group_created"; group: PaneGroup }
 export type GroupDeleted = { event: "group_deleted"; group_id: string }
 export type GroupRenamed = { event: "group_renamed"; group_id: string; name: string }
 export type PaneGroupSet = { event: "pane_group_set"; pane_id: string; group_id: string | null }
+export type DirectoryPickerCancelled = { event: "directory_picker_cancelled" }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled

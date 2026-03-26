@@ -84,6 +84,14 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     usePaneStore.getState().spawnPane("powershell")
   }
 
+  const handleSpawnFromDirectory = () => {
+    // Always add new pane to "All Panes" (null group), not current group
+    if (selectedGroupId !== null) {
+      selectGroup(null)
+    }
+    usePaneStore.getState().requestDirectoryPicker("powershell")
+  }
+
   // Auto-balancing 2D grid: optimal square-ish layout
   const count = sortedActivePanes.length
   const cols = Math.ceil(Math.sqrt(count))
@@ -99,6 +107,16 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         >
           <span>+</span>
           <span>New Terminal</span>
+        </button>
+        <button
+          onClick={handleSpawnFromDirectory}
+          title="Open terminal in folder..."
+          className="flex h-7 items-center justify-center rounded-lg bg-[#333333] px-3 text-sm text-[#CCCCCC] hover:bg-[#444444] font-medium gap-1.5 shrink-0"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span>Open Folder...</span>
         </button>
         {/* Separator */}
         <div className="h-4 w-px bg-[#353535] shrink-0" />
