@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useState } from "react"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import { WebLinksAddon } from "@xterm/addon-web-links"
@@ -50,7 +50,8 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isResizingRef = useRef<boolean>(false)
 
-  const { sendInput, sendResize, killPane, renamePane, togglePin } = usePaneStore()
+  const { sendInput, sendResize, killPane, renamePane, togglePin, uploadFile } = usePaneStore()
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const handleData = useCallback(
     (data: string) => {
@@ -185,6 +186,48 @@ export function XtermPane({ pane }: XtermPaneProps) {
     togglePin(pane.id)
   }, [pane.id, togglePin])
 
+  // Drag and drop handlers for file transfer
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Only set false if we're leaving the terminal div itself
+    if (e.currentTarget === e.target) {
+      setIsDragOver(false)
+    }
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length === 0) return
+
+    for (const file of files) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string
+        // Remove the data URL prefix (e.g., "data:application/octet-stream;base64,")
+        const base64Data = base64.split(",")[1] || base64
+        uploadFile(pane.id, file.name, base64Data)
+      }
+      reader.readAsDataURL(file)
+    }
+  }, [pane.id, uploadFile])
+
   return (
     <div className="relative flex h-full w-full flex-col bg-[#0C0C0C]">
       <PaneTitleBar
@@ -198,9 +241,21 @@ export function XtermPane({ pane }: XtermPaneProps) {
       />
       <div
         ref={terminalRef}
-        className="flex-1 overflow-hidden"
+        className={`flex-1 overflow-hidden relative ${isDragOver ? "ring-2 ring-blue-500 ring-inset" : ""}`}
         style={{ padding: "8px" }}
-      />
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragOver && (
+          <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 z-50 pointer-events-none">
+            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-lg">
+              Drop file to upload
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
