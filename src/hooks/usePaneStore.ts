@@ -4,6 +4,7 @@ import type { Pane, PaneGroup, Shell, DeviceInfo } from "@/lib/types"
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
 const PANE_GROUPS_KEY = "termote-pane-groups-map"
+const AI_COMMAND_KEY = "termote-ai-command"
 
 const GROUP_COLORS = [
   "#E44", // red
@@ -32,6 +33,8 @@ interface PaneState {
   // Device management
   devices: DeviceInfo[]
   showSecurityModal: boolean
+  // AI CLI command
+  aiCommand: string
 
   // Actions
   setWebSocket: (ws: WebSocket | null) => void
@@ -73,6 +76,8 @@ interface PaneState {
   // File transfer actions
   uploadFile: (paneId: string, fileName: string, data: string) => void
   handleFileUploaded: (paneId: string, fileName: string) => void
+  // AI settings
+  setAiCommand: (command: string) => void
   // Persistence helpers
   loadPersistedState: () => { pinnedPaneIds: string[]; viewMode: "auto" | "tabs" | "panes"; paneGroupMap: Record<string, string> }
 }
@@ -120,6 +125,24 @@ function savePaneGroupMap(paneGroupMap: Record<string, string>) {
   }
 }
 
+// Load persisted AI command from localStorage
+function loadAiCommand() {
+  try {
+    return localStorage.getItem(AI_COMMAND_KEY) || "claude"
+  } catch {
+    return "claude"
+  }
+}
+
+// Save AI command to localStorage
+function saveAiCommand(command: string) {
+  try {
+    localStorage.setItem(AI_COMMAND_KEY, command)
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 // Get pane groupId from localStorage
 export function getPaneGroupIdFromStorage(paneId: string): string | null {
   try {
@@ -147,6 +170,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   selectedGroupId: null,
   devices: [],
   showSecurityModal: false,
+  aiCommand: loadAiCommand(),
 
   setWebSocket: (ws) => set({ ws }),
 
@@ -493,9 +517,17 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     console.log(`[Termote] File uploaded: ${fileName} to pane ${paneId}`)
   },
 
+  setAiCommand: (command) => {
+    saveAiCommand(command)
+    set({ aiCommand: command })
+  },
+
   loadPersistedState: () => loadPersistedState(),
 }))
 
 // Initialize view mode from localStorage
 const initialPersisted = loadPersistedState()
 usePaneStore.setState({ viewMode: initialPersisted.viewMode })
+
+// Initialize AI command from localStorage
+usePaneStore.setState({ aiCommand: loadAiCommand() })
