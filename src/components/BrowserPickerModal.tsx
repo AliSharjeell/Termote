@@ -53,7 +53,7 @@ export function BrowserPickerModal() {
             className="w-full rounded-lg bg-[#27272A] px-3 py-2 text-sm text-white placeholder-[#808080] outline-none border border-[#333333] focus:border-white"
           />
           <p className="mt-2 text-xs text-[#808080]">
-            Opens the URL in your default browser on this PC.
+            Opens the URL in an embedded browser pane. Use your PC's local IP (e.g. 192.168.x.x:3000) instead of localhost.
           </p>
         </div>
 
