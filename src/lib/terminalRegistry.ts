@@ -12,7 +12,6 @@
 import { Terminal, ITerminalOptions } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import { WebLinksAddon } from "@xterm/addon-web-links"
-import { WebglAddon } from "@xterm/addon-webgl"
 
 export interface TerminalInstance {
   terminal: Terminal
@@ -158,12 +157,18 @@ export function openTerminal(
     try {
       if (instance.terminal.element && element.contains(instance.terminal.element)) {
         // Already attached to this element, just refresh
-        scheduleFitAndRefresh(instance)
+        try {
+          instance.fitAddon.fit()
+          instance.terminal.refresh(0, instance.terminal.rows - 1)
+        } catch {
+          // Ignore refresh failures
+        }
         return instance
       }
     } catch {
       // DOM comparison failed, continue to reattach
     }
+    // Terminal was attached elsewhere - element was replaced, just reopen
   }
 
   // Register data handler if provided
@@ -179,23 +184,16 @@ export function openTerminal(
   instance.terminal.open(element)
   instance.isAttached = true
 
-  // Load WebGL addon for better rendering performance (with fallback)
-  try {
-    const webglAddon = new WebglAddon()
-    webglAddon.onContextLoss(() => {
-      // WebGL context lost - will attempt to restore
-      console.warn(`[TerminalRegistry] WebGL context lost for pane ${paneId}, attempting recovery...`)
-    })
-    instance.terminal.loadAddon(webglAddon)
-    console.log(`[TerminalRegistry] WebGL addon loaded successfully for pane ${paneId}`)
-  } catch (e) {
-    // WebGL initialization can fail in certain browser states (e.g., GPU process crashed)
-    // Fall back to default DOM renderer - this is safe to ignore
-    console.warn(`[TerminalRegistry] WebGL addon failed to load for pane ${paneId}, using DOM renderer:`, e)
-  }
+  // Skip WebGL addon - it causes context loss issues when switching views
+  // The DOM renderer is stable and works reliably
 
-  // Schedule fit and refresh after DOM is fully rendered
-  scheduleFitAndRefresh(instance)
+  // Fit and refresh after DOM is fully rendered
+  try {
+    instance.fitAddon.fit()
+    instance.terminal.refresh(0, instance.terminal.rows - 1)
+  } catch {
+    // Ignore fit failures during rapid view switches
+  }
 
   return instance
 }
