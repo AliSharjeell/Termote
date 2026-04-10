@@ -15,7 +15,7 @@ interface SplitPaneProps {
 
 export function SplitPane({ searchQuery }: SplitPaneProps) {
   // ALL hooks must be at the top - never inside conditionals!
-  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup } = usePaneStore()
+  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup, sidebarCollapsed, gitSidebarCollapsed, toggleSidebar, toggleGitSidebar } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
@@ -108,6 +108,28 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   return (
     <div ref={containerRef} className="flex h-full w-full flex-row">
       {/* Vertical sidebar with group tabs */}
+      {sidebarCollapsed ? (
+        <div className="shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] bg-[#0d0d0d] p-1 w-10">
+          <button
+            onClick={toggleSidebar}
+            title="Expand sidebar"
+            className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-white"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="14" y1="9" x2="14" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/>
+            </svg>
+          </button>
+          <button
+            onClick={toggleSidebar}
+            title="Panes"
+            className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-white"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+            </svg>
+          </button>
+        </div>
+      ) : (
       <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">
         <div className="flex flex-col gap-1 mb-2">
           <button
@@ -371,6 +393,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           {sortedActivePanes.length} pane{sortedActivePanes.length !== 1 ? "s" : ""}
         </span>
       </div>
+      )}
 
       {/* Main content - left sidebar + grid */}
       <div className="flex flex-1 overflow-hidden">
@@ -417,7 +440,30 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         </div>
 
         {/* Git sidebar */}
-        <SourceControlPane />
+        {gitSidebarCollapsed ? (
+          <div className="shrink-0 flex flex-col items-center border-l border-[#252525] bg-[#0d0d0d] w-10 py-2 gap-2">
+            <button
+              onClick={toggleGitSidebar}
+              title="Expand git sidebar"
+              className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-white"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+            </button>
+            <button
+              onClick={toggleGitSidebar}
+              title="Source Control"
+              className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-white"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/>
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <SourceControlPane />
+        )}
       </div>
     </div>
   )
