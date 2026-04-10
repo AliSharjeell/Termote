@@ -103,6 +103,7 @@ interface PaneState {
   setAuthenticated: (authenticated: boolean) => void
   setLayout: (panes: Pane[], activePanes: string[], floatingPanes: string[], groups?: PaneGroup[]) => void
   spawnPane: (shell: Shell) => void
+  spawnNotePane: () => void
   requestDirectoryPicker: (shell: Shell) => void
   killPane: (paneId: string) => void
   sendInput: (paneId: string, data: string) => void
@@ -480,6 +481,25 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "spawn", shell }))
     }
+  },
+
+  spawnNotePane: () => {
+    const { panes, activePanes } = get()
+    const id = `note-${Date.now()}`
+    const newPane: Pane = {
+      id,
+      pid: 0,
+      shell: "note" as any,
+      name: "Untitled Note",
+      cols: 80,
+      rows: 24,
+    }
+    const updatedPanes = [...panes, newPane]
+    set({
+      panes: updatedPanes,
+      activePanes: [...activePanes, id],
+    })
+    savePanes(updatedPanes)
   },
 
   requestDirectoryPicker: (shell) => {
