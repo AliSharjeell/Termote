@@ -430,16 +430,24 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setLayout: (panes, activePanes, floatingPanes, groups) => {
     const state = get()
     let selectedTab = state.selectedTab
+
+    // Preserve frontend-only panes (browser panes) - they don't come from backend
+    const browserPanes = state.panes.filter(p => p.url != null)
+    const backendPaneIds = new Set(panes.map(p => p.id))
+    const survivingBrowserPanes = browserPanes.filter(p => backendPaneIds.has(p.id) || state.activePanes.includes(p.id))
+
     // Load persisted pinned pane IDs
     const persisted = loadPersistedState()
     const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
     // Apply pinned state from localStorage, use groupId from backend or localStorage
-    const updatedPanes = panes.map(p => ({
+    const updatedPanes = [...survivingBrowserPanes, ...panes.map(p => ({
       ...p,
       pinned: pinnedPaneIdSet.has(p.id),
       // Restore groupId from localStorage if backend doesn't provide it
       groupId: p.groupId ?? persisted.paneGroupMap[p.id] ?? null,
-    }))
+      // Preserve url if this pane has one
+      url: state.panes.find(sp => sp.id === p.id)?.url ?? p.url,
+    }))]
     // Auto-select first pane if none selected or current selection is gone
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
       selectedTab = updatedPanes.length > 0 ? updatedPanes[0].id : ""
