@@ -61,6 +61,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
             console.log("[Termote] Authenticated!")
             if (wsRef.current?.readyState === WebSocket.OPEN) {
               wsRef.current.send(JSON.stringify({ action: "get_device_list" }))
+              wsRef.current.send(JSON.stringify({ action: "get_port_processes" }))
             }
           } else {
             console.error("[Termote] Authentication failed:", message.message)
