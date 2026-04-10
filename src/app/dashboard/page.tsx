@@ -24,14 +24,18 @@ function DashboardContent() {
 
   const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
 
-  // Set default view based on orientation on first load only
+  // Set default view based on orientation on first load only if no explicit preference saved
   const initialLoadRef = useRef(false)
   useEffect(() => {
     if (!initialLoadRef.current && isReady) {
       initialLoadRef.current = true
-      setViewMode(isLandscape ? "panes" : "tabs")
+      // Only apply orientation-based default if viewMode is still "auto" (no user preference saved)
+      if (viewMode === "auto") {
+        setViewMode(isLandscape ? "panes" : "tabs")
+      }
+      // If viewMode is "tabs" or "panes", user already has an explicit preference - do nothing
     }
-  }, [isReady, isLandscape, setViewMode])
+  }, [isReady, isLandscape, setViewMode, viewMode])
 
   // Determine which view to show based on viewMode
   const showTabs = viewMode === "tabs"
