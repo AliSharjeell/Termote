@@ -456,15 +456,18 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Also preserve existing groups if backend sends empty array (backend might not persist groups)
     const hasGroups = groups && groups.length > 0
     const finalGroups = hasGroups ? groups : state.groups
+    // Merge browser pane IDs into activePanes so they're preserved across state updates
+    const browserPaneIds = survivingBrowserPanes.map(p => p.id)
+    const mergedActivePanes = [...new Set([...activePanes, ...browserPaneIds])]
     // Persist panes and groups to localStorage
     savePanes(updatedPanes)
-    saveActivePanes(activePanes)
+    saveActivePanes(mergedActivePanes)
     saveFloatingPanes(floatingPanes)
     saveSelectedTab(selectedTab)
     saveGroups(finalGroups)
     set({
       panes: updatedPanes,
-      activePanes,
+      activePanes: mergedActivePanes,
       floatingPanes,
       selectedTab,
       groups: finalGroups
