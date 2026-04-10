@@ -28,14 +28,14 @@ export function SourceControlPane() {
     }
   }, [cwd, findGitRepos])
 
-  // Set initial selected repo when repos are found
+  // Set initial selected repo when repos are found or cwd changes
   useEffect(() => {
-    if (sourceControlRepos.length > 0 && !selectedRepo) {
+    if (sourceControlRepos.length > 0) {
       // Prefer the current directory if it's a repo, otherwise pick first
       const cwdRepo = sourceControlRepos.find(r => r.path === cwd)
       setSelectedRepo(cwdRepo ? cwdRepo.path : sourceControlRepos[0].path)
     }
-  }, [sourceControlRepos, cwd, selectedRepo])
+  }, [sourceControlRepos, cwd])
 
   // Fetch source control state when selected repo changes
   useEffect(() => {
