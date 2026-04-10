@@ -34,6 +34,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleGitLog,
     handleSourceControlState,
     handleGitReposFound,
+    handlePortProcesses,
   } = usePaneStore()
 
   const handleMessage = useCallback(
@@ -115,9 +116,12 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "git_repos_found":
           handleGitReposFound(message.repos)
           break
+        case "port_processes":
+          handlePortProcesses(message.processes)
+          break
       }
     },
-    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleGitReposFound]
+    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleGitReposFound, handlePortProcesses]
   )
 
   const connect = useCallback(() => {
