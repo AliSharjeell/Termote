@@ -100,59 +100,65 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   const rows = Math.ceil(count / cols)
 
   return (
-    <div ref={containerRef} className="flex h-full w-full flex-col">
-      {/* Toolbar */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-[#353535] bg-[#161616] px-4 py-2 overflow-x-auto">
-        <button
-          onClick={handleAddPane}
-          className="flex h-7 items-center justify-center rounded-lg bg-white px-3 text-sm text-black hover:bg-gray-200 font-medium gap-1.5 shrink-0"
-        >
-          <span>+</span>
-          <span>New Terminal</span>
-        </button>
-        <button
-          onClick={handleSpawnFromDirectory}
-          title="Open terminal in folder..."
-          className="flex h-7 items-center justify-center rounded-lg bg-[#333333] px-3 text-sm text-[#CCCCCC] hover:bg-[#444444] font-medium gap-1.5 shrink-0"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
-          <span>Open Folder...</span>
-        </button>
+    <div ref={containerRef} className="flex h-full w-full flex-row">
+      {/* Vertical sidebar with group tabs */}
+      <div className="flex shrink-0 flex-col gap-1 border-r border-[#353535] bg-[#161616] p-2 w-48">
+        <div className="flex flex-col gap-1 mb-2">
+          <button
+            onClick={handleAddPane}
+            className="flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm text-black hover:bg-gray-200 font-medium shrink-0"
+          >
+            <span>+</span>
+            <span>New Terminal</span>
+          </button>
+          <button
+            onClick={handleSpawnFromDirectory}
+            title="Open terminal in folder..."
+            className="flex items-center justify-center gap-1.5 rounded-lg bg-[#333333] px-3 py-2 text-sm text-[#CCCCCC] hover:bg-[#444444] font-medium shrink-0"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Open Folder...</span>
+          </button>
+        </div>
         {/* Separator */}
-        <div className="h-4 w-px bg-[#353535] shrink-0" />
-        {/* Group tabs */}
+        <div className="h-px bg-[#353535] mb-1" />
+        {/* Group label */}
+        <span className="text-[10px] text-[#808080] px-2 uppercase tracking-wider">Groups</span>
+        {/* Group buttons - vertical */}
         <button
           onClick={() => {
             selectGroup(null)
             window.location.reload()
           }}
-          className={`shrink-0 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
+          className={`w-full rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
             selectedGroupId === null
               ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
               : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
           }`}
         >
-          All Panes
+          <span>All Panes</span>
+          <span className="ml-auto text-xs text-[#666]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
         </button>
         <button
           onClick={() => {
             selectGroup("__ungrouped__")
             window.location.reload()
           }}
-          className={`shrink-0 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
+          className={`w-full rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
               ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
               : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
           }`}
         >
-          Ungrouped
+          <span>Ungrouped</span>
+          <span className="ml-auto text-xs text-[#666]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
         </button>
         {groups.map((group) => (
           <div
             key={group.id}
-            className="group relative shrink-0"
+            className="group relative"
             onMouseEnter={() => setHoveredGroupId(group.id)}
             onMouseLeave={() => setHoveredGroupId(null)}
           >
@@ -161,7 +167,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 selectGroup(group.id)
                 window.location.reload()
               }}
-              className={`rounded-lg px-4 py-2 text-sm border border-[#333333] flex items-center gap-2 ${
+              className={`w-full rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
                 selectedGroupId === group.id
                   ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
                   : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
@@ -171,7 +177,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 className="h-2 w-2 rounded shrink-0"
                 style={{ backgroundColor: group.color }}
               />
-              <span className="truncate max-w-[120px]">{group.name}</span>
+              <span className="truncate">{group.name}</span>
+              <span className="ml-auto text-xs text-[#666]">{panes.filter(p => p.groupId === group.id && activePanes.includes(p.id)).length}</span>
             </button>
             {hoveredGroupId === group.id && (
               <button
@@ -189,8 +196,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         ))}
         {/* Spacer */}
         <div className="flex-1" />
-        <span className="text-xs text-[#808080] shrink-0">
-          {sortedActivePanes.length} pane{sortedActivePanes.length !== 1 ? "s" : ""} ({cols}x{rows})
+        {/* Pane count */}
+        <span className="text-xs text-[#808080] px-2 text-center">
+          {sortedActivePanes.length} pane{sortedActivePanes.length !== 1 ? "s" : ""}
         </span>
       </div>
 
