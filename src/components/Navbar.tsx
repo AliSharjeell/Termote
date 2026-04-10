@@ -21,7 +21,7 @@ export function Navbar() {
             <Link href="/setup" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Setup</Link>
             <Link href="/blog" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Blog</Link>
             <a href="https://github.com/AliSharjeell/Termote" target="_blank" rel="noopener noreferrer"
-               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-700 text-zinc-300 text-sm hover:border-zinc-500 hover:text-zinc-100 transition-colors">
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-700 text-zinc-300 text-sm hover:border-zinc-500 hover:text-zinc-100 transition-colors">
               <Github className="h-4 w-4" />
               GitHub
             </a>
