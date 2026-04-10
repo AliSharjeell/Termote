@@ -206,47 +206,48 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           const isExpanded = expandedGroups.has(group.id)
           return (
             <div key={group.id} className="group/row">
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => { selectGroup(group.id); window.location.reload() }}
-                  className={`flex-1 rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
-                    selectedGroupId === group.id
-                      ? "bg-[#0C0C0C] text-white border-[#0C0C0C]"
-                      : "text-white hover:bg-[#333333] hover:border-[#444444]"
-                  }`}
-                >
-                  <span
-                    className="h-2 w-2 rounded shrink-0"
-                    style={{ backgroundColor: group.color }}
-                  />
-                  <span className="truncate">{group.name}</span>
-                  <span className="ml-auto text-xs text-[#666]">{groupPanes.length}</span>
-                </button>
+              <button
+                onClick={() => { selectGroup(group.id); window.location.reload() }}
+                className={`w-full rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
+                  selectedGroupId === group.id
+                    ? "bg-[#0C0C0C] text-white border-[#0C0C0C]"
+                    : "text-white hover:bg-[#333333] hover:border-[#444444]"
+                }`}
+              >
+                <span
+                  className="h-2 w-2 rounded shrink-0"
+                  style={{ backgroundColor: group.color }}
+                />
+                <span className="truncate">{group.name}</span>
+                <span className="ml-auto text-xs text-[#666]">{groupPanes.length}</span>
                 {groupPanes.length > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      const newSet = new Set(expandedGroups)
-                      if (isExpanded) newSet.delete(group.id)
-                      else newSet.add(group.id)
-                      setExpandedGroups(newSet)
-                    }}
-                    className="h-8 w-6 flex items-center justify-center rounded border border-[#333333] text-[#808080] hover:bg-[#333333] hover:text-white shrink-0"
-                    title={isExpanded ? "Collapse" : "Expand"}
-                  >
-                    <span className="text-xs">{isExpanded ? "▾" : "▸"}</span>
-                  </button>
+                  <>
+                    <span className="border-l border-[#333333] h-4 w-px shrink-0 mx-1" />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const newSet = new Set(expandedGroups)
+                        if (isExpanded) newSet.delete(group.id)
+                        else newSet.add(group.id)
+                        setExpandedGroups(newSet)
+                      }}
+                      className="text-xs text-[#808080] hover:text-white px-1 shrink-0"
+                      title={isExpanded ? "Collapse" : "Expand"}
+                    >
+                      {isExpanded ? "▾" : "▸"}
+                    </button>
+                  </>
                 )}
-                {hoveredGroupId === group.id && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); deleteGroup(group.id) }}
-                    className="h-8 w-6 rounded bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-xs font-bold leading-none shrink-0"
-                    title="Delete group"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
+              </button>
+              {hoveredGroupId === group.id && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteGroup(group.id) }}
+                  className="absolute right-2 top-2 h-5 w-5 rounded bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[10px] font-bold leading-none shrink-0"
+                  title="Delete group"
+                >
+                  ×
+                </button>
+              )}
               {isExpanded && groupPanes.length > 0 && (
                 <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
                   {groupPanes.map((pane) => (
