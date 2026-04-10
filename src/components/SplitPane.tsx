@@ -118,7 +118,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           >
             ›
           </button>
-          <span className="text-[8px] text-[#555]">{sortedActivePanes.length}</span>
+          <span className="text-[8px] text-[#555]">{sortedActivePanes.length}panes</span>
+          {portProcesses.length > 0 && (
+            <span className="text-[8px] text-[#16C60C]">{portProcesses.length}ports</span>
+          )}
         </div>
       ) : (
       <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">
