@@ -136,7 +136,6 @@ function DashboardContent() {
             }}
           />
           <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
-          />
           {tunnelStatus === "connecting" && !isConnected && (
             <span className="text-xs text-[#DCDCAA]">Connecting...</span>
           )}
