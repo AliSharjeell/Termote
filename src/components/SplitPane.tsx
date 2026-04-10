@@ -129,30 +129,80 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <span className="text-[10px] text-[#808080] px-2 uppercase tracking-wider mb-1">Groups</span>
 
         {/* All Panes */}
-        <button
-          onClick={() => { selectGroup(null); window.location.reload() }}
-          className={`w-full rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
-            selectedGroupId === null
-              ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
-              : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
-          }`}
-        >
-          <span>All Panes</span>
-          <span className="ml-auto text-xs text-[#666]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => { selectGroup(null); window.location.reload() }}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
+              selectedGroupId === null
+                ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
+                : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
+            }`}
+          >
+            <span>All Panes</span>
+            <span className="ml-auto text-xs text-[#666]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              const newSet = new Set(expandedGroups)
+              if (expandedGroups.has("__all__")) newSet.delete("__all__")
+              else newSet.add("__all__")
+              setExpandedGroups(newSet)
+            }}
+            className="h-8 w-6 flex items-center justify-center rounded border border-[#333333] text-[#808080] hover:bg-[#333333] hover:text-white shrink-0"
+            title="Expand"
+          >
+            <span className="text-xs">{expandedGroups.has("__all__") ? "▾" : "▸"}</span>
+          </button>
+        </div>
+        {expandedGroups.has("__all__") && (
+          <div className="ml-3 mb-1 flex flex-col gap-0.5 rounded border border-[#2a2a2a] bg-[#0C0C0C] p-1.5">
+            {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
+              <div key={pane.id} className="flex items-center gap-2 rounded px-2 py-1 text-xs text-[#808080] hover:bg-[#27272A] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+                <span className="truncate">{pane.name}</span>
+                {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Ungrouped */}
-        <button
-          onClick={() => { selectGroup("__ungroup__"); window.location.reload() }}
-          className={`w-full rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
-            selectedGroupId === "__ungrouped__"
-              ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
-              : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
-          }`}
-        >
-          <span>Ungrouped</span>
-          <span className="ml-auto text-xs text-[#666]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
+              selectedGroupId === "__ungrouped__"
+                ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
+                : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
+            }`}
+          >
+            <span>Ungrouped</span>
+            <span className="ml-auto text-xs text-[#666]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              const newSet = new Set(expandedGroups)
+              if (expandedGroups.has("__ungrouped__")) newSet.delete("__ungrouped__")
+              else newSet.add("__ungrouped__")
+              setExpandedGroups(newSet)
+            }}
+            className="h-8 w-6 flex items-center justify-center rounded border border-[#333333] text-[#808080] hover:bg-[#333333] hover:text-white shrink-0"
+            title="Expand"
+          >
+            <span className="text-xs">{expandedGroups.has("__ungrouped__") ? "▾" : "▸"}</span>
+          </button>
+        </div>
+        {expandedGroups.has("__ungrouped__") && (
+          <div className="ml-3 mb-1 flex flex-col gap-0.5 rounded border border-[#2a2a2a] bg-[#0C0C0C] p-1.5">
+            {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
+              <div key={pane.id} className="flex items-center gap-2 rounded px-2 py-1 text-xs text-[#808080] hover:bg-[#27272A] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+                <span className="truncate">{pane.name}</span>
+                {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Group rows with inline expand chevron */}
         {groups.map((group) => {
