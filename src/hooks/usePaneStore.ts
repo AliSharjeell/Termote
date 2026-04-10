@@ -87,7 +87,7 @@ interface PaneState {
   // File explorer actions
   openExplorer: () => void
   openBrowser: (url: string) => void
-  browserModalOpen: boolean
+  openBrowserModal: () => void
   closeBrowserModal: () => void
   closeExplorer: () => void
   fetchDirectory: (path: string) => void
@@ -687,6 +687,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   closeExplorer: () => {
     set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+  },
+
+  openBrowserModal: () => {
+    set({ browserModalOpen: true })
   },
 
   closeBrowserModal: () => {
