@@ -22,9 +22,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
 
   // Filter by selected group
   const groupFilteredPanes = selectedGroupId
-    ? filteredPanes.filter((p) => {
-        return p.groupId != null && p.groupId === selectedGroupId
-      })
+    ? selectedGroupId === "__ungrouped__"
+      ? filteredPanes.filter((p) => p.groupId === null)
+      : filteredPanes.filter((p) => {
+          return p.groupId != null && p.groupId === selectedGroupId
+        })
     : filteredPanes
 
   // Sort: pinned panes first, then by original order
@@ -130,6 +132,16 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           }`}
         >
           All Panes
+        </button>
+        <button
+          onClick={() => selectGroup("__ungrouped__")}
+          className={`shrink-0 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
+            selectedGroupId === "__ungrouped__"
+              ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
+              : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
+          }`}
+        >
+          Ungrouped
         </button>
         {groups.map((group) => (
           <div
