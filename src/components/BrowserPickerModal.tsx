@@ -5,6 +5,10 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { X, Globe } from "lucide-react"
 
 export function BrowserPickerModal() {
+  const browserModalOpen = usePaneStore((state) => state.browserModalOpen)
+  const spawnBrowserPane = usePaneStore((state) => state.spawnBrowserPane)
+  const closeBrowserModal = usePaneStore((state) => state.closeBrowserModal)
+
   const [url, setUrl] = useState(() => {
     // Derive HTTP URL from tunnel URL - use the tunnel hostname as the default
     if (typeof window !== "undefined") {
