@@ -124,7 +124,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <span>Open Folder...</span>
           </button>
           <button
-            onClick={() => usePaneStore.getState().set({ browserModalOpen: true })}
+            onClick={() => usePaneStore.getState().openBrowserModal()}
             title="Open browser tab..."
             className="flex items-center justify-center gap-1.5 rounded-lg bg-[#333333] px-3 py-2 text-sm text-[#CCCCCC] hover:bg-[#444444] font-medium shrink-0"
           >
@@ -168,7 +168,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {expandedGroups.has("__all__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().selectTab(pane.id)}>
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -205,7 +205,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {expandedGroups.has("__ungrouped__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().selectTab(pane.id)}>
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -318,10 +318,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             </div>
           ))
         )}
-      </div>
+        </div>
 
-      {/* Git sidebar */}
-      <GitPane />
+        {/* Git sidebar */}
+        <GitPane />
+      </div>
     </div>
   )
 }
