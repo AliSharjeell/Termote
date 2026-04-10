@@ -240,6 +240,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   {isExpanded ? "▾" : "▸"}
                 </button>
                 <span className="truncate">{group.name}</span>
+                <span className="ml-auto text-xs text-[#666]">{groupPanes.length}</span>
               </button>
               {hoveredGroupId === group.id && (
                 <button
