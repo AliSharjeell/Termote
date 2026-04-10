@@ -7,6 +7,7 @@ import { TabBar } from "@/components/TabBar"
 import { ProfileSidebar } from "@/components/ProfileSidebar"
 import { SecurityModal } from "@/components/SecurityModal"
 import { DirectoryPickerModal } from "@/components/DirectoryPickerModal"
+import { BrowserPickerModal } from "@/components/BrowserPickerModal"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
@@ -243,6 +244,9 @@ function DashboardContent() {
 
       {/* Directory Picker Modal */}
       <DirectoryPickerModal />
+
+      {/* Browser Picker Modal */}
+      <BrowserPickerModal />
     </div>
   )
 }

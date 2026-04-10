@@ -41,6 +41,7 @@ interface PaneState {
   showSecurityModal: boolean
   // File explorer state
   explorerOpen: boolean
+  browserModalOpen: boolean
   explorerCurrentPath: string
   explorerContents: DirectoryItem[]
   // AI CLI command
@@ -86,6 +87,8 @@ interface PaneState {
   // File explorer actions
   openExplorer: () => void
   openBrowser: (url: string) => void
+  browserModalOpen: boolean
+  closeBrowserModal: () => void
   closeExplorer: () => void
   fetchDirectory: (path: string) => void
   handleDirectoryContents: (path: string, items: DirectoryItem[]) => void
@@ -306,6 +309,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   devices: [],
   showSecurityModal: false,
   explorerOpen: false,
+  browserModalOpen: false,
   explorerCurrentPath: "",
   explorerContents: [],
   aiCommand: loadAiCommand(),
@@ -683,6 +687,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   closeExplorer: () => {
     set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+  },
+
+  closeBrowserModal: () => {
+    set({ browserModalOpen: false })
   },
 
   fetchDirectory: (path) => {
