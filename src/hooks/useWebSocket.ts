@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useState } from "react"
 import { usePaneStore } from "./usePaneStore"
 import type { ServerMessage, StateUpdate, OutputEvent, AuthResult, GroupCreated, GroupDeleted, GroupRenamed, PaneGroupSet, DirectoryContentsEvent, DeviceListEvent, DeviceKickedEvent, DeviceBannedEvent, ErrorEvent, FileUploadedEvent } from "@/lib/types"
 
@@ -9,10 +9,93 @@ interface UseWebSocketOptions {
   token: string | null
 }
 
+/**
+ * Checks tunnel connectivity by making an HTTP fetch to the tunnel's
+ * /tunnel-check endpoint. This establishes the Dev Tunnel session/cookies
+ * which are required before WebSocket connections will work.
+ * 
+ * Microsoft Dev Tunnels serve an anti-phishing interstitial page on the
+ * first connection from a new origin. This preflight fetch triggers that
+ * flow so the WebSocket upgrade can succeed afterward.
+ */
+async function checkTunnelConnectivity(tunnelBaseUrl: string): Promise<{ ok: boolean; needsConsent: boolean }> {
+  // Convert wss:// to https:// for the HTTP fetch
+  let httpUrl = tunnelBaseUrl
+  if (httpUrl.startsWith("wss://")) {
+    httpUrl = "https://" + httpUrl.slice(6)
+  } else if (httpUrl.startsWith("ws://")) {
+    httpUrl = "http://" + httpUrl.slice(5)
+  }
+  // Remove trailing /ws if present
+  httpUrl = httpUrl.replace(/\/ws\/?$/, "")
+
+  try {
+    // First try the tunnel-check endpoint
+    const response = await fetch(`${httpUrl}/tunnel-check`, {
+      method: "GET",
+      credentials: "include", // Include cookies for Dev Tunnel session
+      headers: {
+        "Accept": "application/json",
+      },
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log("[Termote] Tunnel check passed:", data)
+      return { ok: true, needsConsent: false }
+    }
+
+    // If we get a redirect or non-200, the tunnel may need consent
+    console.warn("[Termote] Tunnel check returned status:", response.status)
+    return { ok: false, needsConsent: true }
+  } catch (error) {
+    console.warn("[Termote] Tunnel check failed (may need consent):", error)
+
+    // Try a simple health check as fallback
+    try {
+      const healthResponse = await fetch(`${httpUrl}/health`, {
+        method: "GET",
+        credentials: "include",
+      })
+      if (healthResponse.ok) {
+        console.log("[Termote] Health check passed, tunnel is reachable")
+        return { ok: true, needsConsent: false }
+      }
+    } catch {
+      // Both checks failed
+    }
+
+    return { ok: false, needsConsent: true }
+  }
+}
+
+/**
+ * Opens the tunnel URL in a popup window for the user to complete
+ * the Dev Tunnel anti-phishing consent flow.
+ */
+function openTunnelConsentPopup(tunnelBaseUrl: string): Window | null {
+  let httpUrl = tunnelBaseUrl
+  if (httpUrl.startsWith("wss://")) {
+    httpUrl = "https://" + httpUrl.slice(6)
+  } else if (httpUrl.startsWith("ws://")) {
+    httpUrl = "http://" + httpUrl.slice(5)
+  }
+  httpUrl = httpUrl.replace(/\/ws\/?$/, "")
+
+  // Open /health in a popup — the Dev Tunnel consent page will show there
+  const popup = window.open(
+    `${httpUrl}/health`,
+    "termote_tunnel_consent",
+    "width=600,height=500,menubar=no,toolbar=no,location=yes,status=yes"
+  )
+  return popup
+}
+
 export function useWebSocket({ url, token }: UseWebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [tunnelStatus, setTunnelStatus] = useState<"idle" | "checking" | "consent" | "ready" | "error">("idle")
 
   const {
     setWebSocket,
@@ -30,28 +113,16 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleFileUploaded,
   } = usePaneStore()
 
-  const connect = useCallback(() => {
-    if (!url) return
-
+  const connectWebSocket = useCallback((wsUrl: string) => {
     try {
-      // Convert https:// to wss:// and http:// to ws://, then append /ws
-      let wsUrl = url
-      if (wsUrl.startsWith("https://")) {
-        wsUrl = "wss://" + wsUrl.slice(8)
-      } else if (wsUrl.startsWith("http://")) {
-        wsUrl = "ws://" + wsUrl.slice(7)
-      }
-      // Append /ws if not already present
-      if (!wsUrl.endsWith("/ws")) {
-        wsUrl = wsUrl.replace(/\/?$/, "/ws")
-      }
-
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
       setWebSocket(ws)
 
       ws.onopen = () => {
+        console.log("[Termote] WebSocket connected to:", wsUrl)
         setConnected(true)
+        setTunnelStatus("ready")
         // Send auth message on connect
         if (token) {
           ws.send(JSON.stringify({ action: "auth", token }))
@@ -77,6 +148,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       }
 
       ws.onclose = () => {
+        console.log("[Termote] WebSocket closed, will reconnect in 3s")
         setConnected(false)
         setAuthenticated(false)
         setWebSocket(null)
@@ -90,12 +162,95 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       }
 
       ws.onerror = (error) => {
-        console.error("WebSocket error:", error, "URL:", wsUrl, "readyState:", ws.readyState)
+        console.error("[Termote] WebSocket error:", error, "URL:", wsUrl, "readyState:", ws.readyState)
       }
     } catch (e) {
-      console.error("Failed to create WebSocket:", e)
+      console.error("[Termote] Failed to create WebSocket:", e)
+      setTunnelStatus("error")
     }
-  }, [url, token, setWebSocket, setConnected, setAuthenticated])
+  }, [token, setWebSocket, setConnected, setAuthenticated])
+
+  const connect = useCallback(async () => {
+    if (!url) return
+
+    // Build WebSocket URL
+    let wsUrl = url
+    if (wsUrl.startsWith("https://")) {
+      wsUrl = "wss://" + wsUrl.slice(8)
+    } else if (wsUrl.startsWith("http://")) {
+      wsUrl = "ws://" + wsUrl.slice(7)
+    }
+    // Append /ws if not already present
+    if (!wsUrl.endsWith("/ws")) {
+      wsUrl = wsUrl.replace(/\/?$/, "/ws")
+    }
+
+    console.log("[Termote] Connecting to:", wsUrl)
+    setTunnelStatus("checking")
+
+    // Pre-flight: check tunnel connectivity via HTTP fetch first
+    // This establishes the Dev Tunnel session/cookies needed for WebSocket
+    const result = await checkTunnelConnectivity(wsUrl)
+
+    if (result.ok) {
+      // Tunnel is reachable, connect WebSocket directly
+      console.log("[Termote] Tunnel pre-flight passed, opening WebSocket")
+      connectWebSocket(wsUrl)
+    } else if (result.needsConsent) {
+      // Tunnel needs consent — open popup and retry
+      console.log("[Termote] Tunnel needs consent, opening popup")
+      setTunnelStatus("consent")
+
+      const popup = openTunnelConsentPopup(wsUrl)
+
+      // Poll until popup is closed or tunnel becomes reachable
+      const pollInterval = setInterval(async () => {
+        // Check if popup was closed
+        if (popup && popup.closed) {
+          clearInterval(pollInterval)
+          console.log("[Termote] Consent popup closed, retrying tunnel check")
+          
+          // Wait a moment for cookies to propagate
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          const retryResult = await checkTunnelConnectivity(wsUrl)
+          if (retryResult.ok) {
+            console.log("[Termote] Tunnel now reachable after consent")
+            connectWebSocket(wsUrl)
+          } else {
+            console.log("[Termote] Tunnel still not reachable, attempting WebSocket anyway")
+            // Try connecting anyway — sometimes the consent flow sets cookies
+            // that we can't detect via fetch due to CORS
+            connectWebSocket(wsUrl)
+          }
+          return
+        }
+
+        // Also try checking connectivity while popup is open
+        const check = await checkTunnelConnectivity(wsUrl)
+        if (check.ok) {
+          clearInterval(pollInterval)
+          if (popup && !popup.closed) popup.close()
+          console.log("[Termote] Tunnel became reachable during consent")
+          connectWebSocket(wsUrl)
+        }
+      }, 2000)
+
+      // Timeout after 60 seconds — try connecting anyway
+      setTimeout(() => {
+        clearInterval(pollInterval)
+        if (popup && !popup.closed) popup.close()
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+          console.log("[Termote] Consent timeout, attempting WebSocket connection anyway")
+          connectWebSocket(wsUrl)
+        }
+      }, 60000)
+    } else {
+      // Unknown error, try connecting anyway
+      console.log("[Termote] Tunnel check inconclusive, attempting WebSocket")
+      connectWebSocket(wsUrl)
+    }
+  }, [url, token, connectWebSocket])
 
   const handleMessage = useCallback(
     (message: ServerMessage) => {
@@ -201,5 +356,6 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
   return {
     disconnect,
     reconnect: connect,
+    tunnelStatus,
   }
 }
