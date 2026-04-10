@@ -152,4 +152,9 @@ export type GitReposFoundEvent = {
   repos: GitRepoInfo[]
 }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent
+export type PortProcessesEvent = {
+  event: "port_processes"
+  processes: Array<{ port: number; pid: number; process_name: string; cwd?: string }>
+}
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent
