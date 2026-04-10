@@ -115,18 +115,15 @@ function DashboardContent() {
       <div className="relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2">
         {/* Status + Focus - left side */}
         <div className="flex items-center gap-2">
-          <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
           <div
-            className={`h-2 w-2 rounded-full ${
+            className={`h-2 w-2 rounded-full shrink-0 ${
               isConnected
                 ? isAuthenticated
                   ? "bg-[#16C60C]"
                   : "bg-[#DCDCAA]"
                 : tunnelStatus === "connecting"
                   ? "bg-[#DCDCAA] animate-pulse"
-                  : tunnelStatus === "failed"
-                    ? "bg-[#E74856]"
-                    : "bg-[#E74856]"
+                  : "bg-[#E74856]"
             }`}
             style={{
               boxShadow: isConnected
@@ -137,6 +134,8 @@ function DashboardContent() {
                   ? "0 0 6px #DCDCAA"
                   : "0 0 6px #E74856"
             }}
+          />
+          <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
           />
           {tunnelStatus === "connecting" && !isConnected && (
             <span className="text-xs text-[#DCDCAA]">Connecting...</span>
