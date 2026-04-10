@@ -103,16 +103,16 @@ function DashboardContent() {
   // Show loading state
   if (!isReady) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#0C0C0C]">
+      <div className="flex h-screen w-full items-center justify-center bg-[#080808]">
         <div className="text-[#CCCCCC]">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0C0C0C]">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#080808]">
       {/* Connection status bar */}
-      <div className="relative flex shrink-0 items-center border-b border-[#333333] bg-[#161616] px-4 py-2">
+      <div className="relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2">
         {/* Status + Focus - left side */}
         <div className="flex items-center gap-2">
           <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
@@ -146,7 +146,7 @@ function DashboardContent() {
           )}
           <button
             onClick={() => window.location.reload()}
-            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2 py-1 text-xs text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors ml-1"
+            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2 py-1 text-xs text-[#A1A1AA] hover:bg-[#252525] hover:text-white transition-colors ml-1"
             title="Focus - reset terminal size to this device"
           >
             <RefreshCw className="h-3 w-3" />
@@ -207,7 +207,7 @@ function DashboardContent() {
           ) : (
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#A1A1AA] hover:bg-[#252525] hover:text-white transition-colors"
               title="Search"
             >
               <Search className="h-4 w-4" />
@@ -215,7 +215,7 @@ function DashboardContent() {
           )}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#333333] transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#252525] transition-colors"
             title="Profile"
           >
             <User className="h-4 w-4" />
@@ -254,7 +254,7 @@ function DashboardContent() {
 export default function Dashboard() {
   return (
     <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center bg-[#0C0C0C]">
+      <div className="flex h-screen w-full items-center justify-center bg-[#080808]">
         <div className="text-[#CCCCCC]">Loading...</div>
       </div>
     }>

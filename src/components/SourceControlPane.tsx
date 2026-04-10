@@ -74,7 +74,7 @@ export function SourceControlPane() {
 
   if (!cwd) {
     return (
-      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] w-64 overflow-hidden">
+      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
         <div className="flex items-center justify-center h-full text-xs text-[#808080] p-4 text-center">
           Focus a terminal pane with a git repository to see source control
         </div>
@@ -88,7 +88,7 @@ export function SourceControlPane() {
 
   if (!isRepo) {
     return (
-      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] w-64 overflow-hidden">
+      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
         <div className="flex items-center justify-center h-full text-xs text-[#808080] p-4 text-center">
           Not a git repository: {cwd}
         </div>
@@ -135,9 +135,9 @@ export function SourceControlPane() {
   })()
 
   return (
-    <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] w-64 overflow-hidden">
+    <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#333333]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#aaaaaa]">
           <circle cx="12" cy="12" r="4"/>
           <line x1="1.05" y1="12" x2="7" y2="12"/>
@@ -170,11 +170,11 @@ export function SourceControlPane() {
 
       {/* Repo selector (if multiple repos) */}
       {sourceControlRepos.length > 1 && (
-        <div className="px-3 py-1.5 border-b border-[#333333] bg-[#161616]">
+        <div className="px-3 py-1.5 border-b border-[#252525] bg-[#0d0d0d]">
           <select
             value={currentRepoPath}
             onChange={(e) => setSelectedRepo(e.target.value)}
-            className="w-full bg-[#0C0C0C] text-[10px] text-[#cccccc] border border-[#333333] rounded px-2 py-1 outline-none"
+            className="w-full bg-[#080808] text-[10px] text-[#cccccc] border border-[#252525] rounded px-2 py-1 outline-none"
           >
             {sourceControlRepos.map(repo => (
               <option key={repo.path} value={repo.path}>
@@ -187,7 +187,7 @@ export function SourceControlPane() {
 
       {/* Sync Changes button (only when ahead > 0) */}
       {state?.ahead > 0 && (
-        <div className="px-3 py-2 border-b border-[#333333]">
+        <div className="px-3 py-2 border-b border-[#252525]">
           <button
             onClick={handlePush}
             className="w-full flex items-center justify-center gap-2 rounded bg-[#444444] hover:bg-[#555555] text-white text-xs py-1.5 font-medium"
@@ -199,20 +199,20 @@ export function SourceControlPane() {
       )}
 
       {/* Changes section - top */}
-      <div className="border-b border-[#333333]">
+      <div className="border-b border-[#252525]">
         {/* Section header */}
-        <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
+        <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
           <span>Changes ({totalChanges})</span>
           {state?.ahead > 0 && <span className="text-[#888888]">↑ {state.ahead} outgoing</span>}
         </div>
 
         {/* Commit message input */}
-        <div className="p-2 border-b border-[#333333]">
+        <div className="p-2 border-b border-[#252525]">
           <textarea
             value={commitMessage}
             onChange={(e) => setCommitMessage(e.target.value)}
             placeholder="Message (Ctrl+Enter to commit...)"
-            className="w-full h-14 bg-[#0C0C0C] text-xs text-white placeholder-[#555555] rounded px-2 py-1.5 resize-none outline-none focus:ring-1 focus:ring-[#555555] border border-[#333333]"
+            className="w-full h-14 bg-[#080808] text-xs text-white placeholder-[#555555] rounded px-2 py-1.5 resize-none outline-none focus:ring-1 focus:ring-[#555555] border border-[#252525]"
           />
           <button
             onClick={handleCommit}
@@ -231,7 +231,7 @@ export function SourceControlPane() {
               <span className="ml-auto">({state.staged.length})</span>
             </div>
             {state.staged.map((file) => (
-              <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#1a1a1a]">
+              <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#111111]">
                 <button
                   onClick={() => handleStage([file.path], true)}
                   className="text-[10px] text-[#888888] opacity-0 group-hover:opacity-100 hover:text-white"
@@ -250,12 +250,12 @@ export function SourceControlPane() {
         {/* Modified/Unstaged */}
         {state?.unstaged && state.unstaged.length > 0 && (
           <div>
-            <div className="px-3 py-1.5 text-[10px] text-[#aaaaaa] uppercase tracking-wider bg-[#1a1a1a] flex items-center gap-2">
+            <div className="px-3 py-1.5 text-[10px] text-[#aaaaaa] uppercase tracking-wider bg-[#111111] flex items-center gap-2">
               <span>Modified</span>
               <span className="ml-auto">({state.unstaged.length})</span>
             </div>
             {state.unstaged.map((file) => (
-              <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#1a1a1a]">
+              <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#111111]">
                 <button
                   onClick={() => handleStage([file.path], false)}
                   className="text-[10px] text-[#888888] opacity-0 group-hover:opacity-100 hover:text-white"
@@ -274,12 +274,12 @@ export function SourceControlPane() {
         {/* Untracked */}
         {state?.untracked && state.untracked.length > 0 && (
           <div>
-            <div className="px-3 py-1.5 text-[10px] text-[#999999] uppercase tracking-wider bg-[#161616] flex items-center gap-2">
+            <div className="px-3 py-1.5 text-[10px] text-[#999999] uppercase tracking-wider bg-[#0d0d0d] flex items-center gap-2">
               <span>Untracked</span>
               <span className="ml-auto">({state.untracked.length})</span>
             </div>
             {state.untracked.map((file) => (
-              <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#1a1a1a]">
+              <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#111111]">
                 <button
                   onClick={() => handleStage([file.path], false)}
                   className="text-[10px] text-[#888888] opacity-0 group-hover:opacity-100 hover:text-white"
@@ -303,17 +303,17 @@ export function SourceControlPane() {
       </div>
 
       {/* Bottom section - Outgoing + History, compact */}
-      <div className="border-t border-[#333333]">
+      <div className="border-t border-[#252525]">
         {/* Outgoing compact */}
         {state?.outgoing_commits && state.outgoing_commits.length > 0 && (
-          <div className="border-b border-[#333333]">
-            <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
+          <div className="border-b border-[#252525]">
+            <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
               <span>Outgoing ({state.outgoing_commits.length})</span>
               <span className="text-[#555555]">{state.remote || "origin"}</span>
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: "80px" }}>
               {state.outgoing_commits.map((commit, i) => (
-                <div key={commit.hash} className="px-3 py-1 hover:bg-[#1a1a1a]">
+                <div key={commit.hash} className="px-3 py-1 hover:bg-[#111111]">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-[#888888] font-mono">{commit.short_hash}</span>
                     <span className="text-[10px] text-[#555555]">·</span>
@@ -327,7 +327,7 @@ export function SourceControlPane() {
 
         {/* History compact */}
         <div>
-          <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
+          <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
             <span>History ({history.length})</span>
             <div className="flex items-center gap-2 text-[#555555]">
               <span>↑ {state?.ahead || 0}</span>

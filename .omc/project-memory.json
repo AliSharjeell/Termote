@@ -130,20 +130,44 @@
   "hotPaths": [
     {
       "path": "src\\hooks\\usePaneStore.ts",
-      "accessCount": 16,
-      "lastAccessed": 1775852881441,
+      "accessCount": 48,
+      "lastAccessed": 1775859495228,
       "type": "directory"
     },
     {
       "path": "src\\components\\SplitPane.tsx",
-      "accessCount": 9,
-      "lastAccessed": 1775851918517,
+      "accessCount": 39,
+      "lastAccessed": 1775859730218,
       "type": "file"
     },
     {
+      "path": "src\\components\\SourceControlPane.tsx",
+      "accessCount": 19,
+      "lastAccessed": 1775859616855,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\types.ts",
+      "accessCount": 11,
+      "lastAccessed": 1775858948305,
+      "type": "directory"
+    },
+    {
       "path": "src\\hooks\\useWebSocket.ts",
+      "accessCount": 10,
+      "lastAccessed": 1775856298091,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\page.tsx",
+      "accessCount": 8,
+      "lastAccessed": 1775859681746,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\BrowserPane.tsx",
       "accessCount": 4,
-      "lastAccessed": 1775852900437,
+      "lastAccessed": 1775859152206,
       "type": "file"
     },
     {
@@ -153,9 +177,33 @@
       "type": "file"
     },
     {
-      "path": "src\\lib\\types.ts",
+      "path": "src\\components\\XtermPane.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775859089228,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\BrowserPickerModal.tsx",
       "accessCount": 2,
-      "lastAccessed": 1775853670365,
+      "lastAccessed": 1775859017938,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\PaneTitleBar.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775859119392,
+      "type": "directory"
+    },
+    {
+      "path": "src",
+      "accessCount": 1,
+      "lastAccessed": 1775858101550,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components",
+      "accessCount": 1,
+      "lastAccessed": 1775858129601,
       "type": "directory"
     }
   ],

@@ -64,7 +64,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
 
   if (sortedActivePanes.length === 0 && !hasAnyPanes) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
+      <div className="flex h-full w-full items-center justify-center bg-[#080808]">
         <div className="text-center text-[#CCCCCC]">
           <p className="text-lg">No active panes</p>
           <button
@@ -105,7 +105,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   return (
     <div ref={containerRef} className="flex h-full w-full flex-row">
       {/* Vertical sidebar with group tabs */}
-      <div className="flex shrink-0 flex-col gap-1 border-r border-[#353535] bg-[#161616] p-2 w-48">
+      <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">
         <div className="flex flex-col gap-1 mb-2">
           <button
             onClick={handleAddPane}
@@ -122,7 +122,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
-            <span>Open Folder...</span>
+            <span>Open Folder</span>
           </button>
           <button
             onClick={() => usePaneStore.getState().openBrowserModal()}
@@ -134,19 +134,19 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               <line x1="2" y1="12" x2="22" y2="12"/>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
-            <span>Open URL...</span>
+            <span>Open URL</span>
           </button>
         </div>
         {/* Separator */}
-        <div className="h-px bg-[#353535] mb-1" />
+        <div className="h-px bg-[#252525] mb-1" />
 
         {/* All Panes */}
         <button
           onClick={() => { selectGroup(null); window.location.reload() }}
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
-              ? "text-white bg-[#1a1a1a]"
-              : "text-[#888] hover:text-white hover:bg-[#1a1a1a]"
+              ? "text-white bg-[#111111]"
+              : "text-[#888] hover:text-white hover:bg-[#111111]"
           }`}
         >
           <span>All Panes</span>
@@ -181,8 +181,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
-              ? "text-white bg-[#1a1a1a]"
-              : "text-[#888] hover:text-white hover:bg-[#1a1a1a]"
+              ? "text-white bg-[#111111]"
+              : "text-[#888] hover:text-white hover:bg-[#111111]"
           }`}
         >
           <span>Ungrouped</span>
@@ -222,8 +222,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 onClick={() => { selectGroup(group.id); window.location.reload() }}
                 className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
-                    ? "text-white bg-[#1a1a1a]"
-                    : "text-[#888] hover:text-white hover:bg-[#1a1a1a]"
+                    ? "text-white bg-[#111111]"
+                    : "text-[#888] hover:text-white hover:bg-[#111111]"
                 }`}
               >
                 <span className="truncate">{group.name}</span>
@@ -292,7 +292,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           }}
         >
         {isGroupEmpty ? (
-          <div className="flex items-center justify-center bg-[#0C0C0C]">
+          <div className="flex items-center justify-center bg-[#080808]">
             <div className="text-center text-[#808080]">
               <p className="text-sm">No panes in this group</p>
               <p className="text-xs mt-1">Click the folder icon on a pane to add it</p>
@@ -302,7 +302,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           sortedActivePanes.map((pane) => (
             <div
               key={pane.id}
-              className="relative overflow-hidden bg-[#0C0C0C]"
+              className="relative overflow-hidden bg-[#080808]"
             >
               <div className="h-full w-full">
                 {pane.url ? (
