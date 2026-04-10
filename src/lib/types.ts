@@ -15,6 +15,7 @@ export interface Pane {
   rows: number
   pinned?: boolean
   groupId?: string | null
+  cwd?: string | null
 }
 
 export interface DeviceInfo {

@@ -266,7 +266,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                     <div
                       key={pane.id}
                       className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer"
-                      onClick={() => usePaneStore.getState().setActivePane(pane.id)}
+                      onClick={() => usePaneStore.getState().selectTab(pane.id)}
                     >
                       <span className="truncate">{pane.name}</span>
                       {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
