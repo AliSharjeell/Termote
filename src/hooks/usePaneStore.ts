@@ -550,7 +550,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     if (ws && isAuthenticated) {
       // Reset state and request root/drill contents
       set({ explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
-      ws.send(JSON.stringify({ action: "list_directory", path: null }))
+      ws.send(JSON.stringify({ action: "list_directory", path: "" }))
     }
   },
 

@@ -16,7 +16,7 @@ export function DirectoryPickerModal() {
   const handleGoUp = () => {
     // Navigate to parent directory
     const parentPath = explorerCurrentPath.replace(/[/\\][^/\\]+$/, "")
-    // On Windows, if we're at C:\, go to root drives (empty path)
+    // On Windows, if we're at root or empty, go to root drives (empty path)
     if (parentPath === explorerCurrentPath || parentPath === "") {
       fetchDirectory("") // Request drives
     } else {
