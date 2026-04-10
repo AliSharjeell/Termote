@@ -129,18 +129,17 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <span className="text-[10px] text-[#808080] px-2 uppercase tracking-wider mb-1">Groups</span>
 
         {/* All Panes */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => { selectGroup(null); window.location.reload() }}
-            className={`flex-1 rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
-              selectedGroupId === null
-                ? "bg-[#0C0C0C] text-white border-[#0C0C0C]"
-                : "text-white hover:bg-[#333333] hover:border-[#444444]"
-            }`}
-          >
-            <span>All Panes</span>
-            <span className="ml-auto text-xs text-[#666]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
-          </button>
+        <button
+          onClick={() => { selectGroup(null); window.location.reload() }}
+          className={`w-full rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
+            selectedGroupId === null
+              ? "bg-[#0C0C0C] text-white border-[#0C0C0C]"
+              : "text-white hover:bg-[#333333] hover:border-[#444444]"
+          }`}
+        >
+          <span>All Panes</span>
+          <span className="ml-auto text-xs text-[#666]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
+          <span className="border-l border-[#333333] h-4 w-px shrink-0 mx-1" />
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -149,12 +148,12 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               else newSet.add("__all__")
               setExpandedGroups(newSet)
             }}
-            className="h-8 w-6 flex items-center justify-center rounded border border-[#333333] text-[#808080] hover:bg-[#333333] hover:text-white shrink-0"
+            className="text-xs text-[#808080] hover:text-white px-1 shrink-0"
             title="Expand"
           >
-            <span className="text-xs">{expandedGroups.has("__all__") ? "▾" : "▸"}</span>
+            {expandedGroups.has("__all__") ? "▾" : "▸"}
           </button>
-        </div>
+        </button>
         {expandedGroups.has("__all__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
