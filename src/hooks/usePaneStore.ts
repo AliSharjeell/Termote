@@ -175,7 +175,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   ws: null,
   isConnected: false,
   isAuthenticated: false,
-  viewMode: "panes",
+  viewMode: "auto",
   groups: [],
   selectedGroupId: null,
   devices: [],
