@@ -148,8 +148,21 @@ export function SourceControlPane() {
         </svg>
         <span className="text-[10px] text-[#888888] uppercase tracking-wider">Source Control</span>
         <span className="text-[10px] text-[#666666]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
-        {/* Push/Pull buttons in header */}
-        <div className="ml-auto flex items-center gap-1">
+        {/* Ahead/Behind counts */}
+        <div className="ml-auto flex items-center gap-2 text-[10px]">
+          {(state?.ahead ?? 0) > 0 && (
+            <span className="text-[#888888]" title="Push pending">
+              <span className="text-[#666]">↑</span> {state.ahead}
+            </span>
+          )}
+          {(state?.behind ?? 0) > 0 && (
+            <span className="text-[#888888]" title="Pull available">
+              <span className="text-[#666]">↓</span> {state.behind}
+            </span>
+          )}
+        </div>
+        {/* Push/Pull buttons */}
+        <div className="flex items-center gap-1">
           <button
             onClick={handlePull}
             title="Pull"
@@ -206,7 +219,6 @@ export function SourceControlPane() {
         {/* Section header */}
         <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
           <span>Changes ({totalChanges})</span>
-          {state?.ahead > 0 && <span className="text-[#888888]">↑ {state.ahead} outgoing</span>}
         </div>
 
         {/* Commit message input */}
@@ -242,9 +254,15 @@ export function SourceControlPane() {
                 >
                   −
                 </button>
-                <span className="text-xs text-[#cccccc] truncate font-mono" title={file.path}>
+                <span className="text-xs text-[#cccccc] truncate font-mono flex-1" title={file.path}>
                   {file.path.split("/").pop() || file.path}
                 </span>
+                {(file.added ?? 0) > 0 && (
+                  <span className="text-[10px] text-[#16C60C]">+{file.added}</span>
+                )}
+                {(file.deleted ?? 0) > 0 && (
+                  <span className="text-[10px] text-[#E74856]">-{file.deleted}</span>
+                )}
               </div>
             ))}
           </div>
@@ -266,9 +284,15 @@ export function SourceControlPane() {
                 >
                   +
                 </button>
-                <span className="text-xs text-[#aaaaaa] truncate font-mono" title={file.path}>
+                <span className="text-xs text-[#aaaaaa] truncate font-mono flex-1" title={file.path}>
                   {file.path.split("/").pop() || file.path}
                 </span>
+                {(file.added ?? 0) > 0 && (
+                  <span className="text-[10px] text-[#16C60C]">+{file.added}</span>
+                )}
+                {(file.deleted ?? 0) > 0 && (
+                  <span className="text-[10px] text-[#E74856]">-{file.deleted}</span>
+                )}
               </div>
             ))}
           </div>
