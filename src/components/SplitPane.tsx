@@ -172,8 +172,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
             className={`flex-1 rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
               selectedGroupId === "__ungrouped__"
-                ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
-                : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
+                ? "bg-[#0C0C0C] text-white border-[#0C0C0C]"
+                : "text-white hover:bg-[#333333] hover:border-[#444444]"
             }`}
           >
             <span>Ungrouped</span>
