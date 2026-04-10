@@ -85,6 +85,7 @@ interface PaneState {
   setShowSecurityModal: (show: boolean) => void
   // File explorer actions
   openExplorer: () => void
+  openBrowser: (url: string) => void
   closeExplorer: () => void
   fetchDirectory: (path: string) => void
   handleDirectoryContents: (path: string, items: DirectoryItem[]) => void
@@ -670,6 +671,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       // Reset state and request root/drill contents
       set({ explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
       ws.send(JSON.stringify({ action: "list_directory", path: "" }))
+    }
+  },
+
+  openBrowser: (url) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "spawn_browser", url }))
     }
   },
 
