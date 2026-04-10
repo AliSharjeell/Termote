@@ -156,9 +156,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           </button>
         </div>
         {expandedGroups.has("__all__") && (
-          <div className="ml-3 mb-1 flex flex-col gap-0.5 rounded border border-[#2a2a2a] bg-[#0C0C0C] p-1.5">
+          <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 rounded px-2 py-1 text-xs text-[#808080] hover:bg-[#27272A] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+              <div key={pane.id} className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#808080] hover:text-white cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -194,9 +194,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           </button>
         </div>
         {expandedGroups.has("__ungrouped__") && (
-          <div className="ml-3 mb-1 flex flex-col gap-0.5 rounded border border-[#2a2a2a] bg-[#0C0C0C] p-1.5">
+          <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 rounded px-2 py-1 text-xs text-[#808080] hover:bg-[#27272A] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+              <div key={pane.id} className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#808080] hover:text-white cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -252,11 +252,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 )}
               </div>
               {isExpanded && groupPanes.length > 0 && (
-                <div className="ml-3 mt-1 mb-1 flex flex-col gap-0.5 rounded border border-[#2a2a2a] bg-[#0C0C0C] p-1.5">
+                <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
                   {groupPanes.map((pane) => (
                     <div
                       key={pane.id}
-                      className="flex items-center gap-2 rounded px-2 py-1 text-xs text-[#808080] hover:bg-[#27272A] cursor-pointer"
+                      className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#808080] hover:text-white cursor-pointer"
                       onClick={() => usePaneStore.getState().setActivePane(pane.id)}
                     >
                       <span className="truncate">{pane.name}</span>
