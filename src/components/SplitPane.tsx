@@ -124,7 +124,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <div className="h-4 w-px bg-[#353535] shrink-0" />
         {/* Group tabs */}
         <button
-          onClick={() => selectGroup(null)}
+          onClick={() => {
+            selectGroup(null)
+            window.location.reload()
+          }}
           className={`shrink-0 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
             selectedGroupId === null
               ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
@@ -134,7 +137,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           All Panes
         </button>
         <button
-          onClick={() => selectGroup("__ungrouped__")}
+          onClick={() => {
+            selectGroup("__ungrouped__")
+            window.location.reload()
+          }}
           className={`shrink-0 rounded-lg px-4 py-2 text-sm border border-[#333333] ${
             selectedGroupId === "__ungrouped__"
               ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
@@ -151,7 +157,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             onMouseLeave={() => setHoveredGroupId(null)}
           >
             <button
-              onClick={() => selectGroup(group.id)}
+              onClick={() => {
+                selectGroup(group.id)
+                window.location.reload()
+              }}
               className={`rounded-lg px-4 py-2 text-sm border border-[#333333] flex items-center gap-2 ${
                 selectedGroupId === group.id
                   ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
