@@ -49,8 +49,10 @@ export type BanDeviceMessage = { action: "ban_device"; ip: string }
 export type UploadFileMessage = { action: "upload_file"; pane_id: string; file_name: string; data: string }
 export type GetGitStatusMessage = { action: "get_git_status"; pane_id: string }
 export type GitCommitMessage = { action: "git_commit"; pane_id: string; message: string }
+export type GitStageMessage = { action: "git_stage"; pane_id: string; files: string[]; unstage: boolean }
+export type GitLogMessage = { action: "git_log"; pane_id: string }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitLogMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -89,4 +91,19 @@ export type GitStatusEvent = {
 
 export type GitCommitResultEvent = { event: "git_commit_result"; pane_id: string; success: boolean; message: string }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent
+export type GitCommitInfo = {
+  hash: string
+  short_hash: string
+  message: string
+  author: string
+  date: string
+}
+
+export type GitLogEvent = {
+  event: "git_log"
+  pane_id: string
+  dir: string
+  commits: GitCommitInfo[]
+}
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent

@@ -1,0 +1,163 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775850374776,
+  "projectRoot": "C:\\AppsNew\\TermoteFull\\TermoteUI",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.2.1",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.4",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "master",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 7,
+      "lastAccessed": 1775850374613,
+      "keyFiles": [
+        "file.svg",
+        "globe.svg",
+        "google20d370399c9772c8.html",
+        "next.svg",
+        "og-image.svg"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1775850374614,
+      "keyFiles": []
+    },
+    "src\\app": {
+      "path": "src\\app",
+      "purpose": "Application code",
+      "fileCount": 7,
+      "lastAccessed": 1775850374622,
+      "keyFiles": [
+        "favicon.ico",
+        "globals.css",
+        "LandingPage.tsx"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 14,
+      "lastAccessed": 1775850374622,
+      "keyFiles": [
+        "BrowserPickerModal.tsx",
+        "DirectoryPickerModal.tsx",
+        "GitPane.tsx"
+      ]
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 4,
+      "lastAccessed": 1775850374623,
+      "keyFiles": [
+        "messages.ts",
+        "posts.ts",
+        "terminalRegistry.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src\\hooks\\usePaneStore.ts",
+      "accessCount": 16,
+      "lastAccessed": 1775852881441,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\SplitPane.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1775851918517,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useWebSocket.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775852900437,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\GitPane.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775853736426,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\types.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775853670365,
+      "type": "directory"
+    }
+  ],
+  "userDirectives": []
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"powershell -Command \\\"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object OwningProcess\\\"\",\"description\":\"Find which process owns port 3000\"}",
+  "error": "Exit code 1",
+  "timestamp": "2026-04-10T18:31:40.451Z",
+  "retry_count": 1
+}

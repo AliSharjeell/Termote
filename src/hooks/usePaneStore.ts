@@ -56,6 +56,18 @@ interface PaneState {
     ahead: number | null
     behind: number | null
   }>
+  // Git log per pane
+  gitLogs: Record<string, {
+    pane_id: string
+    dir: string
+    commits: Array<{
+      hash: string
+      short_hash: string
+      message: string
+      author: string
+      date: string
+    }>
+  }>
   // AI CLI command
   aiCommand: string
 
@@ -111,6 +123,8 @@ interface PaneState {
   // Git actions
   getGitStatus: (paneId: string) => void
   gitCommit: (paneId: string, message: string) => void
+  gitStage: (paneId: string, files: string[], unstage: boolean) => void
+  gitLog: (paneId: string) => void
   handleGitStatus: (status: {
     pane_id: string
     dir: string
@@ -121,6 +135,17 @@ interface PaneState {
     untracked: string[]
     ahead: number | null
     behind: number | null
+  }) => void
+  handleGitLog: (log: {
+    pane_id: string
+    dir: string
+    commits: Array<{
+      hash: string
+      short_hash: string
+      message: string
+      author: string
+      date: string
+    }>
   }) => void
   // AI settings
   setAiCommand: (command: string) => void
@@ -339,6 +364,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   explorerCurrentPath: "",
   explorerContents: [],
   gitStatuses: {},
+  gitLogs: {},
   aiCommand: loadAiCommand(),
 
   setWebSocket: (ws) => set({ ws }),
@@ -772,11 +798,34 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
+  gitStage: (paneId, files, unstage) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "git_stage", pane_id: paneId, files, unstage }))
+    }
+  },
+
+  gitLog: (paneId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "git_log", pane_id: paneId }))
+    }
+  },
+
   handleGitStatus: (status) => {
     set((state) => ({
       gitStatuses: {
         ...state.gitStatuses,
         [status.pane_id]: status,
+      },
+    }))
+  },
+
+  handleGitLog: (log) => {
+    set((state) => ({
+      gitLogs: {
+        ...state.gitLogs,
+        [log.pane_id]: log,
       },
     }))
   },

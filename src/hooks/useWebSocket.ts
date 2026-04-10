@@ -31,6 +31,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleDeviceBanned,
     handleFileUploaded,
     handleGitStatus,
+    handleGitLog,
   } = usePaneStore()
 
   const handleMessage = useCallback(
@@ -103,9 +104,12 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
             getGitStatus(message.pane_id)
           }
           break
+        case "git_log":
+          handleGitLog(message)
+          break
       }
     },
-    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet]
+    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog]
   )
 
   const connect = useCallback(() => {
