@@ -143,7 +143,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {/* All Panes */}
         <button
           onClick={() => { selectGroup(null); window.location.reload() }}
-          className={`w-full rounded border border-[#252525] px-3 py-2 text-sm text-left flex items-center gap-2 ${
+          className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
               ? "text-white bg-[#111111]"
               : "text-[#888] hover:text-white hover:bg-[#111111]"
@@ -157,7 +157,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               else newSet.add("__all__")
               setExpandedGroups(newSet)
             }}
-            className="text-xs text-[#666] hover:text-white px-1 shrink-0"
+            className="text-xs text-[#666] hover:text-white border border-[#252525] rounded px-1 shrink-0"
             title="Expand"
           >
             {expandedGroups.has("__all__") ? "▾" : "▸"}
@@ -179,7 +179,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {/* Ungrouped */}
         <button
           onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
-          className={`w-full rounded border border-[#252525] px-3 py-2 text-sm text-left flex items-center gap-2 ${
+          className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
               ? "text-white bg-[#111111]"
               : "text-[#888] hover:text-white hover:bg-[#111111]"
@@ -193,7 +193,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               else newSet.add("__ungrouped__")
               setExpandedGroups(newSet)
             }}
-            className="text-xs text-[#666] hover:text-white px-1 shrink-0"
+            className="text-xs text-[#666] hover:text-white border border-[#252525] rounded px-1 shrink-0"
             title="Expand"
           >
             {expandedGroups.has("__ungrouped__") ? "▾" : "▸"}
@@ -220,7 +220,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <div key={group.id} className="group/row">
               <button
                 onClick={() => { selectGroup(group.id); window.location.reload() }}
-                className={`w-full rounded border border-[#252525] px-3 py-2 text-sm text-left flex items-center gap-2 ${
+                className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
                     ? "text-white bg-[#111111]"
                     : "text-[#888] hover:text-white hover:bg-[#111111]"
@@ -234,13 +234,12 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                     else newSet.add(group.id)
                     setExpandedGroups(newSet)
                   }}
-                  className="text-xs text-[#666] hover:text-white px-1 shrink-0"
+                  className="text-xs text-[#666] hover:text-white border border-[#252525] rounded px-1 shrink-0"
                   title={isExpanded ? "Collapse" : "Expand"}
                 >
                   {isExpanded ? "▾" : "▸"}
                 </button>
                 <span className="truncate">{group.name}</span>
-                <span className="ml-auto text-xs text-[#666]">{groupPanes.length}</span>
               </button>
               {hoveredGroupId === group.id && (
                 <button
