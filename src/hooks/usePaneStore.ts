@@ -6,6 +6,11 @@ const VIEW_MODE_KEY = "termote-view-mode"
 const PANE_GROUPS_KEY = "termote-pane-groups-map"
 const SELECTED_GROUP_KEY = "termote-selected-group"
 const AI_COMMAND_KEY = "termote-ai-command"
+const PANES_KEY = "termote-panes"
+const ACTIVE_PANES_KEY = "termote-active-panes"
+const FLOATING_PANES_KEY = "termote-floating-panes"
+const SELECTED_TAB_KEY = "termote-selected-tab"
+const GROUPS_KEY = "termote-groups"
 
 const GROUP_COLORS = [
   "#E44", // red
@@ -178,6 +183,100 @@ function saveAiCommand(command: string) {
   }
 }
 
+// Load panes from localStorage
+function loadPanes(): Pane[] {
+  try {
+    const panesJson = localStorage.getItem(PANES_KEY)
+    return panesJson ? JSON.parse(panesJson) : []
+  } catch {
+    return []
+  }
+}
+
+// Save panes to localStorage
+function savePanes(panes: Pane[]) {
+  try {
+    localStorage.setItem(PANES_KEY, JSON.stringify(panes))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+// Load active panes from localStorage
+function loadActivePanes(): string[] {
+  try {
+    const activeJson = localStorage.getItem(ACTIVE_PANES_KEY)
+    return activeJson ? JSON.parse(activeJson) : []
+  } catch {
+    return []
+  }
+}
+
+// Save active panes to localStorage
+function saveActivePanes(activePanes: string[]) {
+  try {
+    localStorage.setItem(ACTIVE_PANES_KEY, JSON.stringify(activePanes))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+// Load floating panes from localStorage
+function loadFloatingPanes(): string[] {
+  try {
+    const floatingJson = localStorage.getItem(FLOATING_PANES_KEY)
+    return floatingJson ? JSON.parse(floatingJson) : []
+  } catch {
+    return []
+  }
+}
+
+// Save floating panes to localStorage
+function saveFloatingPanes(floatingPanes: string[]) {
+  try {
+    localStorage.setItem(FLOATING_PANES_KEY, JSON.stringify(floatingPanes))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+// Load selected tab from localStorage
+function loadSelectedTab(): string {
+  try {
+    return localStorage.getItem(SELECTED_TAB_KEY) || ""
+  } catch {
+    return ""
+  }
+}
+
+// Save selected tab to localStorage
+function saveSelectedTab(tabId: string) {
+  try {
+    localStorage.setItem(SELECTED_TAB_KEY, tabId)
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+// Load groups from localStorage
+function loadGroups(): PaneGroup[] {
+  try {
+    const groupsJson = localStorage.getItem(GROUPS_KEY)
+    return groupsJson ? JSON.parse(groupsJson) : []
+  } catch {
+    return []
+  }
+}
+
+// Save groups to localStorage
+function saveGroups(groups: PaneGroup[]) {
+  try {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(groups))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 // Get pane groupId from localStorage
 export function getPaneGroupIdFromStorage(paneId: string): string | null {
   try {
@@ -193,15 +292,15 @@ export function getPaneGroupIdFromStorage(paneId: string): string | null {
 }
 
 export const usePaneStore = create<PaneState>((set, get) => ({
-  panes: [],
-  activePanes: [],
-  floatingPanes: [],
-  selectedTab: "",
+  panes: loadPanes(),
+  activePanes: loadActivePanes(),
+  floatingPanes: loadFloatingPanes(),
+  selectedTab: loadSelectedTab(),
   ws: null,
   isConnected: false,
   isAuthenticated: false,
   viewMode: "auto",
-  groups: [],
+  groups: loadGroups(),
   selectedGroupId: null,
   devices: [],
   showSecurityModal: false,
@@ -238,12 +337,19 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Use groups from backend if provided, otherwise keep existing
     // Also preserve existing groups if backend sends empty array (backend might not persist groups)
     const hasGroups = groups && groups.length > 0
+    const finalGroups = hasGroups ? groups : state.groups
+    // Persist panes and groups to localStorage
+    savePanes(updatedPanes)
+    saveActivePanes(activePanes)
+    saveFloatingPanes(floatingPanes)
+    saveSelectedTab(selectedTab)
+    saveGroups(finalGroups)
     set({
       panes: updatedPanes,
       activePanes,
       floatingPanes,
       selectedTab,
-      groups: hasGroups ? groups : state.groups
+      groups: finalGroups
     })
   },
 
@@ -345,14 +451,22 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
-  selectTab: (tabId) => set({ selectedTab: tabId }),
+  selectTab: (tabId) => {
+    saveSelectedTab(tabId)
+    set({ selectedTab: tabId })
+  },
   setViewMode: (mode) => {
     saveViewMode(mode)
     set({ viewMode: mode })
   },
 
   renamePane: (paneId, name) => {
-    const { ws, isAuthenticated } = get()
+    const { panes, ws, isAuthenticated } = get()
+    const updatedPanes = panes.map(p =>
+      p.id === paneId ? { ...p, name } : p
+    )
+    savePanes(updatedPanes)
+    set({ panes: updatedPanes })
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "rename", pane_id: paneId, name }))
     }
@@ -366,6 +480,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Save pinned pane IDs to localStorage
     const pinnedPaneIds = updatedPanes.filter(p => p.pinned).map(p => p.id)
     savePinnedPanes(pinnedPaneIds)
+    savePanes(updatedPanes)
     set({ panes: updatedPanes })
   },
 
@@ -380,6 +495,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Optimistically update local state
     const newGroup: PaneGroup = { id, name, color }
     const updatedGroups = [...groups, newGroup]
+    saveGroups(updatedGroups)
     set({ groups: updatedGroups })
     return id
   },
@@ -396,6 +512,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const updatedPanes = panes.map(p =>
       p.groupId === groupId ? { ...p, groupId: null } : p
     )
+    saveGroups(updatedGroups)
+    savePanes(updatedPanes)
     set({
       groups: updatedGroups,
       panes: updatedPanes,
@@ -413,6 +531,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const updatedGroups = groups.map(g =>
       g.id === groupId ? { ...g, name } : g
     )
+    saveGroups(updatedGroups)
     set({ groups: updatedGroups })
   },
 
