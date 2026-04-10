@@ -129,12 +129,16 @@ export function XtermPane({ pane }: XtermPaneProps) {
   useEffect(() => {
     if (!terminalRef.current) return
 
-    // Use MutationObserver to detect visibility changes
+    // Use MutationObserver to detect visibility changes (opacity/class changes)
     const observer = new MutationObserver(() => {
-      if (isMountedRef.current && terminalRef.current) {
+      if (isMountedRef.current && terminalInstanceRef.current) {
         const instance = terminalInstanceRef.current
-        if (instance) {
-          scheduleFitAndRefresh(instance)
+        // Directly trigger fit and refresh
+        try {
+          instance.fitAddon.fit()
+          instance.terminal.refresh(0, instance.terminal.rows - 1)
+        } catch (e) {
+          // Ignore fit failures
         }
       }
     })
