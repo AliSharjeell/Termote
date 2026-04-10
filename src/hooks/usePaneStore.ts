@@ -4,6 +4,7 @@ import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem } from "@/lib/ty
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
 const PANE_GROUPS_KEY = "termote-pane-groups-map"
+const SELECTED_GROUP_KEY = "termote-selected-group"
 const AI_COMMAND_KEY = "termote-ai-command"
 
 const GROUP_COLORS = [
@@ -98,13 +99,37 @@ function loadPersistedState() {
     const pinnedJson = localStorage.getItem(STORAGE_KEY)
     const viewModeJson = localStorage.getItem(VIEW_MODE_KEY)
     const paneGroupsJson = localStorage.getItem(PANE_GROUPS_KEY)
+    const selectedGroupJson = localStorage.getItem(SELECTED_GROUP_KEY)
     return {
       pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
       viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
       paneGroupMap: paneGroupsJson ? JSON.parse(paneGroupsJson) : {},
+      selectedGroupId: selectedGroupJson || null,
     }
   } catch {
-    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {} }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null }
+  }
+}
+
+// Load selected group ID from localStorage
+function loadSelectedGroup(): string | null {
+  try {
+    return localStorage.getItem(SELECTED_GROUP_KEY)
+  } catch {
+    return null
+  }
+}
+
+// Save selected group ID to localStorage
+function saveSelectedGroup(groupId: string | null) {
+  try {
+    if (groupId === null) {
+      localStorage.removeItem(SELECTED_GROUP_KEY)
+    } else {
+      localStorage.setItem(SELECTED_GROUP_KEY, groupId)
+    }
+  } catch {
+    // Storage full or unavailable
   }
 }
 
@@ -415,6 +440,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   selectGroup: (groupId) => {
     console.log("[Termote Store] selectGroup called with:", groupId)
+    saveSelectedGroup(groupId)
     set({ selectedGroupId: groupId })
   },
 
@@ -580,3 +606,6 @@ usePaneStore.setState({ viewMode: initialPersisted.viewMode })
 
 // Initialize AI command from localStorage
 usePaneStore.setState({ aiCommand: loadAiCommand() })
+
+// Initialize selected group from localStorage
+usePaneStore.setState({ selectedGroupId: loadSelectedGroup() })
