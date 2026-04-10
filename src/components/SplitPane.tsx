@@ -7,6 +7,7 @@ import { SourceControlPane } from "./SourceControlPane"
 import { NotePane } from "./NotePane"
 import { ImagePane } from "./ImagePane"
 import { WhiteboardPane } from "./WhiteboardPane"
+import { PortManager } from "./PortManager"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface SplitPaneProps {
@@ -392,6 +393,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <span className="text-xs text-[#808080] px-2 text-center">
           {sortedActivePanes.length} pane{sortedActivePanes.length !== 1 ? "s" : ""}
         </span>
+        <PortManager />
       </div>
       )}
 
