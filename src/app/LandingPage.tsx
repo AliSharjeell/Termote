@@ -585,7 +585,7 @@ export function LandingPageContent() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <InstallButton />
               <a href="https://github.com/AliSharjeell/Termote" target="_blank" rel="noopener noreferrer"
-                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-zinc-100 text-zinc-900 text-sm hover:bg-zinc-200 transition-colors">
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-zinc-100 text-zinc-900 text-sm hover:bg-zinc-200 transition-colors">
                 <Star className="h-4 w-4" />
                 Star on GitHub
               </a>
@@ -602,10 +602,10 @@ export function LandingPageContent() {
 
             <div className="flex items-center gap-6 text-sm text-zinc-500">
               <a href="https://github.com/AliSharjeell/Termote/issues" target="_blank" rel="noopener noreferrer"
-                 className="hover:text-zinc-300 transition-colors">Issues</a>
+                className="hover:text-zinc-300 transition-colors">Issues</a>
               <a href="mailto:alisharjeelofficial@gmail.com" className="hover:text-zinc-300 transition-colors">Contact</a>
               <a href="https://termote.vercel.app" target="_blank" rel="noopener noreferrer"
-                 className="hover:text-zinc-300 transition-colors">Web Client</a>
+                className="hover:text-zinc-300 transition-colors">Web Client</a>
             </div>
 
             <p className="text-sm text-zinc-600">Licensed under MIT</p>
