@@ -126,7 +126,12 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
       <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">
         <div className="flex flex-col gap-1 mb-2">
           <div className="flex items-center justify-between px-1 mb-1">
-            <span className="text-[10px] text-[#555] uppercase tracking-wider">Panes</span>
+            <div className="flex items-center gap-1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#555]">
+                <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+              </svg>
+              <span className="text-[10px] text-[#555] uppercase tracking-wider">Panes</span>
+            </div>
             <button
               onClick={toggleSidebar}
               title="Collapse sidebar"
