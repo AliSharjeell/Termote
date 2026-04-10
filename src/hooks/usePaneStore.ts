@@ -486,7 +486,16 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   killPane: (paneId) => {
-    const { ws, isAuthenticated } = get()
+    const { ws, isAuthenticated, panes } = get()
+    const pane = panes.find(p => p.id === paneId)
+    const isBrowserPane = pane?.url != null
+    if (isBrowserPane) {
+      // Frontend-only pane - remove directly
+      const updatedPanes = panes.filter(p => p.id !== paneId)
+      const updatedActivePanes = get().activePanes.filter(id => id !== paneId)
+      set({ panes: updatedPanes, activePanes: updatedActivePanes })
+      savePanes(updatedPanes)
+    }
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "kill", pane_id: paneId }))
     }
@@ -814,10 +823,12 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       rows: 24,
       url,
     }
+    const updatedPanes = [...panes, newPane]
     set({
-      panes: [...panes, newPane],
+      panes: updatedPanes,
       activePanes: [...activePanes, id],
     })
+    savePanes(updatedPanes)
   },
 
   openBrowserModal: () => {
