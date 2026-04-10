@@ -4,10 +4,11 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { useState, useEffect } from "react"
 
 export function SourceControlPane() {
-  const { panes, activePanes, sourceControlStates, getSourceControlState, gitStage, gitCommit, gitPush, gitPull, gitLog } = usePaneStore()
+  const { panes, activePanes, sourceControlStates, sourceControlRepos, getSourceControlState, gitStage, gitCommit, gitPush, gitPull, gitLog, findGitRepos } = usePaneStore()
   const [commitMessage, setCommitMessage] = useState("")
   const [activePaneId, setActivePaneId] = useState<string | null>(null)
   const [history, setHistory] = useState<Array<{hash: string; short_hash: string; message: string; author: string; date: string}>>([])
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null)
 
   // Find the focused pane - prefer active pane that has a cwd
   useEffect(() => {
@@ -20,21 +21,37 @@ export function SourceControlPane() {
   const activePane = panes.find(p => p.id === activePaneId)
   const cwd = activePane?.cwd
 
-  // Fetch source control state when cwd changes
+  // Fetch repos and source control state when cwd changes
   useEffect(() => {
     if (cwd) {
-      getSourceControlState(cwd)
+      findGitRepos(cwd)
     }
-  }, [cwd, getSourceControlState])
+  }, [cwd, findGitRepos])
+
+  // Set initial selected repo when repos are found
+  useEffect(() => {
+    if (sourceControlRepos.length > 0 && !selectedRepo) {
+      // Prefer the current directory if it's a repo, otherwise pick first
+      const cwdRepo = sourceControlRepos.find(r => r.path === cwd)
+      setSelectedRepo(cwdRepo ? cwdRepo.path : sourceControlRepos[0].path)
+    }
+  }, [sourceControlRepos, cwd, selectedRepo])
+
+  // Fetch source control state when selected repo changes
+  useEffect(() => {
+    if (selectedRepo) {
+      getSourceControlState(selectedRepo)
+    }
+  }, [selectedRepo, getSourceControlState])
 
   // Refresh periodically
   useEffect(() => {
-    if (!cwd) return
+    if (!selectedRepo) return
     const interval = setInterval(() => {
-      getSourceControlState(cwd)
+      getSourceControlState(selectedRepo)
     }, 5000)
     return () => clearInterval(interval)
-  }, [cwd, getSourceControlState])
+  }, [selectedRepo, getSourceControlState])
 
   // Fetch git log for history
   useEffect(() => {
@@ -65,8 +82,11 @@ export function SourceControlPane() {
     )
   }
 
-  const state = sourceControlStates[cwd]
-  if (!state?.is_repo) {
+  const currentRepoPath = selectedRepo || cwd
+  const state = sourceControlStates[currentRepoPath]
+  const isRepo = state?.is_repo || sourceControlRepos.length > 0
+
+  if (!isRepo) {
     return (
       <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] w-64 overflow-hidden">
         <div className="flex items-center justify-center h-full text-xs text-[#808080] p-4 text-center">
@@ -79,7 +99,7 @@ export function SourceControlPane() {
   const handleStage = (files: string[], unstage: boolean) => {
     if (activePaneId) {
       gitStage(activePaneId, files, unstage)
-      setTimeout(() => getSourceControlState(cwd), 500)
+      setTimeout(() => getSourceControlState(currentRepoPath), 500)
     }
   }
 
@@ -87,25 +107,32 @@ export function SourceControlPane() {
     if (activePaneId && commitMessage.trim()) {
       gitCommit(activePaneId, commitMessage.trim())
       setCommitMessage("")
-      setTimeout(() => getSourceControlState(cwd), 500)
+      setTimeout(() => getSourceControlState(currentRepoPath), 500)
     }
   }
 
   const handlePush = () => {
     if (activePaneId) {
       gitPush(activePaneId)
-      setTimeout(() => getSourceControlState(cwd), 1000)
+      setTimeout(() => getSourceControlState(currentRepoPath), 1000)
     }
   }
 
   const handlePull = () => {
     if (activePaneId) {
       gitPull(activePaneId)
-      setTimeout(() => getSourceControlState(cwd), 1000)
+      setTimeout(() => getSourceControlState(currentRepoPath), 1000)
     }
   }
 
-  const totalChanges = state.staged.length + state.unstaged.length + state.untracked.length
+  const totalChanges = (state?.staged.length || 0) + (state?.unstaged.length || 0) + (state?.untracked.length || 0)
+
+  // Determine display path (relative to cwd for sub-repos)
+  const displayName = (() => {
+    if (!selectedRepo || selectedRepo === cwd) return "."
+    const rel = selectedRepo.replace(cwd + "\\", "").replace(cwd + "/", "")
+    return rel || selectedRepo.split(/[/\\]/).pop() || selectedRepo
+  })()
 
   return (
     <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] w-64 overflow-hidden">
@@ -117,7 +144,7 @@ export function SourceControlPane() {
           <line x1="17.01" y1="12" x2="22.96" y2="12"/>
         </svg>
         <span className="text-[10px] text-[#888888] uppercase tracking-wider">Source Control</span>
-        <span className="text-[10px] text-[#666666]">{state.branch || "main"}</span>
+        <span className="text-[10px] text-[#666666]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
         {/* Push/Pull buttons in header */}
         <div className="ml-auto flex items-center gap-1">
           <button
@@ -141,8 +168,25 @@ export function SourceControlPane() {
         </div>
       </div>
 
+      {/* Repo selector (if multiple repos) */}
+      {sourceControlRepos.length > 1 && (
+        <div className="px-3 py-1.5 border-b border-[#333333] bg-[#161616]">
+          <select
+            value={currentRepoPath}
+            onChange={(e) => setSelectedRepo(e.target.value)}
+            className="w-full bg-[#0C0C0C] text-[10px] text-[#cccccc] border border-[#333333] rounded px-2 py-1 outline-none"
+          >
+            {sourceControlRepos.map(repo => (
+              <option key={repo.path} value={repo.path}>
+                {repo.path === cwd ? "./" : repo.name} {repo.branch ? `(${repo.branch})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Sync Changes button (only when ahead > 0) */}
-      {state.ahead > 0 && (
+      {state?.ahead > 0 && (
         <div className="px-3 py-2 border-b border-[#333333]">
           <button
             onClick={handlePush}
@@ -159,7 +203,7 @@ export function SourceControlPane() {
         {/* Section header */}
         <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
           <span>Changes ({totalChanges})</span>
-          {state.ahead > 0 && <span className="text-[#888888]">↑ {state.ahead} outgoing</span>}
+          {state?.ahead > 0 && <span className="text-[#888888]">↑ {state.ahead} outgoing</span>}
         </div>
 
         {/* Commit message input */}
@@ -172,15 +216,15 @@ export function SourceControlPane() {
           />
           <button
             onClick={handleCommit}
-            disabled={!commitMessage.trim() || state.staged.length === 0}
+            disabled={!commitMessage.trim() || (state?.staged.length || 0) === 0}
             className="mt-2 w-full rounded bg-[#444444] hover:bg-[#555555] text-white text-xs py-1.5 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Commit ({state.staged.length})
+            Commit ({state?.staged.length || 0})
           </button>
         </div>
 
         {/* Staged changes */}
-        {state.staged.length > 0 && (
+        {state?.staged && state.staged.length > 0 && (
           <div>
             <div className="px-3 py-1.5 text-[10px] text-[#cccccc] uppercase tracking-wider bg-[#1f1f1f] flex items-center gap-2">
               <span>Staged</span>
@@ -204,7 +248,7 @@ export function SourceControlPane() {
         )}
 
         {/* Modified/Unstaged */}
-        {state.unstaged.length > 0 && (
+        {state?.unstaged && state.unstaged.length > 0 && (
           <div>
             <div className="px-3 py-1.5 text-[10px] text-[#aaaaaa] uppercase tracking-wider bg-[#1a1a1a] flex items-center gap-2">
               <span>Modified</span>
@@ -228,7 +272,7 @@ export function SourceControlPane() {
         )}
 
         {/* Untracked */}
-        {state.untracked.length > 0 && (
+        {state?.untracked && state.untracked.length > 0 && (
           <div>
             <div className="px-3 py-1.5 text-[10px] text-[#999999] uppercase tracking-wider bg-[#161616] flex items-center gap-2">
               <span>Untracked</span>
@@ -261,7 +305,7 @@ export function SourceControlPane() {
       {/* Bottom section - Outgoing + History, compact */}
       <div className="border-t border-[#333333]">
         {/* Outgoing compact */}
-        {state.outgoing_commits.length > 0 && (
+        {state?.outgoing_commits && state.outgoing_commits.length > 0 && (
           <div className="border-b border-[#333333]">
             <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
               <span>Outgoing ({state.outgoing_commits.length})</span>
@@ -286,8 +330,8 @@ export function SourceControlPane() {
           <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
             <span>History ({history.length})</span>
             <div className="flex items-center gap-2 text-[#555555]">
-              <span>↑ {state.ahead}</span>
-              <span>↓ {state.behind}</span>
+              <span>↑ {state?.ahead || 0}</span>
+              <span>↓ {state?.behind || 0}</span>
             </div>
           </div>
           {history.length > 0 ? (
