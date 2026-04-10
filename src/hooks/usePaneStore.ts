@@ -104,6 +104,8 @@ interface PaneState {
   setLayout: (panes: Pane[], activePanes: string[], floatingPanes: string[], groups?: PaneGroup[]) => void
   spawnPane: (shell: Shell) => void
   spawnNotePane: () => void
+  spawnImagePane: () => void
+  spawnWhiteboardPane: () => void
   requestDirectoryPicker: (shell: Shell) => void
   killPane: (paneId: string) => void
   sendInput: (paneId: string, data: string) => void
@@ -491,6 +493,44 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       pid: 0,
       shell: "note" as any,
       name: "Untitled Note",
+      cols: 80,
+      rows: 24,
+    }
+    const updatedPanes = [...panes, newPane]
+    set({
+      panes: updatedPanes,
+      activePanes: [...activePanes, id],
+    })
+    savePanes(updatedPanes)
+  },
+
+  spawnImagePane: () => {
+    const { panes, activePanes } = get()
+    const id = `image-${Date.now()}`
+    const newPane: Pane = {
+      id,
+      pid: 0,
+      shell: "image",
+      name: "Image Viewer",
+      cols: 80,
+      rows: 24,
+    }
+    const updatedPanes = [...panes, newPane]
+    set({
+      panes: updatedPanes,
+      activePanes: [...activePanes, id],
+    })
+    savePanes(updatedPanes)
+  },
+
+  spawnWhiteboardPane: () => {
+    const { panes, activePanes } = get()
+    const id = `whiteboard-${Date.now()}`
+    const newPane: Pane = {
+      id,
+      pid: 0,
+      shell: "whiteboard",
+      name: "Whiteboard",
       cols: 80,
       rows: 24,
     }
