@@ -258,37 +258,7 @@ export function SourceControlPane() {
         )}
       </div>
 
-      {/* Outgoing section - middle */}
-      <div className="border-b border-[#333333] flex-1 overflow-hidden" style={{ maxHeight: "160px" }}>
-        {/* Section header */}
-        <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
-          <span>Outgoing ({state.outgoing_commits.length})</span>
-          <span className="text-[#555555]">{state.remote || "origin"}</span>
-        </div>
-
-        <div className="overflow-y-auto" style={{ maxHeight: "120px" }}>
-          {state.outgoing_commits.length > 0 ? (
-            state.outgoing_commits.map((commit, i) => (
-              <div key={commit.hash} className="px-3 py-2 border-b border-[#222] hover:bg-[#1a1a1a]">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] text-[#888888] font-mono">{commit.short_hash}</span>
-                  <span className="text-[10px] text-[#555555]">●</span>
-                  <span className="text-[10px] text-[#666666]">{i + 1}</span>
-                </div>
-                <div className="text-xs text-[#cccccc] truncate" title={commit.message}>
-                  {commit.message}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="px-3 py-4 text-xs text-[#666666] text-center">
-              {state.ahead === 0 ? "All commits pushed" : "No outgoing commits"}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Graph / History section - bottom */}
+      {/* History section - bottom */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Section header */}
         <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
