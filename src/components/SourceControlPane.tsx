@@ -258,68 +258,56 @@ export function SourceControlPane() {
         )}
       </div>
 
-      {/* History section - bottom */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Section header */}
-        <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
-          <span>History ({history.length})</span>
-          <div className="flex items-center gap-2 text-[#555555]">
-            <span>↑ {state.ahead}</span>
-            <span>↓ {state.behind}</span>
-          </div>
-        </div>
-
-        {/* Branch info */}
-        <div className="px-3 py-1.5 border-b border-[#333] bg-[#161616]">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#888888]"></div>
-            <span className="text-xs text-[#cccccc]">{state.branch || "main"}</span>
-            <span className="text-[10px] text-[#555555]">/</span>
-            <span className="text-[10px] text-[#666666]">{state.remote || "origin"}/{state.branch || "main"}</span>
-          </div>
-        </div>
-
-        {/* Full commit history tree */}
-        <div className="flex-1 overflow-y-auto">
-          {history.length > 0 ? (
-            <div className="px-2 py-2">
-              {history.map((commit, i) => {
-                const isFirst = i === 0;
-                const isLast = i === history.length - 1;
-
-                return (
-                  <div key={commit.hash} className="flex gap-2 relative">
-                    {/* Tree visualization column */}
-                    <div className="flex flex-col items-center w-4 shrink-0">
-                      {!isFirst && <div className="w-px h-3 bg-[#333]"></div>}
-                      <div className={`w-2 h-2 rounded-full border-2 ${isFirst ? 'bg-[#888888] border-[#888888]' : 'bg-[#0C0C0C] border-[#666666]'}`}></div>
-                      {!isLast && <div className="w-px flex-1 bg-[#333] min-h-[16px]"></div>}
-                    </div>
-
-                    {/* Commit content */}
-                    <div className="flex-1 pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-[#888888] font-mono">{commit.short_hash}</span>
-                        {isFirst && (
-                          <span className="text-[8px] px-1 py-0.5 rounded bg-[#444444] text-white">HEAD</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-[#cccccc] mt-0.5 leading-tight" title={commit.message}>
-                        {commit.message}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[9px] text-[#666666]">{commit.author}</span>
-                        <span className="text-[9px] text-[#555555]">·</span>
-                        <span className="text-[9px] text-[#666666]">{commit.date}</span>
-                      </div>
-                    </div>
+      {/* Bottom section - Outgoing + History, compact */}
+      <div className="border-t border-[#333333]">
+        {/* Outgoing compact */}
+        {state.outgoing_commits.length > 0 && (
+          <div className="border-b border-[#333333]">
+            <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
+              <span>Outgoing ({state.outgoing_commits.length})</span>
+              <span className="text-[#555555]">{state.remote || "origin"}</span>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: "80px" }}>
+              {state.outgoing_commits.map((commit, i) => (
+                <div key={commit.hash} className="px-3 py-1 hover:bg-[#1a1a1a]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-[#888888] font-mono">{commit.short_hash}</span>
+                    <span className="text-[10px] text-[#555555]">·</span>
+                    <span className="text-[10px] text-[#666666] truncate">{commit.message}</span>
                   </div>
-                );
-              })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* History compact */}
+        <div>
+          <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#1a1a1a] flex items-center justify-between">
+            <span>History ({history.length})</span>
+            <div className="flex items-center gap-2 text-[#555555]">
+              <span>↑ {state.ahead}</span>
+              <span>↓ {state.behind}</span>
+            </div>
+          </div>
+          {history.length > 0 ? (
+            <div className="overflow-y-auto" style={{ maxHeight: "100px" }}>
+              <div className="px-2 py-1">
+                {history.map((commit, i) => {
+                  const isFirst = i === 0;
+                  return (
+                    <div key={commit.hash} className="flex gap-2 items-center py-0.5">
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isFirst ? 'bg-[#888888]' : 'bg-[#555555]'}`}></div>
+                      <span className="text-[10px] text-[#888888] font-mono shrink-0">{commit.short_hash}</span>
+                      <span className="text-[10px] text-[#666666] truncate">{commit.message}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : (
-            <div className="px-3 py-4 text-xs text-[#666666] text-center">
-              No commit history
+            <div className="px-3 py-2 text-[10px] text-[#666666]">
+              No history
             </div>
           )}
         </div>
