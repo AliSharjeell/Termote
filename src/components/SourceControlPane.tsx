@@ -291,7 +291,7 @@ export function SourceControlPane() {
             </div>
           </div>
           {history.length > 0 ? (
-            <div className="overflow-y-auto" style={{ maxHeight: "100px" }}>
+            <div className="overflow-y-auto" style={{ maxHeight: "60px" }}>
               <div className="px-2 py-1">
                 {history.map((commit, i) => {
                   const isFirst = i === 0;
