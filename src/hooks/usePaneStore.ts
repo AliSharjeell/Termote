@@ -74,8 +74,8 @@ interface PaneState {
     is_repo: boolean
     branch: string | null
     remote: string | null
-    staged: Array<{ path: string; status: string }>
-    unstaged: Array<{ path: string; status: string }>
+    staged: Array<{ path: string; status: string; added?: number; deleted?: number }>
+    unstaged: Array<{ path: string; status: string; added?: number; deleted?: number }>
     untracked: Array<{ path: string; status: string }>
     ahead: number
     behind: number
