@@ -196,10 +196,6 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
                             groupId === group.id ? "text-white" : "text-[#CCCCCC]"
                           }`}
                         >
-                          <span
-                            className="h-2 w-2 rounded"
-                            style={{ backgroundColor: group.color }}
-                          />
                           <span className="flex-1 text-left">{group.name}</span>
                           {groupId === group.id && (
                             <span className="text-[10px] text-[#808080]">current</span>
