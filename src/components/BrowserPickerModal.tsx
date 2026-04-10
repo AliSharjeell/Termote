@@ -5,10 +5,22 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { X, Globe } from "lucide-react"
 
 export function BrowserPickerModal() {
-  const [url, setUrl] = useState("http://localhost:3000")
-  const browserModalOpen = usePaneStore((state) => state.browserModalOpen)
-  const spawnBrowserPane = usePaneStore((state) => state.spawnBrowserPane)
-  const closeBrowserModal = usePaneStore((state) => state.closeBrowserModal)
+  const [url, setUrl] = useState(() => {
+    // Derive HTTP URL from tunnel URL - use the tunnel hostname as the default
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tunnelUrl")
+      if (stored) {
+        try {
+          const wsUrl = new URL(stored)
+          const httpUrl = `${wsUrl.protocol === "wss:" ? "https" : "http"}://${wsUrl.host}`
+          return httpUrl
+        } catch {
+          // fall through to default
+        }
+      }
+    }
+    return "http://localhost:3000"
+  })
 
   if (!browserModalOpen) return null
 
@@ -53,7 +65,7 @@ export function BrowserPickerModal() {
             className="w-full rounded-lg bg-[#27272A] px-3 py-2 text-sm text-white placeholder-[#808080] outline-none border border-[#333333] focus:border-white"
           />
           <p className="mt-2 text-xs text-[#808080]">
-            Opens the URL in an embedded browser pane. Use your PC's local IP (e.g. 192.168.x.x:3000) instead of localhost.
+            Opens the URL in an embedded browser pane on this device.
           </p>
         </div>
 
