@@ -143,7 +143,11 @@ function DashboardContent() {
         {/* View mode toggle - centered */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded-full bg-[#27272A] p-1">
           <button
-            onClick={() => setViewMode("tabs")}
+            onClick={() => {
+              setViewMode("tabs")
+              // Reload to reinitialize terminals fresh in new mode
+              window.location.reload()
+            }}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
               viewMode === "tabs"
                 ? "bg-white text-black shadow-sm"
@@ -154,7 +158,11 @@ function DashboardContent() {
             Tabs
           </button>
           <button
-            onClick={() => setViewMode("panes")}
+            onClick={() => {
+              setViewMode("panes")
+              // Reload to reinitialize terminals fresh in new mode
+              window.location.reload()
+            }}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
               viewMode === "panes"
                 ? "bg-white text-black shadow-sm"
