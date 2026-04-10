@@ -552,9 +552,12 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   killPane: (paneId) => {
     const { ws, isAuthenticated, panes } = get()
     const pane = panes.find(p => p.id === paneId)
-    const isBrowserPane = pane?.url != null
-    if (isBrowserPane) {
-      // Frontend-only pane - remove directly
+    // Frontend-only panes: browser, note, image, whiteboard have no backend process
+    const isFrontendOnly = pane?.url != null ||
+      pane?.shell === "note" ||
+      pane?.shell === "image" ||
+      pane?.shell === "whiteboard"
+    if (isFrontendOnly) {
       const updatedPanes = panes.filter(p => p.id !== paneId)
       const updatedActivePanes = get().activePanes.filter(id => id !== paneId)
       set({ panes: updatedPanes, activePanes: updatedActivePanes })
