@@ -44,6 +44,18 @@ interface PaneState {
   browserModalOpen: boolean
   explorerCurrentPath: string
   explorerContents: DirectoryItem[]
+  // Git status per pane
+  gitStatuses: Record<string, {
+    pane_id: string
+    dir: string
+    is_repo: boolean
+    branch: string | null
+    staged: string[]
+    unstaged: string[]
+    untracked: string[]
+    ahead: number | null
+    behind: number | null
+  }>
   // AI CLI command
   aiCommand: string
 
@@ -96,6 +108,20 @@ interface PaneState {
   // File transfer actions
   uploadFile: (paneId: string, fileName: string, data: string) => void
   handleFileUploaded: (paneId: string, fileName: string) => void
+  // Git actions
+  getGitStatus: (paneId: string) => void
+  gitCommit: (paneId: string, message: string) => void
+  handleGitStatus: (status: {
+    pane_id: string
+    dir: string
+    is_repo: boolean
+    branch: string | null
+    staged: string[]
+    unstaged: string[]
+    untracked: string[]
+    ahead: number | null
+    behind: number | null
+  }) => void
   // AI settings
   setAiCommand: (command: string) => void
   // Persistence helpers
@@ -312,6 +338,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   browserModalOpen: false,
   explorerCurrentPath: "",
   explorerContents: [],
+  gitStatuses: {},
   aiCommand: loadAiCommand(),
 
   setWebSocket: (ws) => set({ ws }),
@@ -729,6 +756,29 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   handleFileUploaded: (paneId, fileName) => {
     console.log(`[Termote] File uploaded: ${fileName} to pane ${paneId}`)
+  },
+
+  getGitStatus: (paneId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "get_git_status", pane_id: paneId }))
+    }
+  },
+
+  gitCommit: (paneId, message) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "git_commit", pane_id: paneId, message }))
+    }
+  },
+
+  handleGitStatus: (status) => {
+    set((state) => ({
+      gitStatuses: {
+        ...state.gitStatuses,
+        [status.pane_id]: status,
+      },
+    }))
   },
 
   setAiCommand: (command) => {

@@ -47,8 +47,10 @@ export type GetDeviceListMessage = { action: "get_device_list" }
 export type KickDeviceMessage = { action: "kick_device"; device_id: string }
 export type BanDeviceMessage = { action: "ban_device"; ip: string }
 export type UploadFileMessage = { action: "upload_file"; pane_id: string; file_name: string; data: string }
+export type GetGitStatusMessage = { action: "get_git_status"; pane_id: string }
+export type GitCommitMessage = { action: "git_commit"; pane_id: string; message: string }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -72,4 +74,19 @@ export type DeviceBannedEvent = { event: "device_banned"; ip: string }
 export type ErrorEvent = { event: "error"; message: string }
 export type FileUploadedEvent = { event: "file_uploaded"; pane_id: string; file_name: string }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent
+export type GitStatusEvent = {
+  event: "git_status"
+  pane_id: string
+  dir: string
+  is_repo: boolean
+  branch: string | null
+  staged: string[]
+  unstaged: string[]
+  untracked: string[]
+  ahead: number | null
+  behind: number | null
+}
+
+export type GitCommitResultEvent = { event: "git_commit_result"; pane_id: string; success: boolean; message: string }
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent

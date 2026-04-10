@@ -30,6 +30,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleDeviceKicked,
     handleDeviceBanned,
     handleFileUploaded,
+    handleGitStatus,
   } = usePaneStore()
 
   const handleMessage = useCallback(
@@ -91,6 +92,16 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
         case "file_uploaded":
           handleFileUploaded(message.pane_id, message.file_name)
+          break
+        case "git_status":
+          handleGitStatus(message)
+          break
+        case "git_commit_result":
+          if (message.success) {
+            // Refresh git status after commit
+            const { getGitStatus } = usePaneStore.getState()
+            getGitStatus(message.pane_id)
+          }
           break
       }
     },
