@@ -23,7 +23,9 @@ export function SourceControlPane() {
 
   // Fetch repos and source control state when cwd changes
   useEffect(() => {
-    if (cwd) {
+    // Only call if cwd looks like a real path (has drive letter or starts with /)
+    // Skip CLI arguments like "--initial-dir"
+    if (cwd && (cwd.startsWith("/") || /^[A-Z]:/i.test(cwd))) {
       findGitRepos(cwd)
     }
   }, [cwd, findGitRepos])
@@ -39,7 +41,8 @@ export function SourceControlPane() {
 
   // Fetch source control state when selected repo changes
   useEffect(() => {
-    if (selectedRepo) {
+    // Only call if selectedRepo looks like a real path
+    if (selectedRepo && (selectedRepo.startsWith("/") || /^[A-Z]:/i.test(selectedRepo))) {
       getSourceControlState(selectedRepo)
     }
   }, [selectedRepo, getSourceControlState])
