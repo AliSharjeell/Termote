@@ -158,7 +158,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {expandedGroups.has("__all__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#808080] hover:text-white cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -196,7 +196,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {expandedGroups.has("__ungrouped__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#808080] hover:text-white cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
+              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().setActivePane(pane.id)}>
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -215,8 +215,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   onClick={() => { selectGroup(group.id); window.location.reload() }}
                   className={`flex-1 rounded-lg px-3 py-2 text-sm border border-[#333333] text-left flex items-center gap-2 ${
                     selectedGroupId === group.id
-                      ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
-                      : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
+                      ? "bg-[#0C0C0C] text-white border-[#0C0C0C]"
+                      : "text-white hover:bg-[#333333] hover:border-[#444444]"
                   }`}
                 >
                   <span
@@ -256,7 +256,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   {groupPanes.map((pane) => (
                     <div
                       key={pane.id}
-                      className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#808080] hover:text-white cursor-pointer"
+                      className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer"
                       onClick={() => usePaneStore.getState().setActivePane(pane.id)}
                     >
                       <span className="truncate">{pane.name}</span>
