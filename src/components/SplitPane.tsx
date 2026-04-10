@@ -218,12 +218,6 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             </div>
           )
         })}
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
         {/* Spacer */}
         <div className="flex-1" />
         {/* Pane count */}
