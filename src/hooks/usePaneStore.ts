@@ -3,6 +3,8 @@ import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem } from "@/lib/ty
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
+const SIDEBAR_KEY = "termote-sidebar-collapsed"
+const GIT_SIDEBAR_KEY = "termote-git-sidebar-collapsed"
 const PANE_GROUPS_KEY = "termote-pane-groups-map"
 const SELECTED_GROUP_KEY = "termote-selected-group"
 const AI_COMMAND_KEY = "termote-ai-command"
@@ -227,14 +229,18 @@ function loadPersistedState() {
     const viewModeJson = localStorage.getItem(VIEW_MODE_KEY)
     const paneGroupsJson = localStorage.getItem(PANE_GROUPS_KEY)
     const selectedGroupJson = localStorage.getItem(SELECTED_GROUP_KEY)
+    const sidebarJson = localStorage.getItem(SIDEBAR_KEY)
+    const gitSidebarJson = localStorage.getItem(GIT_SIDEBAR_KEY)
     return {
       pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
       viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
       paneGroupMap: paneGroupsJson ? JSON.parse(paneGroupsJson) : {},
       selectedGroupId: selectedGroupJson || null,
+      sidebarCollapsed: sidebarJson === "true",
+      gitSidebarCollapsed: gitSidebarJson === "true",
     }
   } catch {
-    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false }
   }
 }
 
@@ -672,11 +678,23 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   toggleSidebar: () => {
-    set(state => ({ sidebarCollapsed: !state.sidebarCollapsed }))
+    set(state => {
+      const next = !state.sidebarCollapsed
+      try {
+        localStorage.setItem(SIDEBAR_KEY, String(next))
+      } catch {}
+      return { sidebarCollapsed: next }
+    })
   },
 
   toggleGitSidebar: () => {
-    set(state => ({ gitSidebarCollapsed: !state.gitSidebarCollapsed }))
+    set(state => {
+      const next = !state.gitSidebarCollapsed
+      try {
+        localStorage.setItem(GIT_SIDEBAR_KEY, String(next))
+      } catch {}
+      return { gitSidebarCollapsed: next }
+    })
   },
 
   fetchPortProcesses: () => {
