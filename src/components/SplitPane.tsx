@@ -157,7 +157,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               else newSet.add("__all__")
               setExpandedGroups(newSet)
             }}
-            className="text-xs text-[#666] hover:text-white border border-[#252525] rounded px-1 shrink-0"
+            className={`text-xs border rounded px-1 shrink-0 ${
+              selectedGroupId === null
+                ? "text-white border-[#555]"
+                : "text-[#666] hover:text-white border-[#252525]"
+            }`}
             title="Expand"
           >
             {expandedGroups.has("__all__") ? "▾" : "▸"}
@@ -204,7 +208,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               else newSet.add("__ungrouped__")
               setExpandedGroups(newSet)
             }}
-            className="text-xs text-[#666] hover:text-white border border-[#252525] rounded px-1 shrink-0"
+            className={`text-xs border rounded px-1 shrink-0 ${
+              selectedGroupId === "__ungrouped__"
+                ? "text-white border-[#555]"
+                : "text-[#666] hover:text-white border-[#252525]"
+            }`}
             title="Expand"
           >
             {expandedGroups.has("__ungrouped__") ? "▾" : "▸"}
@@ -256,7 +264,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                     else newSet.add(group.id)
                     setExpandedGroups(newSet)
                   }}
-                  className="text-xs text-[#666] hover:text-white border border-[#252525] rounded px-1 shrink-0"
+                  className={`text-xs border rounded px-1 shrink-0 ${
+                    selectedGroupId === group.id
+                      ? "text-white border-[#555]"
+                      : "text-[#666] hover:text-white border-[#252525]"
+                  }`}
                   title={isExpanded ? "Collapse" : "Expand"}
                 >
                   {isExpanded ? "▾" : "▸"}
