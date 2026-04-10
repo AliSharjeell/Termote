@@ -121,10 +121,10 @@ function DashboardContent() {
                 ? isAuthenticated
                   ? "bg-[#16C60C]"
                   : "bg-[#DCDCAA]"
-                : tunnelStatus === "checking"
+                : tunnelStatus === "connecting"
                   ? "bg-[#DCDCAA] animate-pulse"
-                  : tunnelStatus === "consent"
-                    ? "bg-[#F9A825] animate-pulse"
+                  : tunnelStatus === "failed"
+                    ? "bg-[#E74856]"
                     : "bg-[#E74856]"
             }`}
             style={{
@@ -132,18 +132,16 @@ function DashboardContent() {
                 ? isAuthenticated
                   ? "0 0 6px #16C60C"
                   : "0 0 6px #DCDCAA"
-                : tunnelStatus === "checking"
+                : tunnelStatus === "connecting"
                   ? "0 0 6px #DCDCAA"
-                  : tunnelStatus === "consent"
-                    ? "0 0 6px #F9A825"
-                    : "0 0 6px #E74856"
+                  : "0 0 6px #E74856"
             }}
           />
-          {tunnelStatus === "checking" && (
-            <span className="text-xs text-[#DCDCAA]">Checking tunnel...</span>
+          {tunnelStatus === "connecting" && !isConnected && (
+            <span className="text-xs text-[#DCDCAA]">Connecting...</span>
           )}
-          {tunnelStatus === "consent" && (
-            <span className="text-xs text-[#F9A825]">Awaiting tunnel access...</span>
+          {tunnelStatus === "failed" && (
+            <span className="text-xs text-[#E74856]">Connection failed - retrying...</span>
           )}
           <button
             onClick={() => window.location.reload()}
