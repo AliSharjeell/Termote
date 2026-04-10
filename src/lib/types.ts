@@ -17,6 +17,7 @@ export interface Pane {
   groupId?: string | null
   cwd?: string | null
   url?: string | null
+  proxyUrl?: string | null
 }
 
 export interface DeviceInfo {
