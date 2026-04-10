@@ -139,6 +139,7 @@ interface PaneState {
   openBrowser: (url: string) => void
   openBrowserModal: () => void
   closeBrowserModal: () => void
+  spawnBrowserPane: (url: string) => void
   closeExplorer: () => void
   fetchDirectory: (path: string) => void
   handleDirectoryContents: (path: string, items: DirectoryItem[]) => void
@@ -791,6 +792,24 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   closeExplorer: () => {
     set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+  },
+
+  spawnBrowserPane: (url) => {
+    const { panes, activePanes } = get()
+    const id = `browser-${Date.now()}`
+    const newPane: Pane = {
+      id,
+      pid: 0,
+      shell: "browser" as any,
+      name: new URL(url).hostname,
+      cols: 80,
+      rows: 24,
+      url,
+    }
+    set({
+      panes: [...panes, newPane],
+      activePanes: [...activePanes, id],
+    })
   },
 
   openBrowserModal: () => {

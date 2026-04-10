@@ -16,6 +16,7 @@ export interface Pane {
   pinned?: boolean
   groupId?: string | null
   cwd?: string | null
+  url?: string | null
 }
 
 export interface DeviceInfo {

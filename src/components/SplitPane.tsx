@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react"
 import { XtermPane } from "./XtermPane"
+import { BrowserPane } from "./BrowserPane"
 import { SourceControlPane } from "./SourceControlPane"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
@@ -304,7 +305,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               className="relative overflow-hidden bg-[#0C0C0C]"
             >
               <div className="h-full w-full">
-                <XtermPane pane={pane} />
+                {pane.url ? (
+                  <BrowserPane pane={pane} />
+                ) : (
+                  <XtermPane pane={pane} />
+                )}
               </div>
             </div>
           ))

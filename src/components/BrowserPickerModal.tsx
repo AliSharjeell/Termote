@@ -7,14 +7,14 @@ import { X, Globe } from "lucide-react"
 export function BrowserPickerModal() {
   const [url, setUrl] = useState("http://localhost:3000")
   const browserModalOpen = usePaneStore((state) => state.browserModalOpen)
-  const openBrowser = usePaneStore((state) => state.openBrowser)
+  const spawnBrowserPane = usePaneStore((state) => state.spawnBrowserPane)
   const closeBrowserModal = usePaneStore((state) => state.closeBrowserModal)
 
   if (!browserModalOpen) return null
 
   const handleSpawn = () => {
     if (url.trim()) {
-      openBrowser(url.trim())
+      spawnBrowserPane(url.trim())
       closeBrowserModal()
     }
   }
