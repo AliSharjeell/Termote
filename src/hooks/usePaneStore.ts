@@ -33,6 +33,9 @@ interface PaneState {
   isAuthenticated: boolean
   // View mode: "auto", "tabs", or "panes"
   viewMode: "auto" | "tabs" | "panes"
+  // Sidebar collapse states
+  sidebarCollapsed: boolean
+  gitSidebarCollapsed: boolean
   // Pane groups
   groups: PaneGroup[]
   selectedGroupId: string | null
@@ -93,6 +96,13 @@ interface PaneState {
     name: string
     branch: string | null
   }>
+  // Port manager
+  portProcesses: Array<{
+    port: number
+    pid: number
+    process_name: string
+    cwd?: string
+  }>
 
   // AI CLI command
   aiCommand: string
@@ -116,6 +126,9 @@ interface PaneState {
   moveToActive: (paneId: string) => void
   selectTab: (tabId: string) => void
   setViewMode: (mode: "auto" | "tabs" | "panes") => void
+  toggleSidebar: () => void
+  toggleGitSidebar: () => void
+  fetchPortProcesses: () => void
   renamePane: (paneId: string, name: string) => void
   togglePin: (paneId: string) => void
   // Group actions
@@ -160,6 +173,7 @@ interface PaneState {
   getSourceControlState: (path: string) => void
   findGitRepos: (path: string) => void
   handleGitReposFound: (repos: Array<{path: string; name: string; branch: string | null}>) => void
+  handlePortProcesses: (processes: Array<{port: number; pid: number; process_name: string; cwd?: string}>) => void
   handleGitStatus: (status: {
     pane_id: string
     dir: string
@@ -408,6 +422,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   isConnected: false,
   isAuthenticated: false,
   viewMode: "auto",
+  sidebarCollapsed: false,
+  gitSidebarCollapsed: false,
   groups: loadGroups(),
   selectedGroupId: null,
   devices: [],
@@ -420,6 +436,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   gitLogs: {},
   sourceControlStates: {},
   sourceControlRepos: [],
+  portProcesses: [],
   aiCommand: loadAiCommand(),
 
   setWebSocket: (ws) => set({ ws }),
@@ -652,6 +669,21 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setViewMode: (mode) => {
     saveViewMode(mode)
     set({ viewMode: mode })
+  },
+
+  toggleSidebar: () => {
+    set(state => ({ sidebarCollapsed: !state.sidebarCollapsed }))
+  },
+
+  toggleGitSidebar: () => {
+    set(state => ({ gitSidebarCollapsed: !state.gitSidebarCollapsed }))
+  },
+
+  fetchPortProcesses: () => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "get_port_processes" }))
+    }
   },
 
   renamePane: (paneId, name) => {
@@ -1013,6 +1045,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     set((state) => ({
       sourceControlRepos: repos,
     }))
+  },
+
+  handlePortProcesses: (processes) => {
+    set({ portProcesses: processes })
   },
 
   handleGitStatus: (status) => {
