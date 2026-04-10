@@ -32,9 +32,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       return
     }
 
-    // Store connection info in sessionStorage
-    sessionStorage.setItem("tunnelUrl", url)
-    sessionStorage.setItem("authToken", password)
+    // Store connection info in localStorage (matches dashboard read)
+    localStorage.setItem("tunnelUrl", url)
+    localStorage.setItem("authToken", password)
 
     setIsLoading(false)
     onSuccess?.()
