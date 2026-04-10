@@ -143,6 +143,8 @@ interface PaneState {
   getGitStatus: (paneId: string) => void
   gitCommit: (paneId: string, message: string) => void
   gitStage: (paneId: string, files: string[], unstage: boolean) => void
+  gitPush: (paneId: string) => void
+  gitPull: (paneId: string) => void
   gitLog: (paneId: string) => void
   getSourceControlState: (path: string) => void
   handleGitStatus: (status: {
@@ -841,6 +843,20 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "git_stage", pane_id: paneId, files, unstage }))
+    }
+  },
+
+  gitPush: (paneId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "git_push", pane_id: paneId }))
+    }
+  },
+
+  gitPull: (paneId) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "git_pull", pane_id: paneId }))
     }
   },
 

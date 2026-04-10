@@ -6,14 +6,14 @@ import { useState, useEffect } from "react"
 type TabId = "changes" | "outgoing" | "graph"
 
 export function SourceControlPane() {
-  const { panes, activePanes, sourceControlStates, getSourceControlState, gitStage, gitCommit } = usePaneStore()
+  const { panes, activePanes, sourceControlStates, getSourceControlState, gitStage, gitCommit, gitPush, gitPull, gitLog } = usePaneStore()
   const [activeTab, setActiveTab] = useState<TabId>("changes")
   const [commitMessage, setCommitMessage] = useState("")
   const [activePaneId, setActivePaneId] = useState<string | null>(null)
+  const [history, setHistory] = useState<Array<{hash: string; short_hash: string; message: string; author: string; date: string}>>([])
 
   // Find the focused pane - prefer active pane that has a cwd
   useEffect(() => {
-    // Find first active pane with cwd
     const focusedPane = panes.find(p => activePanes.includes(p.id) && p.cwd)
     if (focusedPane) {
       setActivePaneId(focusedPane.id)
@@ -38,6 +38,25 @@ export function SourceControlPane() {
     }, 5000)
     return () => clearInterval(interval)
   }, [cwd, getSourceControlState])
+
+  // Fetch git log when graph tab is active
+  useEffect(() => {
+    if (activeTab === "graph" && activePaneId) {
+      gitLog(activePaneId)
+    }
+  }, [activeTab, activePaneId, gitLog])
+
+  // Listen for git log events
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const msg = e.detail
+      if (msg.event === "git_log" && msg.pane_id === activePaneId) {
+        setHistory(msg.commits || [])
+      }
+    }
+    window.addEventListener("terminal-output" as any, handler)
+    return () => window.removeEventListener("terminal-output" as any, handler)
+  }, [activePaneId])
 
   if (!cwd) {
     return (
@@ -75,6 +94,20 @@ export function SourceControlPane() {
     }
   }
 
+  const handlePush = () => {
+    if (activePaneId) {
+      gitPush(activePaneId)
+      setTimeout(() => getSourceControlState(cwd), 1000)
+    }
+  }
+
+  const handlePull = () => {
+    if (activePaneId) {
+      gitPull(activePaneId)
+      setTimeout(() => getSourceControlState(cwd), 1000)
+    }
+  }
+
   const totalChanges = state.staged.length + state.unstaged.length + state.untracked.length
 
   return (
@@ -87,13 +120,37 @@ export function SourceControlPane() {
           <line x1="17.01" y1="12" x2="22.96" y2="12"/>
         </svg>
         <span className="text-[10px] text-[#808080] uppercase tracking-wider">Source Control</span>
-        <span className="ml-auto text-[10px] text-[#808080]">{state.branch || "main"}</span>
+        <span className="text-[10px] text-[#808080]">{state.branch || "main"}</span>
+        {/* Push/Pull buttons in header */}
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={handlePull}
+            title="Pull"
+            className="p-1 rounded hover:bg-[#333] text-[#808080] hover:text-white"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+          </button>
+          <button
+            onClick={handlePush}
+            title="Push"
+            className="p-1 rounded hover:bg-[#333] text-[#808080] hover:text-white"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Sync Changes button */}
+      {/* Sync Changes button (only when ahead > 0) */}
       {state.ahead > 0 && (
         <div className="px-3 py-2 border-b border-[#333333]">
-          <button className="w-full flex items-center justify-center gap-2 rounded bg-[#238636] hover:bg-[#2ea043] text-white text-xs py-1.5 font-medium">
+          <button
+            onClick={handlePush}
+            className="w-full flex items-center justify-center gap-2 rounded bg-[#238636] hover:bg-[#2ea043] text-white text-xs py-1.5 font-medium"
+          >
             <span>↑</span>
             <span>Sync Changes ({state.ahead})</span>
           </button>
@@ -256,51 +313,75 @@ export function SourceControlPane() {
         )}
 
         {activeTab === "graph" && (
-          <div className="p-3">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 rounded-full bg-[#58A6FF] border-2 border-[#58A6FF]"></div>
-                <div className="w-0.5 h-8 bg-[#333]"></div>
-                <div className="w-3 h-3 rounded-full border-2 border-[#58A6FF] opacity-50"></div>
+          <div className="flex flex-col h-full">
+            {/* Branch info header */}
+            <div className="px-3 py-2 border-b border-[#333333]">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#58A6FF]"></div>
+                <span className="text-xs text-white font-medium">{state.branch || "main"}</span>
+                <span className="text-[10px] text-[#666]">/</span>
+                <span className="text-[10px] text-[#808080]">{state.remote || "origin"}/{state.branch || "main"}</span>
               </div>
-              <div className="flex-1">
-                <div className="text-xs text-white font-medium">{state.branch || "main"}</div>
-                <div className="text-[10px] text-[#808080] mt-0.5">
-                  {state.remote || "origin"}/
-                  {state.branch || "main"}
-                </div>
-                {state.behind > 0 && (
-                  <div className="text-[10px] text-[#3FB950] mt-0.5">
-                    ↓ {state.behind} behind
-                  </div>
-                )}
+              <div className="flex gap-4 mt-2 text-[10px]">
+                <span className="text-[#3FB950]">↑ {state.ahead}</span>
+                <span className="text-[#F85149]">↓ {state.behind}</span>
               </div>
             </div>
 
-            <div className="border border-[#333] rounded p-2 bg-[#161616]">
-              <div className="text-[10px] text-[#808080] mb-2">LOCAL vs REMOTE</div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#808080]">Ahead</span>
-                  <span className="text-[#3FB950]">{state.ahead}</span>
+            {/* Full commit history tree */}
+            <div className="flex-1 overflow-y-auto">
+              {history.length > 0 ? (
+                <div className="px-2 py-2">
+                  {/* Tree lines */}
+                  <div className="relative">
+                    {history.map((commit, i) => {
+                      const isFirst = i === 0;
+                      const isLast = i === history.length - 1;
+                      const hasNext = i < history.length - 1;
+
+                      return (
+                        <div key={commit.hash} className="flex gap-2 relative">
+                          {/* Tree visualization column */}
+                          <div className="flex flex-col items-center w-4 shrink-0">
+                            {/* Top line */}
+                            {!isFirst && (
+                              <div className="w-px h-3 bg-[#333]"></div>
+                            )}
+                            {/* Circle node */}
+                            <div className={`w-2 h-2 rounded-full border-2 ${isFirst ? 'bg-[#58A6FF] border-[#58A6FF]' : 'bg-[#0C0C0C] border-[#58A6FF]'}`}></div>
+                            {/* Bottom line */}
+                            {!isLast && (
+                              <div className="w-px flex-1 bg-[#333] min-h-[20px]"></div>
+                            )}
+                          </div>
+
+                          {/* Commit content */}
+                          <div className={`flex-1 pb-3 ${isFirst ? '' : 'pt-0'}`}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-[#58A6FF] font-mono">{commit.short_hash}</span>
+                              {isFirst && (
+                                <span className="text-[8px] px-1 py-0.5 rounded bg-[#238636] text-white">HEAD</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-white mt-0.5 leading-tight" title={commit.message}>
+                              {commit.message}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[9px] text-[#666]">{commit.author}</span>
+                              <span className="text-[9px] text-[#555]">·</span>
+                              <span className="text-[9px] text-[#666]">{commit.date}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#808080]">Behind</span>
-                  <span className="text-[#F85149]">{state.behind}</span>
+              ) : (
+                <div className="px-3 py-8 text-xs text-[#808080] text-center">
+                  No commit history
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#808080]">Staged</span>
-                  <span className="text-[#3FB950]">{state.staged.length}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#808080]">Modified</span>
-                  <span className="text-[#F85149]">{state.unstaged.length}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#808080]">Untracked</span>
-                  <span className="text-[#D29922]">{state.untracked.length}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}

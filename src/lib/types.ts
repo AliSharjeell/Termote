@@ -50,10 +50,12 @@ export type UploadFileMessage = { action: "upload_file"; pane_id: string; file_n
 export type GetGitStatusMessage = { action: "get_git_status"; pane_id: string }
 export type GitCommitMessage = { action: "git_commit"; pane_id: string; message: string }
 export type GitStageMessage = { action: "git_stage"; pane_id: string; files: string[]; unstage: boolean }
+export type GitPushMessage = { action: "git_push"; pane_id: string }
+export type GitPullMessage = { action: "git_pull"; pane_id: string }
 export type GitLogMessage = { action: "git_log"; pane_id: string }
 export type GetSourceControlStateMessage = { action: "get_source_control_state"; path: string }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitLogMessage | GetSourceControlStateMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage
 
 // Server -> Client messages
 export type StateUpdate = {
