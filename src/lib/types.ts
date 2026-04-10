@@ -115,6 +115,8 @@ export type GitLogEvent = {
 export type SourceControlFile = {
   path: string
   status: string
+  added?: number
+  deleted?: number
 }
 
 export type OutgoingCommit = {
