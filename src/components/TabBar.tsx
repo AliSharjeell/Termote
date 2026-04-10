@@ -196,7 +196,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
             <div
               key={pane.id}
               className="absolute inset-0"
-              style={{ visibility: pane.id === selectedTab ? "visible" : "hidden" }}
+              style={{ opacity: pane.id === selectedTab ? 1 : 0, pointerEvents: pane.id === selectedTab ? "auto" : "none" }}
             >
               <XtermPane pane={pane} />
             </div>
