@@ -12,7 +12,7 @@ interface SplitPaneProps {
 
 export function SplitPane({ searchQuery }: SplitPaneProps) {
   // ALL hooks must be at the top - never inside conditionals!
-  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectGroup, deleteGroup } = usePaneStore()
+  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
@@ -143,10 +143,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {/* All Panes */}
         <button
           onClick={() => { selectGroup(null); window.location.reload() }}
-          className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 ${
+          className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
-              ? "text-white bg-[#111111]"
-              : "text-[#888] hover:text-white hover:bg-[#111111]"
+              ? "text-white bg-[#252525]"
+              : "text-white hover:bg-[#1f1f1f]"
           }`}
         >
           <button
@@ -168,7 +168,18 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {expandedGroups.has("__all__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().selectTab(pane.id)}>
+              <div
+                key={pane.id}
+                className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
+                  selectedTab === pane.id ? "text-white font-medium bg-[#1f1f1f] rounded" : "text-white hover:text-[#ccc]"
+                }`}
+                onClick={() => usePaneStore.getState().selectTab(pane.id)}
+              >
+                {pane.url ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                )}
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -179,10 +190,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {/* Ungrouped */}
         <button
           onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
-          className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 ${
+          className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
-              ? "text-white bg-[#111111]"
-              : "text-[#888] hover:text-white hover:bg-[#111111]"
+              ? "text-white bg-[#252525]"
+              : "text-white hover:bg-[#1f1f1f]"
           }`}
         >
           <button
@@ -204,7 +215,18 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         {expandedGroups.has("__ungrouped__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
-              <div key={pane.id} className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer" onClick={() => usePaneStore.getState().selectTab(pane.id)}>
+              <div
+                key={pane.id}
+                className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
+                  selectedTab === pane.id ? "text-white font-medium bg-[#1f1f1f] rounded" : "text-white hover:text-[#ccc]"
+                }`}
+                onClick={() => usePaneStore.getState().selectTab(pane.id)}
+              >
+                {pane.url ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                )}
                 <span className="truncate">{pane.name}</span>
                 {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
               </div>
@@ -220,10 +242,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <div key={group.id} className="group/row">
               <button
                 onClick={() => { selectGroup(group.id); window.location.reload() }}
-                className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 ${
+                className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
-                    ? "text-white bg-[#111111]"
-                    : "text-[#888] hover:text-white hover:bg-[#111111]"
+                    ? "text-white bg-[#252525]"
+                    : "text-white hover:bg-[#1f1f1f]"
                 }`}
               >
                 <button
@@ -256,9 +278,16 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   {groupPanes.map((pane) => (
                     <div
                       key={pane.id}
-                      className="flex items-center gap-2 px-3 py-1 text-sm text-white hover:text-[#ccc] cursor-pointer"
+                      className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
+                        selectedTab === pane.id ? "text-white font-medium bg-[#1f1f1f] rounded" : "text-white hover:text-[#ccc]"
+                      }`}
                       onClick={() => usePaneStore.getState().selectTab(pane.id)}
                     >
+                      {pane.url ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                      )}
                       <span className="truncate">{pane.name}</span>
                       {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
                     </div>
