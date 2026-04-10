@@ -16,7 +16,7 @@ interface SplitPaneProps {
 
 export function SplitPane({ searchQuery }: SplitPaneProps) {
   // ALL hooks must be at the top - never inside conditionals!
-  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup, sidebarCollapsed, gitSidebarCollapsed, toggleSidebar, toggleGitSidebar } = usePaneStore()
+  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup, sidebarCollapsed, gitSidebarCollapsed, toggleSidebar, toggleGitSidebar, portProcesses } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
@@ -114,9 +114,12 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
-            className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-white text-lg font-bold"
+            className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white text-lg font-bold"
           >
             ›
+            {portProcesses.length > 0 && (
+              <span className="text-[8px] text-[#16C60C]">{portProcesses.length}</span>
+            )}
           </button>
         </div>
       ) : (
