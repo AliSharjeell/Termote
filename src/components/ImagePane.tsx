@@ -100,7 +100,13 @@ export function ImagePane({ pane }: ImagePaneProps) {
             ) : error ? (
               <div className="text-center">
                 <p className="text-[#E44] text-sm mb-2">{error}</p>
-                <p className="text-[#666] text-xs">Check the URL and try again</p>
+                <p className="text-[#666] text-xs mb-2">Check the URL and try again</p>
+                <button
+                  onClick={loadImage}
+                  className="px-3 py-1 bg-[#252525] hover:bg-[#333] text-white text-xs rounded"
+                >
+                  Retry
+                </button>
               </div>
             ) : (
               <img
