@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react"
 import { XtermPane } from "./XtermPane"
+import { GitPane } from "./GitPane"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface SplitPaneProps {
@@ -285,17 +286,19 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         </span>
       </div>
 
-      {/* Auto-balancing grid */}
-      <div
-        className="flex-1 overflow-hidden"
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${Math.max(cols, 1)}, 1fr)`,
-          gridTemplateRows: `repeat(${Math.max(rows, 1)}, 1fr)`,
-          gap: "2px",
-          background: "#181818",
-        }}
-      >
+      {/* Main content - left sidebar + grid */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Auto-balancing grid */}
+        <div
+          className="flex-1 overflow-hidden"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${Math.max(cols, 1)}, 1fr)`,
+            gridTemplateRows: `repeat(${Math.max(rows, 1)}, 1fr)`,
+            gap: "2px",
+            background: "#181818",
+          }}
+        >
         {isGroupEmpty ? (
           <div className="flex items-center justify-center bg-[#0C0C0C]">
             <div className="text-center text-[#808080]">
@@ -316,6 +319,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           ))
         )}
       </div>
+
+      {/* Git sidebar */}
+      <GitPane />
     </div>
   )
 }
