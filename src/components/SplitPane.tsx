@@ -125,8 +125,6 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         </div>
         {/* Separator */}
         <div className="h-px bg-[#353535] mb-1" />
-        {/* Group label */}
-        <span className="text-[10px] text-[#808080] px-2 uppercase tracking-wider mb-1">Groups</span>
 
         {/* All Panes */}
         <button
