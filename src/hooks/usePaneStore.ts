@@ -445,8 +445,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       pinned: pinnedPaneIdSet.has(p.id),
       // Restore groupId from localStorage if backend doesn't provide it
       groupId: p.groupId ?? persisted.paneGroupMap[p.id] ?? null,
-      // Preserve url if this pane has one
+      // Preserve url and proxyUrl if this pane has one
       url: state.panes.find(sp => sp.id === p.id)?.url ?? p.url,
+      proxyUrl: state.panes.find(sp => sp.id === p.id)?.proxyUrl ?? p.proxyUrl,
     }))]
     // Auto-select first pane if none selected or current selection is gone
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
@@ -817,6 +818,18 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   spawnBrowserPane: (url) => {
     const { panes, activePanes } = get()
     const id = `browser-${Date.now()}`
+    // Build proxy URL using tunnel
+    let proxyUrl: string | null = null
+    const stored = localStorage.getItem("tunnelUrl")
+    if (stored) {
+      try {
+        const wsUrl = new URL(stored)
+        const baseUrl = `${wsUrl.protocol === "wss:" ? "https" : "http"}://${wsUrl.host}`
+        proxyUrl = `${baseUrl}/proxy?url=${encodeURIComponent(url)}`
+      } catch {
+        // fall through - proxyUrl stays null
+      }
+    }
     const newPane: Pane = {
       id,
       pid: 0,
@@ -825,6 +838,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       cols: 80,
       rows: 24,
       url,
+      proxyUrl,
     }
     const updatedPanes = [...panes, newPane]
     set({
