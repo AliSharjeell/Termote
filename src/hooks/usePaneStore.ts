@@ -87,6 +87,13 @@ interface PaneState {
       date: string
     }>
   }>
+  // Git repos found in current directory
+  sourceControlRepos: Array<{
+    path: string
+    name: string
+    branch: string | null
+  }>
+
   // AI CLI command
   aiCommand: string
 
@@ -147,6 +154,8 @@ interface PaneState {
   gitPull: (paneId: string) => void
   gitLog: (paneId: string) => void
   getSourceControlState: (path: string) => void
+  findGitRepos: (path: string) => void
+  handleGitReposFound: (repos: Array<{path: string; name: string; branch: string | null}>) => void
   handleGitStatus: (status: {
     pane_id: string
     dir: string
@@ -406,6 +415,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   gitStatuses: {},
   gitLogs: {},
   sourceControlStates: {},
+  sourceControlRepos: [],
   aiCommand: loadAiCommand(),
 
   setWebSocket: (ws) => set({ ws }),
@@ -872,6 +882,19 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "get_source_control_state", path }))
     }
+  },
+
+  findGitRepos: (path) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "find_git_repos", path }))
+    }
+  },
+
+  handleGitReposFound: (repos) => {
+    set((state) => ({
+      sourceControlRepos: repos,
+    }))
   },
 
   handleGitStatus: (status) => {

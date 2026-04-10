@@ -108,7 +108,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <div className="flex flex-col gap-1 mb-2">
           <button
             onClick={handleAddPane}
-            className="flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm text-black hover:bg-gray-200 font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
           >
             <span>+</span>
             <span>New Terminal</span>
@@ -116,7 +116,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={handleSpawnFromDirectory}
             title="Open terminal in folder..."
-            className="flex items-center justify-center gap-1.5 rounded-lg bg-[#333333] px-3 py-2 text-sm text-[#CCCCCC] hover:bg-[#444444] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -126,7 +126,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={() => usePaneStore.getState().openBrowserModal()}
             title="Open browser tab..."
-            className="flex items-center justify-center gap-1.5 rounded-lg bg-[#333333] px-3 py-2 text-sm text-[#CCCCCC] hover:bg-[#444444] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/>

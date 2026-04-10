@@ -115,7 +115,7 @@ function DashboardContent() {
       <div className="relative flex shrink-0 items-center border-b border-[#333333] bg-[#161616] px-4 py-2">
         {/* Status + Focus - left side */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-[#CCCCCC] tracking-wide">Termote</span>
+          <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
           <div
             className={`h-2 w-2 rounded-full ${
               isConnected
