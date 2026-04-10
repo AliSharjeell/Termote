@@ -1,15 +1,23 @@
 "use client"
 
+import { useState } from "react"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { ChevronUp, Folder, FolderOpen, File, X } from "lucide-react"
+import { ChevronUp, Folder, FolderOpen, File, X, Search } from "lucide-react"
 
 export function DirectoryPickerModal() {
+  const [searchQuery, setSearchQuery] = useState("")
   const explorerOpen = usePaneStore((state) => state.explorerOpen)
   const explorerCurrentPath = usePaneStore((state) => state.explorerCurrentPath)
   const explorerContents = usePaneStore((state) => state.explorerContents)
   const closeExplorer = usePaneStore((state) => state.closeExplorer)
   const fetchDirectory = usePaneStore((state) => state.fetchDirectory)
   const spawnAtDirectory = usePaneStore((state) => state.spawnAtDirectory)
+
+  const filteredContents = searchQuery
+    ? explorerContents.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : explorerContents
 
   if (!explorerOpen) return null
 
@@ -55,6 +63,16 @@ export function DirectoryPickerModal() {
                 {explorerCurrentPath || "Drives"}
               </span>
             </div>
+            <div className="relative flex items-center ml-2">
+              <Search className="absolute left-2.5 h-4 w-4 text-[#808080] pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search folders..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 w-48 rounded-full bg-[#27272A] pl-8 pr-3 text-xs text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
+              />
+            </div>
           </div>
           <button
             onClick={closeExplorer}
@@ -66,7 +84,7 @@ export function DirectoryPickerModal() {
 
         {/* Body - File List */}
         <div className="flex-1 overflow-y-auto p-2">
-          {explorerContents.length === 0 ? (
+          {filteredContents.length === 0 ? (
             <div className="flex h-full items-center justify-center text-[#808080]">
               <div className="text-center">
                 <FolderOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -75,7 +93,7 @@ export function DirectoryPickerModal() {
             </div>
           ) : (
             <div className="space-y-0.5">
-              {explorerContents.map((item) => (
+              {filteredContents.map((item) => (
                 <button
                   key={item.absolute_path}
                   onClick={() => handleItemClick(item)}
