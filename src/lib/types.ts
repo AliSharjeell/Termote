@@ -1,4 +1,4 @@
-export type Shell = "powershell" | "cmd" | "wsl"
+export type Shell = "powershell" | "cmd" | "wsl" | "note"
 
 export interface PaneGroup {
   id: string
