@@ -57,8 +57,10 @@ export type GitPullMessage = { action: "git_pull"; pane_id: string }
 export type GitLogMessage = { action: "git_log"; pane_id: string }
 export type GetSourceControlStateMessage = { action: "get_source_control_state"; path: string }
 export type FindGitReposMessage = { action: "find_git_repos"; path: string }
+export type GetPortProcessesMessage = { action: "get_port_processes" }
+export type KillProcessMessage = { action: "kill_process"; pid: number }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -157,4 +159,11 @@ export type PortProcessesEvent = {
   processes: Array<{ port: number; pid: number; process_name: string; cwd?: string }>
 }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent
+export type ProcessKilledEvent = {
+  event: "process_killed"
+  pid: number
+  success: boolean
+  message: string
+}
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent

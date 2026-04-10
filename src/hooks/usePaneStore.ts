@@ -131,6 +131,7 @@ interface PaneState {
   toggleSidebar: () => void
   toggleGitSidebar: () => void
   fetchPortProcesses: () => void
+  killProcess: (pid: number) => void
   renamePane: (paneId: string, name: string) => void
   togglePin: (paneId: string) => void
   // Group actions
@@ -176,6 +177,7 @@ interface PaneState {
   findGitRepos: (path: string) => void
   handleGitReposFound: (repos: Array<{path: string; name: string; branch: string | null}>) => void
   handlePortProcesses: (processes: Array<{port: number; pid: number; process_name: string; cwd?: string}>) => void
+  handleProcessKilled: (pid: number, success: boolean) => void
   handleGitStatus: (status: {
     pane_id: string
     dir: string
@@ -704,6 +706,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
+  killProcess: (pid) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "kill_process", pid }))
+    }
+  },
+
   renamePane: (paneId, name) => {
     const { panes, ws, isAuthenticated } = get()
     const updatedPanes = panes.map(p =>
@@ -1067,6 +1076,14 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   handlePortProcesses: (processes) => {
     set({ portProcesses: processes })
+  },
+
+  handleProcessKilled: (pid, success) => {
+    if (success) {
+      set(state => ({
+        portProcesses: state.portProcesses.filter(p => p.pid !== pid)
+      }))
+    }
   },
 
   handleGitStatus: (status) => {

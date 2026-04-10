@@ -35,6 +35,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleSourceControlState,
     handleGitReposFound,
     handlePortProcesses,
+    handleProcessKilled,
   } = usePaneStore()
 
   const handleMessage = useCallback(
@@ -119,9 +120,12 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "port_processes":
           handlePortProcesses(message.processes)
           break
+        case "process_killed":
+          handleProcessKilled(message.pid, message.success)
+          break
       }
     },
-    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleGitReposFound, handlePortProcesses]
+    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleGitReposFound, handlePortProcesses, handleProcessKilled]
   )
 
   const connect = useCallback(() => {
