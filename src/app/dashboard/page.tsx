@@ -80,7 +80,7 @@ function DashboardContent() {
   }, [router, searchParams])
 
   // Connect to WebSocket
-  const { disconnect } = useWebSocket({
+  const { disconnect, tunnelStatus } = useWebSocket({
     url: tunnelUrl,
     token: authToken,
   })
@@ -121,16 +121,30 @@ function DashboardContent() {
                 ? isAuthenticated
                   ? "bg-[#16C60C]"
                   : "bg-[#DCDCAA]"
-                : "bg-[#E74856]"
+                : tunnelStatus === "checking"
+                  ? "bg-[#DCDCAA] animate-pulse"
+                  : tunnelStatus === "consent"
+                    ? "bg-[#F9A825] animate-pulse"
+                    : "bg-[#E74856]"
             }`}
             style={{
               boxShadow: isConnected
                 ? isAuthenticated
                   ? "0 0 6px #16C60C"
                   : "0 0 6px #DCDCAA"
-                : "0 0 6px #E74856"
+                : tunnelStatus === "checking"
+                  ? "0 0 6px #DCDCAA"
+                  : tunnelStatus === "consent"
+                    ? "0 0 6px #F9A825"
+                    : "0 0 6px #E74856"
             }}
           />
+          {tunnelStatus === "checking" && (
+            <span className="text-xs text-[#DCDCAA]">Checking tunnel...</span>
+          )}
+          {tunnelStatus === "consent" && (
+            <span className="text-xs text-[#F9A825]">Awaiting tunnel access...</span>
+          )}
           <button
             onClick={() => window.location.reload()}
             className="flex items-center gap-1 rounded-full bg-[#27272A] px-2 py-1 text-xs text-[#A1A1AA] hover:bg-[#333333] hover:text-white transition-colors ml-1"
