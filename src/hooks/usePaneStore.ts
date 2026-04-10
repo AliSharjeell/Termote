@@ -68,6 +68,25 @@ interface PaneState {
       date: string
     }>
   }>
+  // Source control state (keyed by path)
+  sourceControlStates: Record<string, {
+    path: string
+    is_repo: boolean
+    branch: string | null
+    remote: string | null
+    staged: Array<{ path: string; status: string }>
+    unstaged: Array<{ path: string; status: string }>
+    untracked: Array<{ path: string; status: string }>
+    ahead: number
+    behind: number
+    outgoing_commits: Array<{
+      hash: string
+      short_hash: string
+      message: string
+      author: string
+      date: string
+    }>
+  }>
   // AI CLI command
   aiCommand: string
 
@@ -125,6 +144,7 @@ interface PaneState {
   gitCommit: (paneId: string, message: string) => void
   gitStage: (paneId: string, files: string[], unstage: boolean) => void
   gitLog: (paneId: string) => void
+  getSourceControlState: (path: string) => void
   handleGitStatus: (status: {
     pane_id: string
     dir: string
@@ -135,6 +155,24 @@ interface PaneState {
     untracked: string[]
     ahead: number | null
     behind: number | null
+  }) => void
+  handleSourceControlState: (state: {
+    path: string
+    is_repo: boolean
+    branch: string | null
+    remote: string | null
+    staged: Array<{ path: string; status: string }>
+    unstaged: Array<{ path: string; status: string }>
+    untracked: Array<{ path: string; status: string }>
+    ahead: number
+    behind: number
+    outgoing_commits: Array<{
+      hash: string
+      short_hash: string
+      message: string
+      author: string
+      date: string
+    }>
   }) => void
   handleGitLog: (log: {
     pane_id: string
@@ -365,6 +403,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   explorerContents: [],
   gitStatuses: {},
   gitLogs: {},
+  sourceControlStates: {},
   aiCommand: loadAiCommand(),
 
   setWebSocket: (ws) => set({ ws }),
@@ -812,6 +851,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
+  getSourceControlState: (path) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "get_source_control_state", path }))
+    }
+  },
+
   handleGitStatus: (status) => {
     set((state) => ({
       gitStatuses: {
@@ -826,6 +872,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       gitLogs: {
         ...state.gitLogs,
         [log.pane_id]: log,
+      },
+    }))
+  },
+
+  handleSourceControlState: (scState) => {
+    set((state) => ({
+      sourceControlStates: {
+        ...state.sourceControlStates,
+        [scState.path]: scState,
       },
     }))
   },

@@ -51,8 +51,9 @@ export type GetGitStatusMessage = { action: "get_git_status"; pane_id: string }
 export type GitCommitMessage = { action: "git_commit"; pane_id: string; message: string }
 export type GitStageMessage = { action: "git_stage"; pane_id: string; files: string[]; unstage: boolean }
 export type GitLogMessage = { action: "git_log"; pane_id: string }
+export type GetSourceControlStateMessage = { action: "get_source_control_state"; path: string }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitLogMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitLogMessage | GetSourceControlStateMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -106,4 +107,31 @@ export type GitLogEvent = {
   commits: GitCommitInfo[]
 }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent
+export type SourceControlFile = {
+  path: string
+  status: string
+}
+
+export type OutgoingCommit = {
+  hash: string
+  short_hash: string
+  message: string
+  author: string
+  date: string
+}
+
+export type SourceControlStateEvent = {
+  event: "source_control_state"
+  path: string
+  is_repo: boolean
+  branch: string | null
+  remote: string | null
+  staged: SourceControlFile[]
+  unstaged: SourceControlFile[]
+  untracked: SourceControlFile[]
+  ahead: number
+  behind: number
+  outgoing_commits: OutgoingCommit[]
+}
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent

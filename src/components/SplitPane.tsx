@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react"
 import { XtermPane } from "./XtermPane"
-import { GitPane } from "./GitPane"
+import { SourceControlPane } from "./SourceControlPane"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface SplitPaneProps {
@@ -321,7 +321,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         </div>
 
         {/* Git sidebar */}
-        <GitPane />
+        <SourceControlPane />
       </div>
     </div>
   )

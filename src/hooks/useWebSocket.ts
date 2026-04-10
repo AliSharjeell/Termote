@@ -32,6 +32,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleFileUploaded,
     handleGitStatus,
     handleGitLog,
+    handleSourceControlState,
   } = usePaneStore()
 
   const handleMessage = useCallback(
@@ -106,6 +107,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
         case "git_log":
           handleGitLog(message)
+          break
+        case "source_control_state":
+          handleSourceControlState(message)
           break
       }
     },
