@@ -33,7 +33,7 @@ export function NotePane({ pane }: NotePaneProps) {
   const handleRename = (newTitle: string) => renamePane(pane.id, newTitle)
 
   return (
-    <div className="flex flex-col h-full bg-[#0d0d0d]">
+    <div className="flex flex-col h-full bg-[#0C0C0C]">
       <PaneTitleBar
         title={pane.name}
         paneId={pane.id}
