@@ -43,12 +43,63 @@ export function NotePane({ pane }: NotePaneProps) {
         onRename={handleRename}
         onPin={() => togglePin(pane.id)}
       />
-      <div className="flex-1 overflow-hidden">
-        <BlockNoteView editor={editor} theme="dark" onChange={() => {
-          try {
-            localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify(editor.document))
-          } catch {}
-        }} />
+      <div className="flex-1 overflow-hidden [&_.bn-editor]:!bg-transparent">
+        <BlockNoteView
+          editor={editor}
+          theme={{
+            colors: {
+              background: "transparent",
+              surface: "transparent",
+              border: "#252525",
+              text: "#CCCCCC",
+              textHover: "#FFFFFF",
+              textSelected: "#FFFFFF",
+              placeholder: "#555555",
+              highlightedText: "#2a2a2a",
+              tooltip: "#1a1a1a",
+              tooltipText: "#CCCCCC",
+              inlinePrompt: "#252525",
+              inlinePromptText: "#CCCCCC",
+              shadow: "rgba(0,0,0,0.5)",
+              glow: "transparent",
+            },
+            cursor: {
+              color: "#58A6FF",
+            },
+            selection: {
+              background: "#264f78",
+            },
+            sideMenu: {
+              background: "#1a1a1a",
+              text: "#CCCCCC",
+              border: "#333333",
+              hover: "#252525",
+              active: "#333333",
+            },
+            filePanel: {
+              background: "#0C0C0C",
+              border: "#252525",
+              text: "#CCCCCC",
+            },
+            suggestionMenu: {
+              background: "#1a1a1a",
+              border: "#333333",
+              text: "#CCCCCC",
+              hover: "#252525",
+              hoverText: "#FFFFFF",
+            },
+            table: {
+              background: "transparent",
+              border: "#333333",
+              hover: "#252525",
+            },
+          } as any}
+          onChange={() => {
+            try {
+              localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify(editor.document))
+            } catch {}
+          }}
+        />
       </div>
     </div>
   )
