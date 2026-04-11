@@ -387,7 +387,7 @@ export function SourceControlPane() {
               </div>
             </div>
           ) : (
-            <div className="px-3 py-2 text-[10px] text-[#666666]">
+            <div className="px-3 py-2 text-[10px] text-[#CCCCCC]">
               No history
             </div>
           )}
