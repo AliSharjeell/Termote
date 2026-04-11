@@ -169,13 +169,13 @@ export function SourceControlPane() {
         {/* Ahead/Behind counts */}
         <div className="ml-auto flex items-center gap-2 text-[10px]">
           {(state?.ahead ?? 0) > 0 && (
-            <span className="text-[#888888]" title="Push pending">
-              <span className="text-[#666]">↑</span> {state.ahead}
+            <span className="text-[#CCCCCC]" title="Push pending">
+              <span className="text-[#CCCCCC]">↑</span> {state.ahead}
             </span>
           )}
           {(state?.behind ?? 0) > 0 && (
-            <span className="text-[#888888]" title="Pull available">
-              <span className="text-[#666]">↓</span> {state.behind}
+            <span className="text-[#CCCCCC]" title="Pull available">
+              <span className="text-[#CCCCCC]">↓</span> {state.behind}
             </span>
           )}
         </div>
