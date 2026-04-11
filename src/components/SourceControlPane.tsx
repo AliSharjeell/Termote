@@ -139,20 +139,18 @@ export function SourceControlPane() {
     <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525]">
+        <button
+          onClick={toggleGitSidebar}
+          title="Collapse git sidebar"
+          className="text-[#666] hover:text-white text-xs"
+        >
+          ‹
+        </button>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#aaaaaa]">
           <circle cx="12" cy="12" r="4"/>
           <line x1="1.05" y1="12" x2="7" y2="12"/>
           <line x1="17.01" y1="12" x2="22.96" y2="12"/>
         </svg>
-        <button
-          onClick={toggleGitSidebar}
-          title="Collapse git sidebar"
-          className="text-[#888] hover:text-white mr-1"
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
         <span className="text-[10px] text-[#888888] uppercase tracking-wider">Source Control</span>
         <span className="text-[10px] text-[#666666]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
         {/* Ahead/Behind counts */}
