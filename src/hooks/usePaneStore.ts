@@ -609,6 +609,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
   },
 
@@ -630,6 +631,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
   },
 
@@ -651,6 +653,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
   },
 
@@ -1090,6 +1093,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
   },
 
