@@ -600,8 +600,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     set({
       panes: updatedPanes,
       activePanes: [...activePanes, id],
+      selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveSelectedTab(id)
   },
 
   spawnImagePane: () => {
@@ -619,8 +621,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     set({
       panes: updatedPanes,
       activePanes: [...activePanes, id],
+      selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveSelectedTab(id)
   },
 
   spawnWhiteboardPane: () => {
@@ -638,8 +642,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     set({
       panes: updatedPanes,
       activePanes: [...activePanes, id],
+      selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveSelectedTab(id)
   },
 
   requestDirectoryPicker: (shell) => {
@@ -1075,8 +1081,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     set({
       panes: updatedPanes,
       activePanes: [...activePanes, id],
+      selectedTab: id,
     })
     savePanes(updatedPanes)
+    saveSelectedTab(id)
   },
 
   openBrowserModal: () => {
@@ -1106,6 +1114,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
       // Send spawn_at_dir action
       ws.send(JSON.stringify({ action: "spawn_at_dir", shell: "powershell", dir }))
+      // Select the group so new panes show
+      selectGroup(null)
     }
   },
 
