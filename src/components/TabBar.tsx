@@ -172,14 +172,20 @@ export function TabBar({ searchQuery }: TabBarProps) {
           {/* Group rows */}
           {groups.map((group) => {
             const groupPanes = panes.filter(p => p.groupId === group.id && activePanes.includes(p.id))
+            const isExpanded = expandedGroups.has(group.id)
             return (
               <div key={group.id} className="group/row">
-                <div className="flex items-center gap-2 px-3 py-1.5">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
+                <div className="flex items-center gap-2 px-3 py-1.5 cursor-pointer" onClick={() => {
+                  const newSet = new Set(expandedGroups)
+                  if (isExpanded) newSet.delete(group.id)
+                  else newSet.add(group.id)
+                  setExpandedGroups(newSet)
+                }}>
+                  <span className="text-xs text-[#555] shrink-0">{isExpanded ? "▾" : "▸"}</span>
                   <span className="truncate text-sm text-[#CCCCCC]">{group.name}</span>
                   <span className="ml-auto text-xs text-[#555]">{groupPanes.length}</span>
                 </div>
-                {groupPanes.map((pane) => (
+                {isExpanded && groupPanes.map((pane) => (
                   <div
                     key={pane.id}
                     className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ml-2 ${
@@ -209,9 +215,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
           })}
 
           {/* All Panes */}
-          <div className="flex items-center gap-2 px-3 py-1.5 mt-1">
-            <span className="text-xs text-[#555] uppercase tracking-wider">All Panes</span>
-          </div>
           {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
             <div
               key={pane.id}
