@@ -86,6 +86,26 @@ export function SourceControlPane() {
   if (!cwd) {
     return (
       <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
+        {/* Collapse button row */}
+        <div className="flex justify-start px-2 py-1 border-b border-[#1a1a1a]">
+          <button
+            onClick={toggleGitSidebar}
+            title="Collapse git sidebar"
+            className="text-[#CCCCCC] hover:text-white"
+          >
+            <PanelRight size={14} />
+          </button>
+        </div>
+        {/* Header */}
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC]">
+            <circle cx="12" cy="12" r="4"/>
+            <line x1="1.05" y1="12" x2="7" y2="12"/>
+            <line x1="17.01" y1="12" x2="22.96" y2="12"/>
+          </svg>
+          <span className="text-[10px] text-[#CCCCCC] uppercase tracking-wider">Source Control</span>
+        </div>
+        {/* Empty state */}
         <div className="flex items-center justify-center h-full text-xs text-[#CCCCCC] p-4 text-center">
           Focus a terminal pane with a git repository to see source control
         </div>
@@ -100,6 +120,27 @@ export function SourceControlPane() {
   if (!isRepo) {
     return (
       <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
+        {/* Collapse button row */}
+        <div className="flex justify-start px-2 py-1 border-b border-[#1a1a1a]">
+          <button
+            onClick={toggleGitSidebar}
+            title="Collapse git sidebar"
+            className="text-[#CCCCCC] hover:text-white"
+          >
+            <PanelRight size={14} />
+          </button>
+        </div>
+        {/* Header */}
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC]">
+            <circle cx="12" cy="12" r="4"/>
+            <line x1="1.05" y1="12" x2="7" y2="12"/>
+            <line x1="17.01" y1="12" x2="22.96" y2="12"/>
+          </svg>
+          <span className="text-[10px] text-[#CCCCCC] uppercase tracking-wider">Source Control</span>
+          <span className="text-[10px] text-[#CCCCCC]">main</span>
+        </div>
+        {/* Empty state */}
         <div className="flex items-center justify-center h-full text-xs text-[#CCCCCC] p-4 text-center">
           Not a git repository: {cwd}
         </div>
