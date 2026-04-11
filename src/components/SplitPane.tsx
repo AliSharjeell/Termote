@@ -411,7 +411,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         >
         {isGroupEmpty ? (
           <div className="flex items-center justify-center bg-[#080808]">
-            <div className="text-center text-[#808080]">
+            <div className="text-center text-[#CCCCCC]">
               <p className="text-sm">No panes in this group</p>
               <p className="text-xs mt-1">Click the folder icon on a pane to add it</p>
             </div>
