@@ -360,7 +360,7 @@ export function SourceControlPane() {
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="px-3 py-2 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#111111] flex items-center justify-between shrink-0 border-b border-[#1a1a1a]">
             <span>History ({history.length})</span>
-            <div className="flex items-center gap-2 text-[#555555]">
+            <div className="flex items-center gap-2 text-[#CCCCCC]">
               <span>↑ {state?.ahead || 0}</span>
               <span>↓ {state?.behind || 0}</span>
             </div>
