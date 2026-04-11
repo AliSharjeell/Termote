@@ -193,6 +193,25 @@ export function TabBar({ searchQuery }: TabBarProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Tab bar */}
         <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[#333333] bg-[#161616] px-4 py-2">
+        {/* Sidebar toggles - right side */}
+        <div className="ml-auto flex items-center gap-1 shrink-0">
+          <button
+            onClick={toggleTabsSidebar}
+            title={tabsSidebarCollapsed ? "Show sidebar (Alt+1)" : "Hide sidebar (Alt+1)"}
+            className={`p-1.5 rounded hover:bg-[#333] ${tabsSidebarCollapsed ? "text-[#666]" : "text-[#58A6FF]"}`}
+          >
+            <PanelLeft size={14} />
+          </button>
+          <button
+            onClick={toggleTabsGitSidebar}
+            title={tabsGitSidebarCollapsed ? "Show git (Alt+2)" : "Hide git (Alt+2)"}
+            className={`p-1.5 rounded hover:bg-[#333] ${tabsGitSidebarCollapsed ? "text-[#666]" : "text-[#58A6FF]"}`}
+          >
+            <PanelRight size={14} />
+          </button>
+        </div>
+        {/* Separator */}
+        <div className="h-4 w-px bg-[#353535] shrink-0" />
         {/* Add button */}
         <button
           onClick={() => usePaneStore.getState().spawnPane("powershell")}
