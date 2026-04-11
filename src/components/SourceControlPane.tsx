@@ -270,7 +270,7 @@ export function SourceControlPane() {
               <span>Outgoing ({state.outgoing_commits.length})</span>
               <span className="text-[#CCCCCC]">{state.remote || "origin"}</span>
             </div>
-            <div className="overflow-y-auto" style={{ maxHeight: "60px" }}>
+            <div className="overflow-y-auto" style={{ maxHeight: "120px" }}>
               {state.outgoing_commits.map((commit, i) => (
                 <div key={commit.hash} className="px-3 py-1 hover:bg-[#111111]">
                   <div className="flex items-center gap-2">
