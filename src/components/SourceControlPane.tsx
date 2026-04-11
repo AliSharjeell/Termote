@@ -348,7 +348,7 @@ export function SourceControlPane() {
         )}
 
         {totalChanges === 0 && (
-          <div className="px-3 py-4 text-xs text-[#666666] text-center">
+          <div className="px-3 py-4 text-xs text-[#CCCCCC] text-center">
             No changes
           </div>
         )}
