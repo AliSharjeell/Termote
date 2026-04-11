@@ -506,16 +506,16 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const state = get()
     let selectedTab = state.selectedTab
 
-    // Preserve frontend-only panes (browser panes) - they don't come from backend
-    const browserPanes = state.panes.filter(p => p.url != null)
+    // Preserve frontend-only panes (browser, note, image, whiteboard) - they don't come from backend
+    const frontendPanes = state.panes.filter(p => p.url != null || ["note", "image", "whiteboard"].includes(p.shell))
     const backendPaneIds = new Set(panes.map(p => p.id))
-    const survivingBrowserPanes = browserPanes.filter(p => backendPaneIds.has(p.id) || state.activePanes.includes(p.id))
+    const survivingFrontendPanes = frontendPanes.filter(p => backendPaneIds.has(p.id) || state.activePanes.includes(p.id))
 
     // Load persisted pinned pane IDs
     const persisted = loadPersistedState()
     const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
     // Apply pinned state from localStorage, use groupId from backend or localStorage
-    const updatedPanes = [...survivingBrowserPanes, ...panes.map(p => ({
+    const updatedPanes = [...survivingFrontendPanes, ...panes.map(p => ({
       ...p,
       pinned: pinnedPaneIdSet.has(p.id),
       // Restore groupId from localStorage if backend doesn't provide it
@@ -533,7 +533,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const hasGroups = groups && groups.length > 0
     const finalGroups = hasGroups ? groups : state.groups
     // Merge browser pane IDs into activePanes so they're preserved across state updates
-    const browserPaneIds = survivingBrowserPanes.map(p => p.id)
+    const browserPaneIds = survivingFrontendPanes.map(p => p.id)
     const mergedActivePanes = [...new Set([...activePanes, ...browserPaneIds])]
     // Prune repos whose cwd is no longer used by any open pane
     const remainingCwds = new Set(
