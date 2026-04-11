@@ -108,7 +108,6 @@ interface PaneState {
   // Selected source control repo path
   selectedSourceControlRepo: string | null
   // Port manager
-  portProcesses: Array<{
     port: number
     pid: number
     process_name: string
@@ -537,9 +536,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       url: state.panes.find(sp => sp.id === p.id)?.url ?? p.url,
       proxyUrl: state.panes.find(sp => sp.id === p.id)?.proxyUrl ?? p.proxyUrl,
     }))]
-    // Auto-select first pane if none selected or current selection is gone
+    // Auto-select the last pane if count increased (new pane spawned) and current selection is gone
+    const prevPaneCount = state.panes.length
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
-      selectedTab = updatedPanes.length > 0 ? updatedPanes[0].id : ""
+      // If we had fewer panes before and now have more, select the last one (newest)
+      if (panes.length > prevPaneCount && panes.length > 0) {
+        selectedTab = panes[panes.length - 1].id
+      } else {
+        selectedTab = updatedPanes.length > 0 ? updatedPanes[0].id : ""
+      }
     }
     // Use groups from backend if provided, otherwise keep existing
     // Also preserve existing groups if backend sends empty array (backend might not persist groups)
