@@ -53,6 +53,7 @@ interface PaneState {
   showSecurityModal: boolean
   // File explorer state
   explorerOpen: boolean
+  imagePickerOpen: boolean
   browserModalOpen: boolean
   explorerCurrentPath: string
   explorerContents: DirectoryItem[]
@@ -496,6 +497,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   devices: [],
   showSecurityModal: false,
   explorerOpen: false,
+  imagePickerOpen: false,
   browserModalOpen: false,
   explorerCurrentPath: "",
   explorerContents: [],
@@ -1050,6 +1052,18 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
+  openImagePicker: () => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      set({ imagePickerOpen: true, explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
+      ws.send(JSON.stringify({ action: "list_directory", path: "" }))
+    }
+  },
+
+  closeImagePicker: () => {
+    set({ imagePickerOpen: false, explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+  },
+
   openBrowser: (url) => {
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
@@ -1114,7 +1128,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   handleDirectoryContents: (path, items) => {
-    set({ explorerCurrentPath: path, explorerContents: items })
+    const { imagePickerOpen } = get()
+    set({
+      explorerCurrentPath: path,
+      explorerContents: items,
+      // Close image picker since we're now showing directory contents
+      imagePickerOpen: false,
+    })
   },
 
   spawnAtDirectory: (dir) => {
