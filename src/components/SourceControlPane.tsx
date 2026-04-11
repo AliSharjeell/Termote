@@ -263,6 +263,27 @@ export function SourceControlPane() {
           </button>
         </div>
 
+        {/* Outgoing compact */}
+        {state?.outgoing_commits && state.outgoing_commits.length > 0 && (
+          <div className="border-b border-[#1a1a1a] shrink-0">
+            <div className="px-3 py-1 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
+              <span>Outgoing ({state.outgoing_commits.length})</span>
+              <span className="text-[#CCCCCC]">{state.remote || "origin"}</span>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: "60px" }}>
+              {state.outgoing_commits.map((commit, i) => (
+                <div key={commit.hash} className="px-3 py-1 hover:bg-[#111111]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-[#CCCCCC] font-mono">{commit.short_hash}</span>
+                    <span className="text-[10px] text-[#CCCCCC]">·</span>
+                    <span className="text-[10px] text-[#CCCCCC] truncate">{commit.message}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Staged changes */}
         {state?.staged && state.staged.length > 0 && (
           <div>
@@ -393,26 +414,6 @@ export function SourceControlPane() {
           )}
         </div>
 
-        {/* Outgoing compact */}
-        {state?.outgoing_commits && state.outgoing_commits.length > 0 && (
-          <div className="border-t border-[#1a1a1a] shrink-0">
-            <div className="px-3 py-1 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
-              <span>Outgoing ({state.outgoing_commits.length})</span>
-              <span className="text-[#CCCCCC]">{state.remote || "origin"}</span>
-            </div>
-            <div className="overflow-y-auto" style={{ maxHeight: "60px" }}>
-              {state.outgoing_commits.map((commit, i) => (
-                <div key={commit.hash} className="px-3 py-1 hover:bg-[#111111]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#CCCCCC] font-mono">{commit.short_hash}</span>
-                    <span className="text-[10px] text-[#CCCCCC]">·</span>
-                    <span className="text-[10px] text-[#CCCCCC] truncate">{commit.message}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
