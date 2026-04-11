@@ -242,7 +242,7 @@ export function SourceControlPane() {
       {/* Changes section - top */}
       <div className="border-b border-[#252525]">
         {/* Section header */}
-        <div className="px-3 py-1.5 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
+        <div className="px-3 py-1.5 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
           <span>Changes ({totalChanges})</span>
         </div>
 
