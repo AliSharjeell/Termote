@@ -5,16 +5,15 @@ import { PanelLeft, PanelRight } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { XtermPane } from "./XtermPane"
 import { SourceControlPane } from "./SourceControlPane"
+import { PortManager } from "./PortManager"
 
 interface TabBarProps {
   searchQuery?: string
 }
 
 export function TabBar({ searchQuery }: TabBarProps) {
-  const { panes, activePanes, floatingPanes, selectedTab, selectTab, groups, deleteGroup, tabsSidebarCollapsed, tabsGitSidebarCollapsed, toggleTabsSidebar, toggleTabsGitSidebar } =
+  const { panes, selectedTab, selectTab, tabsSidebarCollapsed, tabsGitSidebarCollapsed, toggleTabsSidebar, toggleTabsGitSidebar } =
     usePaneStore()
-  const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
-  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null)
 
   // Keyboard shortcuts for sidebar toggles and tab close
   useEffect(() => {
@@ -29,7 +28,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
       }
       if (e.ctrlKey && e.key === "w") {
         e.preventDefault()
-        // Close the selected tab (kill pane)
         if (selectedTab) {
           usePaneStore.getState().killPane(selectedTab)
         }
@@ -43,26 +41,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
   const searchFiltered = searchQuery
     ? panes.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : panes
-
-  // Split panes into ungrouped and grouped
-  const ungroupedPanes = searchFiltered.filter((p) => !p.groupId)
-  const groupedPanesByGroup = groups.reduce((acc, group) => {
-    const groupPanes = searchFiltered.filter((p) => p.groupId === group.id)
-    if (groupPanes.length > 0) {
-      acc.push({ group, panes: groupPanes })
-    }
-    return acc
-  }, [] as { group: typeof groups[0]; panes: typeof panes }[])
-
-  // Sort: pinned panes first, then by original order
-  const sortPanes = (paneList: typeof panes) =>
-    [...paneList].sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1
-      if (!a.pinned && b.pinned) return 1
-      return 0
-    })
-
-  const selectedPane = panes.find((p) => p.id === selectedTab)
 
   const handleTabClick = (paneId: string) => {
     selectTab(paneId)
@@ -123,6 +101,61 @@ export function TabBar({ searchQuery }: TabBarProps) {
             >
               <span>+</span>
               <span>New Terminal</span>
+            </button>
+            <button
+              onClick={() => usePaneStore.getState().openExplorer()}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>Open Folder</span>
+            </button>
+            <button
+              onClick={() => usePaneStore.getState().openBrowserModal()}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <span>Open Browser</span>
+            </button>
+            <button
+              onClick={() => usePaneStore.getState().spawnNotePane()}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <span>New Note</span>
+            </button>
+            <button
+              onClick={() => usePaneStore.getState().spawnImagePane()}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span>New Image</span>
+            </button>
+            <button
+              onClick={() => usePaneStore.getState().spawnWhiteboardPane()}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white font-medium shrink-0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+              <span>New Whiteboard</span>
             </button>
           </div>
           <div className="h-px bg-[#252525] mb-1" />
@@ -186,14 +219,17 @@ export function TabBar({ searchQuery }: TabBarProps) {
               })}
             </div>
           )}
+          {/* Port manager at bottom */}
+          <div className="mt-auto pt-2 border-t border-[#252525]">
+            <PortManager />
+          </div>
         </div>
       )}
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Tab bar */}
-        <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[#333333] bg-[#161616] px-4 py-2">
         {/* Sidebar toggles - right side */}
+        <div className="flex shrink-0 items-center gap-2 border-b border-[#333333] bg-[#161616] px-4 py-2">
         <div className="ml-auto flex items-center gap-1 shrink-0">
           <button
             onClick={toggleTabsSidebar}
@@ -210,121 +246,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
             <PanelRight size={14} />
           </button>
         </div>
-        {/* Separator */}
-        <div className="h-4 w-px bg-[#353535] shrink-0" />
-        {/* Add button */}
-        <button
-          onClick={() => usePaneStore.getState().spawnPane("powershell")}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-black hover:bg-gray-200 text-lg"
-        >
-          +
-        </button>
-
-        {/* Separator */}
-        <div className="h-4 w-px bg-[#353535] shrink-0" />
-
-        {/* Ungrouped pane tabs */}
-        {sortPanes(ungroupedPanes).map((pane) => (
-          <div
-            key={pane.id}
-            className={`group flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm border border-[#333333] shrink-0 ${
-              selectedTab === pane.id
-                ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
-                : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
-            }`}
-            onClick={() => handleTabClick(pane.id)}
-          >
-            <span className="truncate max-w-[150px]">
-              {pane.name}
-            </span>
-          </div>
-        ))}
-
-        {/* Grouped panes as expandable groups */}
-        {groupedPanesByGroup.map(({ group, panes: groupPanes }) => {
-          const isExpanded = expandedGroupId === group.id
-          const isSelected = groupPanes.some((p) => p.id === selectedTab)
-
-          if (isExpanded) {
-            // Expanded: show all panes in the group
-            return (
-              <div key={group.id} className="flex items-center gap-1 shrink-0">
-                <div
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm border border-[#3B78FF] bg-[#0C0C0C] text-[#CCCCCC] shrink-0 relative`}
-                >
-                  <span
-                    className="h-2 w-2 rounded shrink-0"
-                    style={{ backgroundColor: group.color }}
-                  />
-                  <span className="truncate max-w-[100px]">{group.name}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteGroup(group.id)
-                    }}
-                    className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[10px] font-bold leading-none"
-                    title="Delete group"
-                  >
-                    ×
-                  </button>
-                </div>
-                {sortPanes(groupPanes).map((pane) => (
-                  <div
-                    key={pane.id}
-                    className={`group flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm border border-[#333333] shrink-0 ${
-                      selectedTab === pane.id
-                        ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
-                        : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
-                    }`}
-                    onClick={() => handleTabClick(pane.id)}
-                  >
-                    <span className="truncate max-w-[150px]">
-                      {pane.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )
-          }
-
-          // Collapsed: show single group tab
-          return (
-            <div
-              key={group.id}
-              className="group relative shrink-0"
-              onMouseEnter={() => setHoveredGroupId(group.id)}
-              onMouseLeave={() => setHoveredGroupId(null)}
-            >
-              <div
-                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm border border-[#333333] cursor-pointer shrink-0 ${
-                  isSelected
-                    ? "bg-[#0C0C0C] text-[#CCCCCC] border-[#0C0C0C]"
-                    : "text-[#808080] hover:bg-[#333333] hover:border-[#444444]"
-                }`}
-                onClick={() => toggleGroupExpand(group.id)}
-              >
-                <span
-                  className="h-2 w-2 rounded shrink-0"
-                  style={{ backgroundColor: group.color }}
-                />
-                <span className="truncate max-w-[100px]">{group.name}</span>
-                <span className="text-[10px] text-[#606060]">({groupPanes.length})</span>
-                {hoveredGroupId === group.id && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteGroup(group.id)
-                    }}
-                    className="ml-1 h-4 w-4 rounded-full bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[10px] font-bold leading-none"
-                    title="Delete group"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-          )
-        })}
       </div>
 
       {/* Active pane content - render all panes but show only selected one */}
@@ -344,7 +265,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
             </div>
           ))
         )}
-      </div>
       </div>
 
       {/* Git sidebar */}
