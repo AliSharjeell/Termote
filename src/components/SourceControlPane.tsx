@@ -204,7 +204,7 @@ export function SourceControlPane() {
 
       {/* Current directory path */}
       {selectedSourceControlRepo && (
-        <div className="px-3 py-1 text-[9px] text-[#555555] border-b border-[#1a1a1a] truncate" title={selectedSourceControlRepo}>
+        <div className="px-3 py-1 text-[9px] text-[#CCCCCC] border-b border-[#1a1a1a] truncate" title={selectedSourceControlRepo}>
           {selectedSourceControlRepo}
         </div>
       )}
