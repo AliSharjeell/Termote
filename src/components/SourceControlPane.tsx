@@ -86,7 +86,7 @@ export function SourceControlPane() {
   if (!cwd) {
     return (
       <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
-        <div className="flex items-center justify-center h-full text-xs text-[#808080] p-4 text-center">
+        <div className="flex items-center justify-center h-full text-xs text-[#CCCCCC] p-4 text-center">
           Focus a terminal pane with a git repository to see source control
         </div>
       </div>
@@ -100,7 +100,7 @@ export function SourceControlPane() {
   if (!isRepo) {
     return (
       <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
-        <div className="flex items-center justify-center h-full text-xs text-[#808080] p-4 text-center">
+        <div className="flex items-center justify-center h-full text-xs text-[#CCCCCC] p-4 text-center">
           Not a git repository: {cwd}
         </div>
       </div>
@@ -215,7 +215,7 @@ export function SourceControlPane() {
           <select
             value={currentRepoPath}
             onChange={(e) => setSelectedSourceControlRepo(e.target.value || null)}
-            className="w-full bg-[#080808] text-[10px] text-[#cccccc] border border-[#252525] rounded px-2 py-1 outline-none"
+            className="w-full bg-[#080808] text-[10px] text-[#CCCCCC] border border-[#252525] rounded px-2 py-1 outline-none"
           >
             {sourceControlRepos.map(repo => (
               <option key={repo.path} value={repo.path}>
@@ -266,7 +266,7 @@ export function SourceControlPane() {
         {/* Staged changes */}
         {state?.staged && state.staged.length > 0 && (
           <div>
-            <div className="px-3 py-1.5 text-[10px] text-[#cccccc] uppercase tracking-wider bg-[#1f1f1f] flex items-center gap-2">
+            <div className="px-3 py-1.5 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#1f1f1f] flex items-center gap-2">
               <span>Staged</span>
               <span className="ml-auto">({state.staged.length})</span>
             </div>
@@ -279,7 +279,7 @@ export function SourceControlPane() {
                 >
                   −
                 </button>
-                <span className="text-xs text-[#cccccc] truncate font-mono flex-1" title={file.path}>
+                <span className="text-xs text-[#CCCCCC] truncate font-mono flex-1" title={file.path}>
                   {file.path.split("/").pop() || file.path}
                 </span>
                 {(file.added ?? 0) > 0 && (
