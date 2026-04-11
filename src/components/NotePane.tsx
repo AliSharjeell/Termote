@@ -33,7 +33,7 @@ export function NotePane({ pane }: NotePaneProps) {
   const handleRename = (newTitle: string) => renamePane(pane.id, newTitle)
 
   return (
-    <div className="flex flex-col h-full bg-[#1a1a1a]">
+    <div className="flex flex-col h-full bg-[#0d0d0d]">
       <PaneTitleBar
         title={pane.name}
         paneId={pane.id}
@@ -43,9 +43,8 @@ export function NotePane({ pane }: NotePaneProps) {
         onRename={handleRename}
         onPin={() => togglePin(pane.id)}
       />
-      <div className="flex-1 overflow-hidden [&_.bn-editor]:bg-transparent [&_.bn-editor]:text-white [&_.bn-editor_.ProseMirror]:outline-none [&_.bn-editor_.ProseMirror]:px-4 [&_.bn-editor_.ProseMirror]:py-3">
+      <div className="flex-1 overflow-hidden [&_.bn-editor]:bg-[#0d0d0d] [&_.bn-editor_.ProseMirror]:bg-[#0d0d0d] [&_.bn-editor_.ProseMirror]:text-white [&_.bn-editor_.ProseMirror]:outline-none [&_.bn-editor_.ProseMirror]:px-4 [&_.bn-editor_.ProseMirror]:py-3">
         <BlockNoteView editor={editor} onChange={() => {
-          // Save to localStorage when content changes
           try {
             localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify(editor.document))
           } catch {}
