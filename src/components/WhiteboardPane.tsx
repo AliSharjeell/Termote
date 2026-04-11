@@ -11,33 +11,35 @@ interface WhiteboardPaneProps {
 
 const WB_KEY = (id: string) => `wb-${id}`
 
-interface WbPath {
-  points: { x: number; y: number }[]
-  color: string
-  width: number
-}
-
+interface WbPoint { x: number; y: number }
+interface WbPath { points: WbPoint[]; color: string; width: number }
 interface WbContent {
   paths: WbPath[]
   bgColor: string
-  offsetX: number
-  offsetY: number
-  scale: number
+  viewX: number
+  viewY: number
+  viewScale: number
 }
 
 function loadWb(id: string): WbContent {
   try {
     const raw = localStorage.getItem(WB_KEY(id))
-    return raw ? JSON.parse(raw) : { paths: [], bgColor: "#1a1a1a", offsetX: 0, offsetY: 0, scale: 1 }
-  } catch {
-    return { paths: [], bgColor: "#1a1a1a", offsetX: 0, offsetY: 0, scale: 1 }
-  }
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return {
+        paths: parsed.paths || [],
+        bgColor: parsed.bgColor || "#1a1a1a",
+        viewX: parsed.viewX ?? 0,
+        viewY: parsed.viewY ?? 0,
+        viewScale: parsed.viewScale ?? 1,
+      }
+    }
+  } catch {}
+  return { paths: [], bgColor: "#1a1a1a", viewX: 0, viewY: 0, viewScale: 1 }
 }
 
-function saveWb(id: string, content: WbContent) {
-  try {
-    localStorage.setItem(WB_KEY(id), JSON.stringify(content))
-  } catch {}
+function saveWb(id: string, c: WbContent) {
+  try { localStorage.setItem(WB_KEY(id), JSON.stringify(c)) } catch {}
 }
 
 type Tool = "pen" | "eraser" | "pan"
@@ -50,22 +52,24 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
   const [penWidth, setPenWidth] = useState(3)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
-  const currentPathRef = useRef<{ x: number; y: number }[]>([])
+  const currentRef = useRef<WbPoint[]>([])
   const contentRef = useRef(content)
-  const isPanningRef = useRef(false)
-  const lastPanRef = useRef({ x: 0, y: 0 })
+  const isPanRef = useRef(false)
+  const panLastRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => { contentRef.current = content }, [content])
 
-  const drawScene = useCallback((ctx: CanvasRenderingContext2D, content: WbContent) => {
-    const { paths, bgColor, offsetX, offsetY, scale } = content
+  const redraw = useCallback((ctx: CanvasRenderingContext2D, c: WbContent) => {
+    const { paths, bgColor, viewX, viewY, viewScale } = c
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
     ctx.fillStyle = bgColor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
     ctx.save()
-    ctx.translate(ctx.canvas.width / 2 + offsetX, ctx.canvas.height / 2 + offsetY)
-    ctx.scale(scale, scale)
+    ctx.translate(ctx.canvas.width / 2 + viewX, ctx.canvas.height / 2 + viewY)
+    ctx.scale(viewScale, viewScale)
     ctx.translate(-ctx.canvas.width / 2, -ctx.canvas.height / 2)
+
     for (const path of paths) {
       if (path.points.length < 2) continue
       ctx.strokeStyle = path.color
@@ -74,9 +78,7 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
       ctx.lineJoin = "round"
       ctx.beginPath()
       ctx.moveTo(path.points[0].x, path.points[0].y)
-      for (let i = 1; i < path.points.length; i++) {
-        ctx.lineTo(path.points[i].x, path.points[i].y)
-      }
+      for (let i = 1; i < path.points.length; i++) ctx.lineTo(path.points[i].x, path.points[i].y)
       ctx.stroke()
     }
     ctx.restore()
@@ -87,98 +89,87 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     if (!canvas) return
     const ctx = canvas.getContext("2d")
     if (!ctx) return
-    const resize = () => {
-      const parent = canvas.parentElement
-      if (!parent) return
-      canvas.width = parent.clientWidth
-      canvas.height = parent.clientHeight
-      drawScene(ctx, contentRef.current)
-    }
-    resize()
-    const ro = new ResizeObserver(resize)
+    const ro = new ResizeObserver(() => {
+      canvas.width = canvas.parentElement!.clientWidth
+      canvas.height = canvas.parentElement!.clientHeight
+      redraw(ctx, contentRef.current)
+    })
     ro.observe(canvas.parentElement!)
     return () => ro.disconnect()
-  }, [drawScene])
+  }, [redraw])
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext("2d")
-    if (ctx) drawScene(ctx, content)
-  }, [content, drawScene])
-
-  const getWorldPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current!
-    const rect = canvas.getBoundingClientRect()
-    const { offsetX, offsetY, scale } = contentRef.current
-    const worldX = (e.clientX - rect.left - (canvas.width / 2 + offsetX)) / scale + canvas.width / 2
-    const worldY = (e.clientY - rect.top - (canvas.height / 2 + offsetY)) / scale + canvas.height / 2
-    return { x: worldX, y: worldY }
-  }
+    if (ctx) redraw(ctx, content)
+  }, [content, redraw])
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (tool === "pan") {
-      isPanningRef.current = true
-      lastPanRef.current = { x: e.clientX, y: e.clientY }
+      isPanRef.current = true
+      panLastRef.current = { x: e.clientX, y: e.clientY }
       return
     }
     isDrawingRef.current = true
-    currentPathRef.current = [getWorldPos(e)]
+    const canvas = canvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    currentRef.current = [{ x: e.clientX - rect.left, y: e.clientY - rect.top }]
   }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (tool === "pan") {
-      if (!isPanningRef.current) return
-      const dx = e.clientX - lastPanRef.current.x
-      const dy = e.clientY - lastPanRef.current.y
-      lastPanRef.current = { x: e.clientX, y: e.clientY }
-      const c = { ...contentRef.current, offsetX: contentRef.current.offsetX + dx, offsetY: contentRef.current.offsetY + dy }
+      if (!isPanRef.current) return
+      const dx = e.clientX - panLastRef.current.x
+      const dy = e.clientY - panLastRef.current.y
+      panLastRef.current = { x: e.clientX, y: e.clientY }
+      const c = { ...contentRef.current, viewX: contentRef.current.viewX + dx, viewY: contentRef.current.viewY + dy }
       setContent(c)
       const canvas = canvasRef.current
-      if (canvas) {
-        const ctx = canvas.getContext("2d")
-        if (ctx) drawScene(ctx, c)
-      }
+      if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) redraw(ctx, c) }
       return
     }
     if (!isDrawingRef.current) return
-    const pos = getWorldPos(e)
-    currentPathRef.current.push(pos)
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    const canvas = canvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    const wx = e.clientX - rect.left
+    const wy = e.clientY - rect.top
+    const prev = currentRef.current[currentRef.current.length - 1]
+    currentRef.current.push({ x: wx, y: wy })
 
-    const pts = currentPathRef.current
-    if (pts.length < 2) return
+    const ctx = canvas.getContext("2d")!
+    const c = contentRef.current
     ctx.save()
-    ctx.translate(ctx.canvas.width / 2 + contentRef.current.offsetX, ctx.canvas.height / 2 + contentRef.current.offsetY)
-    ctx.scale(contentRef.current.scale, contentRef.current.scale)
+    ctx.translate(ctx.canvas.width / 2 + c.viewX, ctx.canvas.height / 2 + c.viewY)
+    ctx.scale(c.viewScale, c.viewScale)
     ctx.translate(-ctx.canvas.width / 2, -ctx.canvas.height / 2)
-    const prev = pts[pts.length - 2]
-    const curr = pts[pts.length - 1]
-    ctx.strokeStyle = tool === "eraser" ? contentRef.current.bgColor : penColor
+    ctx.strokeStyle = tool === "eraser" ? c.bgColor : penColor
     ctx.lineWidth = tool === "eraser" ? penWidth * 4 : penWidth
     ctx.lineCap = "round"
     ctx.lineJoin = "round"
     ctx.beginPath()
     ctx.moveTo(prev.x, prev.y)
-    ctx.lineTo(curr.x, curr.y)
+    ctx.lineTo(wx, wy)
     ctx.stroke()
     ctx.restore()
   }
 
   const handleMouseUp = () => {
-    if (tool === "pan") { isPanningRef.current = false; return }
+    if (tool === "pan") { isPanRef.current = false; return }
     if (!isDrawingRef.current) return
     isDrawingRef.current = false
-    const pts = currentPathRef.current
-    if (pts.length < 2) return
-    const newPath: WbPath = { points: pts, color: tool === "eraser" ? contentRef.current.bgColor : penColor, width: tool === "eraser" ? penWidth * 4 : penWidth }
+    if (currentRef.current.length < 2) { currentRef.current = []; return }
+    const newPath: WbPath = {
+      points: [...currentRef.current],
+      color: tool === "eraser" ? contentRef.current.bgColor : penColor,
+      width: tool === "eraser" ? penWidth * 4 : penWidth,
+    }
     const c = { ...contentRef.current, paths: [...contentRef.current.paths, newPath] }
     setContent(c)
     saveWb(pane.id, c)
-    currentPathRef.current = []
+    currentRef.current = []
+    const canvas = canvasRef.current
+    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) redraw(ctx, c) }
   }
 
   const clearBoard = () => {
@@ -186,7 +177,7 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     setContent(c)
     saveWb(pane.id, c)
     const canvas = canvasRef.current
-    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) drawScene(ctx, c) }
+    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) redraw(ctx, c) }
   }
 
   const undo = () => {
@@ -194,23 +185,25 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     const c = { ...contentRef.current, paths: contentRef.current.paths.slice(0, -1) }
     setContent(c)
     saveWb(pane.id, c)
+    const canvas = canvasRef.current
+    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) redraw(ctx, c) }
   }
 
   const resetView = () => {
-    const c = { ...contentRef.current, offsetX: 0, offsetY: 0, scale: 1 }
+    const c = { ...contentRef.current, viewX: 0, viewY: 0, viewScale: 1 }
     setContent(c)
     saveWb(pane.id, c)
     const canvas = canvasRef.current
-    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) drawScene(ctx, c) }
+    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) redraw(ctx, c) }
   }
 
   const zoom = (factor: number) => {
-    const newScale = Math.max(0.1, Math.min(5, contentRef.current.scale * factor))
-    const c = { ...contentRef.current, scale: newScale }
+    const s = Math.max(0.1, Math.min(5, contentRef.current.viewScale * factor))
+    const c = { ...contentRef.current, viewScale: s }
     setContent(c)
     saveWb(pane.id, c)
     const canvas = canvasRef.current
-    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) drawScene(ctx, c) }
+    if (canvas) { const ctx = canvas.getContext("2d"); if (ctx) redraw(ctx, c) }
   }
 
   return (
@@ -226,7 +219,7 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
         <input type="range" min="1" max="20" value={penWidth} onChange={(e) => setPenWidth(Number(e.target.value))} className="w-16" />
         <div className="w-px h-4 bg-[#252525]" />
         <button onClick={() => zoom(1/1.2)} className="px-2 py-1 text-xs text-[#888] hover:text-white rounded">−</button>
-        <span className="text-[10px] text-[#666] w-10 text-center">{Math.round(content.scale*100)}%</span>
+        <span className="text-[10px] text-[#666] w-10 text-center">{Math.round(content.viewScale*100)}%</span>
         <button onClick={() => zoom(1.2)} className="px-2 py-1 text-xs text-[#888] hover:text-white rounded">+</button>
         <button onClick={resetView} className="px-2 py-1 text-xs text-[#888] hover:text-white rounded">Reset</button>
         <div className="w-px h-4 bg-[#252525]" />
