@@ -23,7 +23,9 @@ export function NotePane({ pane }: NotePaneProps) {
         const raw = localStorage.getItem(NOTE_KEY(pane.id))
         if (raw) {
           const parsed = JSON.parse(raw)
-          return parsed.content || undefined
+          if (parsed.content) return parsed.content
+          if (parsed.document) return parsed.document
+          return parsed
         }
       } catch {}
       return undefined
@@ -96,8 +98,11 @@ export function NotePane({ pane }: NotePaneProps) {
           } as any}
           onChange={() => {
             try {
-              localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify(editor.document))
-            } catch {}
+              const doc = editor.document
+              localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify({ content: doc }))
+            } catch (e) {
+              console.error("[NotePane] save error:", e)
+            }
           }}
         />
       </div>
