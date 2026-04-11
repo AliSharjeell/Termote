@@ -6,6 +6,10 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { XtermPane } from "./XtermPane"
 import { SourceControlPane } from "./SourceControlPane"
 import { PortManager } from "./PortManager"
+import { BrowserPane } from "./BrowserPane"
+import { NotePane } from "./NotePane"
+import { ImagePane } from "./ImagePane"
+import { WhiteboardPane } from "./WhiteboardPane"
 
 interface TabBarProps {
   searchQuery?: string
@@ -217,7 +221,17 @@ export function TabBar({ searchQuery }: TabBarProps) {
               className="absolute inset-0"
               style={{ opacity: pane.id === selectedTab ? 1 : 0, pointerEvents: pane.id === selectedTab ? "auto" : "none" }}
             >
-              <XtermPane pane={pane} />
+              {pane.url ? (
+                <BrowserPane pane={pane} />
+              ) : pane.shell === "note" ? (
+                <NotePane pane={pane} />
+              ) : pane.shell === "image" ? (
+                <ImagePane pane={pane} />
+              ) : pane.shell === "whiteboard" ? (
+                <WhiteboardPane pane={pane} />
+              ) : (
+                <XtermPane pane={pane} />
+              )}
             </div>
           ))}
         </div>
