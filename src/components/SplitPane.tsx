@@ -131,7 +131,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <button
               onClick={toggleSidebar}
               title="Collapse sidebar"
-              className="text-[#666] hover:text-white"
+              className="text-[#CCCCCC] hover:text-white"
             >
               <PanelLeft size={14} />
             </button>
@@ -234,7 +234,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             {expandedGroups.has("__all__") ? "▾" : "▸"}
           </button>
           <span>All Panes</span>
-          <span className="ml-auto text-xs text-[#666]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
+          <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
         </button>
         {expandedGroups.has("__all__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
@@ -279,15 +279,15 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             }}
             className={`text-xs border rounded px-1 shrink-0 ${
               selectedGroupId === "__ungrouped__"
-                ? "text-white border-[#555]"
-                : "text-[#666] hover:text-white border-[#252525]"
+                ? "text-[#CCCCCC] border-[#555]"
+                : "text-[#CCCCCC] hover:text-white border-[#252525]"
             }`}
             title="Expand"
           >
             {expandedGroups.has("__ungrouped__") ? "▾" : "▸"}
           </button>
           <span>Ungrouped</span>
-          <span className="ml-auto text-xs text-[#666]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
+          <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
         </button>
         {expandedGroups.has("__ungrouped__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
@@ -327,8 +327,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 onClick={() => { selectGroup(group.id); window.location.reload() }}
                 className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
-                    ? "text-white bg-[#252525]"
-                    : "text-white hover:bg-[#1f1f1f]"
+                    ? "text-[#CCCCCC] bg-[#252525]"
+                    : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
                 }`}
               >
                 <button
@@ -341,15 +341,15 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   }}
                   className={`text-xs border rounded px-1 shrink-0 ${
                     selectedGroupId === group.id
-                      ? "text-white border-[#555]"
-                      : "text-[#666] hover:text-white border-[#252525]"
+                      ? "text-[#CCCCCC] border-[#555]"
+                      : "text-[#CCCCCC] hover:text-white border-[#252525]"
                   }`}
                   title={isExpanded ? "Collapse" : "Expand"}
                 >
                   {isExpanded ? "▾" : "▸"}
                 </button>
                 <span className="truncate">{group.name}</span>
-                <span className="ml-auto text-xs text-[#666]">{groupPanes.length}</span>
+                <span className="ml-auto text-xs text-[#CCCCCC]">{groupPanes.length}</span>
               </button>
               {hoveredGroupId === group.id && (
                 <button
