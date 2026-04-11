@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
+import { PanelLeft, PanelRight } from "lucide-react"
 import { XtermPane } from "./XtermPane"
 import { BrowserPane } from "./BrowserPane"
 import { SourceControlPane } from "./SourceControlPane"
@@ -114,9 +115,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
-            className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white text-lg font-bold"
+            className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white text-[9px] font-mono"
           >
-            ›
+            <PanelLeft size={12} />
+            <span className="text-[7px] mt-0.5">left</span>
           </button>
           <span className="text-[8px] text-[#555]">{sortedActivePanes.length}panes</span>
           {portProcesses.length > 0 && (
@@ -130,9 +132,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <button
               onClick={toggleSidebar}
               title="Collapse sidebar"
-              className="text-[#666] hover:text-white text-xs"
+              className="text-[#666] hover:text-white text-[9px] font-mono flex items-center gap-0.5"
             >
-              ‹
+              <PanelLeft size={12} />
+              <span>left</span>
             </button>
           </div>
           <button
@@ -445,12 +448,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <button
               onClick={toggleGitSidebar}
               title="Expand git sidebar"
-              className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white"
+              className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white text-[9px] font-mono"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/>
-              </svg>
-              <span className="text-[8px] mt-0.5">‹</span>
+              <PanelRight size={14} />
+              <span className="text-[7px] mt-0.5">right</span>
             </button>
           </div>
         ) : (

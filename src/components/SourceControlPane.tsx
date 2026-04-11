@@ -2,6 +2,7 @@
 
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { useState, useEffect } from "react"
+import { PanelRight } from "lucide-react"
 
 export function SourceControlPane() {
   const { panes, activePanes, sourceControlStates, sourceControlRepos, selectedSourceControlRepo, setSelectedSourceControlRepo, getSourceControlState, gitStage, gitCommit, gitPush, gitPull, gitLog, findGitRepos, toggleGitSidebar } = usePaneStore()
@@ -151,9 +152,10 @@ export function SourceControlPane() {
         <button
           onClick={toggleGitSidebar}
           title="Collapse git sidebar"
-          className="text-[#666] hover:text-white text-xs"
+          className="text-[#666] hover:text-white text-[9px] font-mono flex items-center gap-0.5"
         >
-          ‹
+          <span>right</span>
+          <PanelRight size={12} />
         </button>
       </div>
       {/* Header */}
