@@ -404,9 +404,9 @@ export function SourceControlPane() {
               {state.outgoing_commits.map((commit, i) => (
                 <div key={commit.hash} className="px-3 py-1 hover:bg-[#111111]">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#888888] font-mono">{commit.short_hash}</span>
-                    <span className="text-[10px] text-[#555555]">·</span>
-                    <span className="text-[10px] text-[#666666] truncate">{commit.message}</span>
+                    <span className="text-[10px] text-[#CCCCCC] font-mono">{commit.short_hash}</span>
+                    <span className="text-[10px] text-[#CCCCCC]">·</span>
+                    <span className="text-[10px] text-[#CCCCCC] truncate">{commit.message}</span>
                   </div>
                 </div>
               ))}
