@@ -13,6 +13,8 @@ const ACTIVE_PANES_KEY = "termote-active-panes"
 const FLOATING_PANES_KEY = "termote-floating-panes"
 const SELECTED_TAB_KEY = "termote-selected-tab"
 const GROUPS_KEY = "termote-groups"
+const SOURCE_CONTROL_REPOS_KEY = "termote-source-control-repos"
+const SOURCE_CONTROL_SELECTED_KEY = "termote-source-control-selected"
 
 const GROUP_COLORS = [
   "#E44", // red
@@ -98,6 +100,8 @@ interface PaneState {
     name: string
     branch: string | null
   }>
+  // Selected source control repo path
+  selectedSourceControlRepo: string | null
   // Port manager
   portProcesses: Array<{
     port: number
@@ -175,6 +179,7 @@ interface PaneState {
   gitLog: (paneId: string) => void
   getSourceControlState: (path: string) => void
   findGitRepos: (path: string) => void
+  setSelectedSourceControlRepo: (path: string | null) => void
   handleGitReposFound: (repos: Array<{path: string; name: string; branch: string | null}>) => void
   handlePortProcesses: (processes: Array<{port: number; pid: number; process_name: string; cwd?: string}>) => void
   handleProcessKilled: (pid: number, success: boolean) => void
@@ -407,6 +412,47 @@ function saveGroups(groups: PaneGroup[]) {
   }
 }
 
+// Load source control repos from localStorage
+function loadSourceControlRepos() {
+  try {
+    const json = localStorage.getItem(SOURCE_CONTROL_REPOS_KEY)
+    return json ? JSON.parse(json) : []
+  } catch {
+    return []
+  }
+}
+
+// Save source control repos to localStorage
+function saveSourceControlRepos(repos: Array<{path: string; name: string; branch: string | null}>) {
+  try {
+    localStorage.setItem(SOURCE_CONTROL_REPOS_KEY, JSON.stringify(repos))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+// Load selected source control repo from localStorage
+function loadSourceControlSelected(): string | null {
+  try {
+    return localStorage.getItem(SOURCE_CONTROL_SELECTED_KEY)
+  } catch {
+    return null
+  }
+}
+
+// Save selected source control repo to localStorage
+function saveSourceControlSelected(path: string | null) {
+  try {
+    if (path) {
+      localStorage.setItem(SOURCE_CONTROL_SELECTED_KEY, path)
+    } else {
+      localStorage.removeItem(SOURCE_CONTROL_SELECTED_KEY)
+    }
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 // Get pane groupId from localStorage
 export function getPaneGroupIdFromStorage(paneId: string): string | null {
   try {
@@ -443,7 +489,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   gitStatuses: {},
   gitLogs: {},
   sourceControlStates: {},
-  sourceControlRepos: [],
+  sourceControlRepos: loadSourceControlRepos(),
+  selectedSourceControlRepo: loadSourceControlSelected(),
   portProcesses: [],
   aiCommand: loadAiCommand(),
 
@@ -1068,10 +1115,25 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
+  setSelectedSourceControlRepo: (path) => {
+    saveSourceControlSelected(path)
+    set({ selectedSourceControlRepo: path })
+  },
+
   handleGitReposFound: (repos) => {
-    set((state) => ({
-      sourceControlRepos: repos,
-    }))
+    saveSourceControlRepos(repos)
+    set((state) => {
+      // Auto-select first repo if none selected or previous selection not in new list
+      let selected = state.selectedSourceControlRepo
+      if (!selected || !repos.find(r => r.path === selected)) {
+        selected = repos.length > 0 ? repos[0].path : null
+        saveSourceControlSelected(selected)
+      }
+      return {
+        sourceControlRepos: repos,
+        selectedSourceControlRepo: selected,
+      }
+    })
   },
 
   handlePortProcesses: (processes) => {

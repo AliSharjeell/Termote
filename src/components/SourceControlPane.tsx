@@ -4,11 +4,10 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { useState, useEffect } from "react"
 
 export function SourceControlPane() {
-  const { panes, activePanes, sourceControlStates, sourceControlRepos, getSourceControlState, gitStage, gitCommit, gitPush, gitPull, gitLog, findGitRepos, toggleGitSidebar } = usePaneStore()
+  const { panes, activePanes, sourceControlStates, sourceControlRepos, selectedSourceControlRepo, setSelectedSourceControlRepo, getSourceControlState, gitStage, gitCommit, gitPush, gitPull, gitLog, findGitRepos, toggleGitSidebar } = usePaneStore()
   const [commitMessage, setCommitMessage] = useState("")
   const [activePaneId, setActivePaneId] = useState<string | null>(null)
   const [history, setHistory] = useState<Array<{hash: string; short_hash: string; message: string; author: string; date: string}>>([])
-  const [selectedRepo, setSelectedRepo] = useState<string | null>(null)
 
   // Find the focused pane - prefer active pane that has a cwd
   useEffect(() => {
@@ -30,31 +29,22 @@ export function SourceControlPane() {
     }
   }, [cwd, findGitRepos])
 
-  // Set initial selected repo when repos are found or cwd changes
-  useEffect(() => {
-    if (sourceControlRepos.length > 0) {
-      // Prefer the current directory if it's a repo, otherwise pick first
-      const cwdRepo = sourceControlRepos.find(r => r.path === cwd)
-      setSelectedRepo(cwdRepo ? cwdRepo.path : sourceControlRepos[0].path)
-    }
-  }, [sourceControlRepos, cwd])
-
   // Fetch source control state when selected repo changes
   useEffect(() => {
-    // Only call if selectedRepo looks like a real path
-    if (selectedRepo && (selectedRepo.startsWith("/") || /^[A-Z]:/i.test(selectedRepo))) {
-      getSourceControlState(selectedRepo)
+    // Only call if selectedSourceControlRepo looks like a real path
+    if (selectedSourceControlRepo && (selectedSourceControlRepo.startsWith("/") || /^[A-Z]:/i.test(selectedSourceControlRepo))) {
+      getSourceControlState(selectedSourceControlRepo)
     }
-  }, [selectedRepo, getSourceControlState])
+  }, [selectedSourceControlRepo, getSourceControlState])
 
   // Refresh periodically
   useEffect(() => {
-    if (!selectedRepo) return
+    if (!selectedSourceControlRepo) return
     const interval = setInterval(() => {
-      getSourceControlState(selectedRepo)
+      getSourceControlState(selectedSourceControlRepo)
     }, 5000)
     return () => clearInterval(interval)
-  }, [selectedRepo, getSourceControlState])
+  }, [selectedSourceControlRepo, getSourceControlState])
 
   // Fetch git log for history
   useEffect(() => {
@@ -85,7 +75,7 @@ export function SourceControlPane() {
     )
   }
 
-  const currentRepoPath = selectedRepo || cwd
+  const currentRepoPath = selectedSourceControlRepo || cwd
   const state = sourceControlStates[currentRepoPath]
   const isRepo = state?.is_repo || sourceControlRepos.length > 0
 
@@ -132,9 +122,9 @@ export function SourceControlPane() {
 
   // Determine display path (relative to cwd for sub-repos)
   const displayName = (() => {
-    if (!selectedRepo || selectedRepo === cwd) return "."
-    const rel = selectedRepo.replace(cwd + "\\", "").replace(cwd + "/", "")
-    return rel || selectedRepo.split(/[/\\]/).pop() || selectedRepo
+    if (!selectedSourceControlRepo || selectedSourceControlRepo === cwd) return "."
+    const rel = selectedSourceControlRepo.replace(cwd + "\\", "").replace(cwd + "/", "")
+    return rel || selectedSourceControlRepo.split(/[/\\]/).pop() || selectedSourceControlRepo
   })()
 
   return (
@@ -157,6 +147,20 @@ export function SourceControlPane() {
         </button>
         <span className="text-[10px] text-[#888888] uppercase tracking-wider">Source Control</span>
         <span className="text-[10px] text-[#666666]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
+        {/* Repo selector */}
+        {sourceControlRepos.length > 1 && (
+          <select
+            value={selectedSourceControlRepo || ""}
+            onChange={(e) => setSelectedSourceControlRepo(e.target.value || null)}
+            className="text-[9px] bg-[#1a1a1a] text-[#888] border border-[#333] rounded px-1 py-0.5 ml-1"
+          >
+            {sourceControlRepos.map((repo) => (
+              <option key={repo.path} value={repo.path}>
+                {repo.name}
+              </option>
+            ))}
+          </select>
+        )}
         {/* Ahead/Behind counts */}
         <div className="ml-auto flex items-center gap-2 text-[10px]">
           {(state?.ahead ?? 0) > 0 && (
@@ -198,7 +202,7 @@ export function SourceControlPane() {
         <div className="px-3 py-1.5 border-b border-[#252525] bg-[#0d0d0d]">
           <select
             value={currentRepoPath}
-            onChange={(e) => setSelectedRepo(e.target.value)}
+            onChange={(e) => setSelectedSourceControlRepo(e.target.value || null)}
             className="w-full bg-[#080808] text-[10px] text-[#cccccc] border border-[#252525] rounded px-2 py-1 outline-none"
           >
             {sourceControlRepos.map(repo => (
