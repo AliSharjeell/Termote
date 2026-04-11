@@ -155,20 +155,6 @@ export function SourceControlPane() {
         </button>
         <span className="text-[10px] text-[#888888] uppercase tracking-wider">Source Control</span>
         <span className="text-[10px] text-[#666666]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
-        {/* Repo selector */}
-        {sourceControlRepos.length > 1 && (
-          <select
-            value={selectedSourceControlRepo || ""}
-            onChange={(e) => setSelectedSourceControlRepo(e.target.value || null)}
-            className="text-[9px] bg-[#1a1a1a] text-[#888] border border-[#333] rounded px-1 py-0.5 ml-1"
-          >
-            {sourceControlRepos.map((repo) => (
-              <option key={repo.path} value={repo.path}>
-                {repo.name}
-              </option>
-            ))}
-          </select>
-        )}
         {/* Ahead/Behind counts */}
         <div className="ml-auto flex items-center gap-2 text-[10px]">
           {(state?.ahead ?? 0) > 0 && (
