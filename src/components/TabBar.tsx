@@ -12,10 +12,17 @@ interface TabBarProps {
 }
 
 export function TabBar({ searchQuery }: TabBarProps) {
-  const { panes, selectedTab, selectTab, tabsSidebarCollapsed, tabsGitSidebarCollapsed, toggleTabsSidebar, toggleTabsGitSidebar } =
-    usePaneStore()
+  const {
+    panes,
+    selectedTab,
+    selectTab,
+    tabsSidebarCollapsed,
+    tabsGitSidebarCollapsed,
+    toggleTabsSidebar,
+    toggleTabsGitSidebar,
+  } = usePaneStore()
 
-  // Keyboard shortcuts for sidebar toggles and tab close
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && e.key === "1") {
@@ -42,14 +49,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
     ? panes.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : panes
 
-  const handleTabClick = (paneId: string) => {
-    selectTab(paneId)
-  }
-
-  const toggleGroupExpand = (groupId: string) => {
-    setExpandedGroupId(expandedGroupId === groupId ? null : groupId)
-  }
-
   if (panes.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
@@ -71,12 +70,12 @@ export function TabBar({ searchQuery }: TabBarProps) {
 
   return (
     <div className="flex h-full w-full flex-row bg-[#0C0C0C]">
-      {/* Left sidebar - pane navigation */}
+      {/* Left sidebar */}
       {tabsSidebarCollapsed ? (
         <div className="shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] bg-[#0d0d0d] p-1 w-10">
           <button
             onClick={toggleTabsSidebar}
-            title="Expand sidebar"
+            title="Expand sidebar (Alt+1)"
             className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
           >
             <PanelLeft size={14} />
@@ -85,11 +84,12 @@ export function TabBar({ searchQuery }: TabBarProps) {
         </div>
       ) : (
         <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">
+          {/* Header */}
           <div className="flex flex-col gap-1 mb-2">
             <div className="flex items-center justify-start px-1 mb-1">
               <button
                 onClick={toggleTabsSidebar}
-                title="Collapse sidebar"
+                title="Collapse sidebar (Alt+1)"
                 className="text-[#CCCCCC] hover:text-white"
               >
                 <PanelLeft size={14} />
@@ -131,7 +131,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
                 <polyline points="14 2 14 8 20 8"/>
                 <line x1="16" y1="13" x2="8" y2="13"/>
                 <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
               </svg>
               <span>New Note</span>
             </button>
@@ -158,11 +157,14 @@ export function TabBar({ searchQuery }: TabBarProps) {
               <span>New Whiteboard</span>
             </button>
           </div>
+
           <div className="h-px bg-[#252525] mb-1" />
+
+          {/* Pane list */}
           <div className="px-3 py-1 text-[10px] text-[#808080] uppercase tracking-wider mb-1">
-            Panes ({panes.length})
+            Panes ({searchFiltered.length})
           </div>
-          {panes.map((pane) => (
+          {searchFiltered.map((pane) => (
             <div
               key={pane.id}
               className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ${
@@ -197,29 +199,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
               {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
             </div>
           ))}
-          {groups.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-[#252525]">
-              <div className="px-3 py-1 text-[10px] text-[#808080] uppercase tracking-wider mb-1">
-                Groups
-              </div>
-              {groups.map((group) => {
-                const groupPanes = panes.filter(p => p.groupId === group.id)
-                return (
-                  <div key={group.id} className="mb-1">
-                    <div className="flex items-center gap-2 px-3 py-1.5 text-sm">
-                      <span
-                        className="h-2 w-2 rounded shrink-0"
-                        style={{ backgroundColor: group.color }}
-                      />
-                      <span className="truncate text-[#CCCCCC]">{group.name}</span>
-                      <span className="ml-auto text-xs text-[#666]">{groupPanes.length}</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-          {/* Port manager at bottom */}
+
+          {/* Spacer + Port manager */}
           <div className="mt-auto pt-2 border-t border-[#252525]">
             <PortManager />
           </div>
@@ -228,34 +209,9 @@ export function TabBar({ searchQuery }: TabBarProps) {
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Sidebar toggles - right side */}
-        <div className="flex shrink-0 items-center gap-2 border-b border-[#333333] bg-[#161616] px-4 py-2">
-        <div className="ml-auto flex items-center gap-1 shrink-0">
-          <button
-            onClick={toggleTabsSidebar}
-            title={tabsSidebarCollapsed ? "Show sidebar (Alt+1)" : "Hide sidebar (Alt+1)"}
-            className={`p-1.5 rounded hover:bg-[#333] ${tabsSidebarCollapsed ? "text-[#666]" : "text-[#58A6FF]"}`}
-          >
-            <PanelLeft size={14} />
-          </button>
-          <button
-            onClick={toggleTabsGitSidebar}
-            title={tabsGitSidebarCollapsed ? "Show git (Alt+2)" : "Hide git (Alt+2)"}
-            className={`p-1.5 rounded hover:bg-[#333] ${tabsGitSidebarCollapsed ? "text-[#666]" : "text-[#58A6FF]"}`}
-          >
-            <PanelRight size={14} />
-          </button>
-        </div>
-      </div>
-
-      {/* Active pane content - render all panes but show only selected one */}
-      <div className="flex-1 overflow-hidden relative">
-        {panes.length === 0 ? (
-          <div className="flex h-full w-full items-center justify-center text-[#808080]">
-            <p className="text-sm">Select a tab to view</p>
-          </div>
-        ) : (
-          panes.map((pane) => (
+        {/* Active pane content */}
+        <div className="flex-1 overflow-hidden relative">
+          {searchFiltered.map((pane) => (
             <div
               key={pane.id}
               className="absolute inset-0"
@@ -263,8 +219,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
             >
               <XtermPane pane={pane} />
             </div>
-          ))
-        )}
+          ))}
+        </div>
       </div>
 
       {/* Git sidebar */}
@@ -272,7 +228,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
         <div className="shrink-0 flex flex-col items-center border-l border-[#252525] bg-[#0d0d0d] w-10 py-2 gap-2">
           <button
             onClick={toggleTabsGitSidebar}
-            title="Expand git sidebar"
+            title="Expand git sidebar (Alt+2)"
             className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
           >
             <PanelRight size={14} />
