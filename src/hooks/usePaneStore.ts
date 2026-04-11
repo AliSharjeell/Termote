@@ -5,6 +5,8 @@ const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
 const SIDEBAR_KEY = "termote-sidebar-collapsed"
 const GIT_SIDEBAR_KEY = "termote-git-sidebar-collapsed"
+const TABS_SIDEBAR_KEY = "termote-tabs-sidebar-collapsed"
+const TABS_GIT_SIDEBAR_KEY = "termote-tabs-git-sidebar-collapsed"
 const PANE_GROUPS_KEY = "termote-pane-groups-map"
 const SELECTED_GROUP_KEY = "termote-selected-group"
 const AI_COMMAND_KEY = "termote-ai-command"
@@ -37,9 +39,12 @@ interface PaneState {
   isAuthenticated: boolean
   // View mode: "auto", "tabs", or "panes"
   viewMode: "auto" | "tabs" | "panes"
-  // Sidebar collapse states
+  // Sidebar collapse states (panes mode)
   sidebarCollapsed: boolean
   gitSidebarCollapsed: boolean
+  // Sidebar collapse states (tabs mode)
+  tabsSidebarCollapsed: boolean
+  tabsGitSidebarCollapsed: boolean
   // Pane groups
   groups: PaneGroup[]
   selectedGroupId: string | null
@@ -134,6 +139,8 @@ interface PaneState {
   setViewMode: (mode: "auto" | "tabs" | "panes") => void
   toggleSidebar: () => void
   toggleGitSidebar: () => void
+  toggleTabsSidebar: () => void
+  toggleTabsGitSidebar: () => void
   fetchPortProcesses: () => void
   killProcess: (pid: number) => void
   renamePane: (paneId: string, name: string) => void
@@ -238,6 +245,8 @@ function loadPersistedState() {
     const selectedGroupJson = localStorage.getItem(SELECTED_GROUP_KEY)
     const sidebarJson = localStorage.getItem(SIDEBAR_KEY)
     const gitSidebarJson = localStorage.getItem(GIT_SIDEBAR_KEY)
+    const tabsSidebarJson = localStorage.getItem(TABS_SIDEBAR_KEY)
+    const tabsGitSidebarJson = localStorage.getItem(TABS_GIT_SIDEBAR_KEY)
     return {
       pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
       viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
@@ -245,9 +254,11 @@ function loadPersistedState() {
       selectedGroupId: selectedGroupJson || null,
       sidebarCollapsed: sidebarJson === "true",
       gitSidebarCollapsed: gitSidebarJson === "true",
+      tabsSidebarCollapsed: tabsSidebarJson === "true",
+      tabsGitSidebarCollapsed: tabsGitSidebarJson === "true",
     }
   } catch {
-    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false }
   }
 }
 
@@ -478,6 +489,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   viewMode: "auto",
   sidebarCollapsed: false,
   gitSidebarCollapsed: false,
+  tabsSidebarCollapsed: false,
+  tabsGitSidebarCollapsed: false,
   groups: loadGroups(),
   selectedGroupId: null,
   devices: [],
@@ -772,6 +785,26 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         localStorage.setItem(GIT_SIDEBAR_KEY, String(next))
       } catch {}
       return { gitSidebarCollapsed: next }
+    })
+  },
+
+  toggleTabsSidebar: () => {
+    set(state => {
+      const next = !state.tabsSidebarCollapsed
+      try {
+        localStorage.setItem(TABS_SIDEBAR_KEY, String(next))
+      } catch {}
+      return { tabsSidebarCollapsed: next }
+    })
+  },
+
+  toggleTabsGitSidebar: () => {
+    set(state => {
+      const next = !state.tabsGitSidebarCollapsed
+      try {
+        localStorage.setItem(TABS_GIT_SIDEBAR_KEY, String(next))
+      } catch {}
+      return { tabsGitSidebarCollapsed: next }
     })
   },
 
@@ -1228,3 +1261,9 @@ usePaneStore.setState({ aiCommand: loadAiCommand() })
 
 // Initialize selected group from localStorage
 usePaneStore.setState({ selectedGroupId: loadSelectedGroup() })
+
+// Initialize tabs sidebar states from localStorage
+usePaneStore.setState({
+  tabsSidebarCollapsed: initialPersisted.tabsSidebarCollapsed,
+  tabsGitSidebarCollapsed: initialPersisted.tabsGitSidebarCollapsed,
+})
