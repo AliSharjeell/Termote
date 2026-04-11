@@ -54,12 +54,12 @@ export function SourceControlPane() {
     return () => clearInterval(interval)
   }, [selectedSourceControlRepo, getSourceControlState])
 
-  // Fetch git log for history
+  // Fetch git log when selected repo or active pane changes
   useEffect(() => {
     if (activePaneId) {
       gitLog(activePaneId)
     }
-  }, [activePaneId, gitLog])
+  }, [activePaneId, selectedSourceControlRepo, gitLog])
 
   // Listen for git log events
   useEffect(() => {
@@ -345,7 +345,7 @@ export function SourceControlPane() {
       </div>
 
       {/* Bottom section - History + Outgoing, compact */}
-      <div className="border-t border-[#252525] flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="border-t border-[#252525] flex-1 flex flex-col min-h-0 overflow-hidden mt-2">
         {/* History compact */}
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between shrink-0">
