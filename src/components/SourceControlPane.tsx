@@ -309,7 +309,7 @@ export function SourceControlPane() {
                 >
                   +
                 </button>
-                <span className="text-xs text-[#aaaaaa] truncate font-mono flex-1" title={file.path}>
+                <span className="text-xs text-[#CCCCCC] truncate font-mono flex-1" title={file.path}>
                   {file.path.split("/").pop() || file.path}
                 </span>
                 {(file.added ?? 0) > 0 && (
