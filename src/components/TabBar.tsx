@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PanelLeft, PanelRight } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { XtermPane } from "./XtermPane"
@@ -15,6 +15,22 @@ export function TabBar({ searchQuery }: TabBarProps) {
     usePaneStore()
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null)
+
+  // Keyboard shortcuts for sidebar toggles
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === "1") {
+        e.preventDefault()
+        toggleTabsSidebar()
+      }
+      if (e.altKey && e.key === "2") {
+        e.preventDefault()
+        toggleTabsGitSidebar()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [toggleTabsSidebar, toggleTabsGitSidebar])
 
   // Search filter
   const searchFiltered = searchQuery
