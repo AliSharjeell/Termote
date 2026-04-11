@@ -63,14 +63,23 @@ export function SourceControlPane() {
 
   // Listen for git log events
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
+    const outputHandler = (e: CustomEvent) => {
       const msg = e.detail
       if (msg.event === "git_log" && msg.pane_id === activePaneId) {
         setHistory(msg.commits || [])
       }
     }
-    window.addEventListener("terminal-output" as any, handler)
-    return () => window.removeEventListener("terminal-output" as any, handler)
+    const storeHandler = (e: CustomEvent) => {
+      if (e.detail.pane_id === activePaneId) {
+        setHistory(e.detail.commits || [])
+      }
+    }
+    window.addEventListener("terminal-output" as any, outputHandler)
+    window.addEventListener("git-log-received" as any, storeHandler)
+    return () => {
+      window.removeEventListener("terminal-output" as any, outputHandler)
+      window.removeEventListener("git-log-received" as any, storeHandler)
+    }
   }, [activePaneId])
 
   if (!cwd) {

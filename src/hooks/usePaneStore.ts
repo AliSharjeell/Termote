@@ -1169,6 +1169,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         [log.pane_id]: log,
       },
     }))
+    // Also dispatch as event for components listening on git-log-received
+    window.dispatchEvent(new CustomEvent("git-log-received", { detail: log }))
   },
 
   handleSourceControlState: (scState) => {
