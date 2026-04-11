@@ -152,19 +152,19 @@ export function SourceControlPane() {
         <button
           onClick={toggleGitSidebar}
           title="Collapse git sidebar"
-          className="text-[#666] hover:text-white"
+          className="text-[#CCCCCC] hover:text-white"
         >
           <PanelRight size={14} />
         </button>
       </div>
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525]">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#aaaaaa]">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC]">
           <circle cx="12" cy="12" r="4"/>
           <line x1="1.05" y1="12" x2="7" y2="12"/>
           <line x1="17.01" y1="12" x2="22.96" y2="12"/>
         </svg>
-        <span className="text-[10px] text-[#888888] uppercase tracking-wider">Source Control</span>
+        <span className="text-[10px] text-[#CCCCCC] uppercase tracking-wider">Source Control</span>
         <span className="text-[10px] text-[#666666]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
         {/* Ahead/Behind counts */}
         <div className="ml-auto flex items-center gap-2 text-[10px]">
