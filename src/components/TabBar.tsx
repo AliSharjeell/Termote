@@ -19,6 +19,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
   const {
     panes,
     groups,
+    activePanes,
     selectedTab,
     selectTab,
     selectGroup,
@@ -28,6 +29,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
     toggleTabsSidebar,
     toggleTabsGitSidebar,
   } = usePaneStore()
+
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -63,7 +66,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
           <p className="text-lg">No active panes</p>
           <button
             onClick={() => {
-              console.log("New Terminal clicked, isAuthenticated:", usePaneStore.getState().isAuthenticated)
               usePaneStore.getState().spawnPane("powershell")
             }}
             className="mt-4 rounded-lg bg-white px-6 py-2.5 text-sm text-black hover:bg-gray-200 font-medium"
@@ -167,80 +169,185 @@ export function TabBar({ searchQuery }: TabBarProps) {
 
           <div className="h-px bg-[#252525] mb-1" />
 
-          {/* Groups */}
-          {groups.map((group) => {
-            const groupPanes = searchFiltered.filter((p) => p.groupId === group.id)
-            if (groupPanes.length === 0) return null
-            return (
-              <div key={group.id} className="mb-1">
-                <div className="px-3 py-1 text-[10px] text-[#808080] uppercase tracking-wider flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: group.color }} />
-                  {group.name}
+          {/* All Panes */}
+          <button
+            onClick={() => { selectGroup(null); window.location.reload() }}
+            className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
+              selectedGroupId === null
+                ? "text-[#CCCCCC] bg-[#252525]"
+                : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+            }`}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const newSet = new Set(expandedGroups)
+                if (expandedGroups.has("__all__")) newSet.delete("__all__")
+                else newSet.add("__all__")
+                setExpandedGroups(newSet)
+              }}
+              className={`text-xs border rounded px-1 shrink-0 ${
+                selectedGroupId === null
+                  ? "text-[#CCCCCC] border-[#555]"
+                  : "text-[#CCCCCC] hover:text-white border-[#252525]"
+              }`}
+              title="Expand"
+            >
+              {expandedGroups.has("__all__") ? "▾" : "▸"}
+            </button>
+            <span>All Panes</span>
+            <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
+          </button>
+          {expandedGroups.has("__all__") && (
+            <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
+              {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
+                <div
+                  key={pane.id}
+                  className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
+                    selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
+                  }`}
+                  onClick={() => selectTab(pane.id)}
+                >
+                  {pane.url ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  ) : pane.shell === "note" ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  ) : pane.shell === "image" ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  ) : pane.shell === "whiteboard" ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                  )}
+                  <span className="truncate">{pane.name}</span>
+                  {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
                 </div>
-                {groupPanes.map((pane) => (
-                  <div
-                    key={pane.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ml-2 ${
-                      selectedTab === pane.id
-                        ? "text-white bg-[#252525]"
-                        : "text-[#808080] hover:text-white hover:bg-[#1f1f1f]"
+              ))}
+            </div>
+          )}
+
+          {/* Ungrouped */}
+          <button
+            onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
+            className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
+              selectedGroupId === "__ungrouped__"
+                ? "text-[#CCCCCC] bg-[#252525]"
+                : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+            }`}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const newSet = new Set(expandedGroups)
+                if (expandedGroups.has("__ungrouped__")) newSet.delete("__ungrouped__")
+                else newSet.add("__ungrouped__")
+                setExpandedGroups(newSet)
+              }}
+              className={`text-xs border rounded px-1 shrink-0 ${
+                selectedGroupId === "__ungrouped__"
+                  ? "text-[#CCCCCC] border-[#555]"
+                  : "text-[#CCCCCC] hover:text-white border-[#252525]"
+              }`}
+              title="Expand"
+            >
+              {expandedGroups.has("__ungrouped__") ? "▾" : "▸"}
+            </button>
+            <span>Ungrouped</span>
+            <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
+          </button>
+          {expandedGroups.has("__ungrouped__") && (
+            <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
+              {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
+                <div
+                  key={pane.id}
+                  className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
+                    selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
+                  }`}
+                  onClick={() => selectTab(pane.id)}
+                >
+                  {pane.url ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  ) : pane.shell === "note" ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  ) : pane.shell === "image" ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  ) : pane.shell === "whiteboard" ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                  )}
+                  <span className="truncate">{pane.name}</span>
+                  {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Group rows */}
+          {groups.map((group) => {
+            const groupPanes = panes.filter(p => p.groupId === group.id && activePanes.includes(p.id))
+            const isExpanded = expandedGroups.has(group.id)
+            return (
+              <div key={group.id} className="group/row">
+                <button
+                  onClick={() => { selectGroup(group.id); window.location.reload() }}
+                  className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
+                    selectedGroupId === group.id
+                      ? "text-[#CCCCCC] bg-[#252525]"
+                      : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+                  }`}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const newSet = new Set(expandedGroups)
+                      if (isExpanded) newSet.delete(group.id)
+                      else newSet.add(group.id)
+                      setExpandedGroups(newSet)
+                    }}
+                    className={`text-xs border rounded px-1 shrink-0 ${
+                      selectedGroupId === group.id
+                        ? "text-[#CCCCCC] border-[#555]"
+                        : "text-[#CCCCCC] hover:text-white border-[#252525]"
                     }`}
-                    onClick={() => selectTab(pane.id)}
+                    title={isExpanded ? "Collapse" : "Expand"}
                   >
-                    {pane.url ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    ) : pane.shell === "note" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    ) : pane.shell === "image" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    ) : pane.shell === "whiteboard" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                    ) : (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                    )}
-                    <span className="truncate">{pane.name}</span>
-                    {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+                    {isExpanded ? "▾" : "▸"}
+                  </button>
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
+                  <span className="truncate">{group.name}</span>
+                  <span className="ml-auto text-xs text-[#CCCCCC]">{groupPanes.length}</span>
+                </button>
+                {isExpanded && groupPanes.length > 0 && (
+                  <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
+                    {groupPanes.map((pane) => (
+                      <div
+                        key={pane.id}
+                        className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
+                          selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
+                        }`}
+                        onClick={() => selectTab(pane.id)}
+                      >
+                        {pane.url ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        ) : pane.shell === "note" ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        ) : pane.shell === "image" ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        ) : pane.shell === "whiteboard" ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        ) : (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                        )}
+                        <span className="truncate">{pane.name}</span>
+                        {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )
           })}
-
-          {/* Ungrouped */}
-          {(() => {
-            const ungrouped = searchFiltered.filter((p) => p.groupId === null)
-            if (ungrouped.length === 0) return null
-            return (
-              <div className="mb-1">
-                <div className="px-3 py-1 text-[10px] text-[#808080] uppercase tracking-wider">Ungrouped</div>
-                {ungrouped.map((pane) => (
-                  <div
-                    key={pane.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ml-2 ${
-                      selectedTab === pane.id
-                        ? "text-white bg-[#252525]"
-                        : "text-[#808080] hover:text-white hover:bg-[#1f1f1f]"
-                    }`}
-                    onClick={() => selectTab(pane.id)}
-                  >
-                    {pane.url ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    ) : pane.shell === "note" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    ) : pane.shell === "image" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    ) : pane.shell === "whiteboard" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                    ) : (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                    )}
-                    <span className="truncate">{pane.name}</span>
-                    {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
-                  </div>
-                ))}
-              </div>
-            )
-          })()}
 
           {/* Spacer + Port manager */}
           <div className="mt-auto pt-2 border-t border-[#252525]">
