@@ -397,10 +397,6 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         })}
         {/* Spacer */}
         <div className="flex-1" />
-        {/* Pane count */}
-        <span className="text-xs text-[#808080] px-2 text-center">
-          {sortedActivePanes.length} pane{sortedActivePanes.length !== 1 ? "s" : ""}
-        </span>
         <PortManager />
       </div>
       )}
