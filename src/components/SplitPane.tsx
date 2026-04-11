@@ -127,7 +127,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
       ) : (
       <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">
         <div className="flex flex-col gap-1 mb-2">
-          <div className="flex items-center justify-end px-1 mb-1">
+          <div className="flex items-center justify-start px-1 mb-1">
             <button
               onClick={toggleSidebar}
               title="Collapse sidebar"
