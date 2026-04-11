@@ -165,7 +165,7 @@ export function SourceControlPane() {
           <line x1="17.01" y1="12" x2="22.96" y2="12"/>
         </svg>
         <span className="text-[10px] text-[#CCCCCC] uppercase tracking-wider">Source Control</span>
-        <span className="text-[10px] text-[#666666]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
+        <span className="text-[10px] text-[#CCCCCC]">{state?.branch || sourceControlRepos.find(r => r.path === currentRepoPath)?.branch || "main"}</span>
         {/* Ahead/Behind counts */}
         <div className="ml-auto flex items-center gap-2 text-[10px]">
           {(state?.ahead ?? 0) > 0 && (
