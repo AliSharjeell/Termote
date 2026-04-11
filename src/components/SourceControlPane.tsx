@@ -9,6 +9,14 @@ export function SourceControlPane() {
   const [activePaneId, setActivePaneId] = useState<string | null>(null)
   const [history, setHistory] = useState<Array<{hash: string; short_hash: string; message: string; author: string; date: string}>>([])
 
+  // Find all panes with a cwd for repo discovery
+  const allPaneCwds = panes
+    .filter(p => activePanes.includes(p.id) && p.cwd && (p.cwd.startsWith("/") || /^[A-Z]:/i.test(p.cwd)))
+    .map(p => p.cwd)
+
+  // Deduplicate cwds
+  const uniqueCwds = [...new Set(allPaneCwds)]
+
   // Find the focused pane - prefer active pane that has a cwd
   useEffect(() => {
     const focusedPane = panes.find(p => activePanes.includes(p.id) && p.cwd)
@@ -20,14 +28,14 @@ export function SourceControlPane() {
   const activePane = panes.find(p => p.id === activePaneId)
   const cwd = activePane?.cwd
 
-  // Fetch repos and source control state when cwd changes
+  // Fetch repos for all open pane directories
   useEffect(() => {
-    // Only call if cwd looks like a real path (has drive letter or starts with /)
-    // Skip CLI arguments like "--initial-dir"
-    if (cwd && (cwd.startsWith("/") || /^[A-Z]:/i.test(cwd))) {
-      findGitRepos(cwd)
-    }
-  }, [cwd, findGitRepos])
+    uniqueCwds.forEach(dir => {
+      if (dir && (dir.startsWith("/") || /^[A-Z]:/i.test(dir))) {
+        findGitRepos(dir)
+      }
+    })
+  }, [uniqueCwds.length])
 
   // Fetch source control state when selected repo changes
   useEffect(() => {
