@@ -357,32 +357,11 @@ export function SourceControlPane() {
         )}
       </div>
 
-      {/* Bottom section - Outgoing + History, compact */}
-      <div className="border-t border-[#252525]">
-        {/* Outgoing compact */}
-        {state?.outgoing_commits && state.outgoing_commits.length > 0 && (
-          <div className="border-b border-[#252525]">
-            <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
-              <span>Outgoing ({state.outgoing_commits.length})</span>
-              <span className="text-[#555555]">{state.remote || "origin"}</span>
-            </div>
-            <div className="overflow-y-auto" style={{ maxHeight: "80px" }}>
-              {state.outgoing_commits.map((commit, i) => (
-                <div key={commit.hash} className="px-3 py-1 hover:bg-[#111111]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#888888] font-mono">{commit.short_hash}</span>
-                    <span className="text-[10px] text-[#555555]">·</span>
-                    <span className="text-[10px] text-[#666666] truncate">{commit.message}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+      {/* Bottom section - History + Outgoing, compact */}
+      <div className="border-t border-[#252525] flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* History compact */}
-        <div>
-          <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between shrink-0">
             <span>History ({history.length})</span>
             <div className="flex items-center gap-2 text-[#555555]">
               <span>↑ {state?.ahead || 0}</span>
@@ -417,6 +396,27 @@ export function SourceControlPane() {
             </div>
           )}
         </div>
+
+        {/* Outgoing compact */}
+        {state?.outgoing_commits && state.outgoing_commits.length > 0 && (
+          <div className="border-t border-[#1a1a1a] shrink-0">
+            <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
+              <span>Outgoing ({state.outgoing_commits.length})</span>
+              <span className="text-[#555555]">{state.remote || "origin"}</span>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: "60px" }}>
+              {state.outgoing_commits.map((commit, i) => (
+                <div key={commit.hash} className="px-3 py-1 hover:bg-[#111111]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-[#888888] font-mono">{commit.short_hash}</span>
+                    <span className="text-[10px] text-[#555555]">·</span>
+                    <span className="text-[10px] text-[#666666] truncate">{commit.message}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
