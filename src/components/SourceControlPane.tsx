@@ -398,7 +398,7 @@ export function SourceControlPane() {
           <div className="border-t border-[#1a1a1a] shrink-0">
             <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
               <span>Outgoing ({state.outgoing_commits.length})</span>
-              <span className="text-[#555555]">{state.remote || "origin"}</span>
+              <span className="text-[#CCCCCC]">{state.remote || "origin"}</span>
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: "60px" }}>
               {state.outgoing_commits.map((commit, i) => (
