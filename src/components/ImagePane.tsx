@@ -3,7 +3,7 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
-import { useState, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 
 interface ImagePaneProps {
   pane: Pane
@@ -38,13 +38,32 @@ function clearImageContent(id: string) {
 }
 
 export function ImagePane({ pane }: ImagePaneProps) {
-  const { killPane, renamePane, togglePin } = usePaneStore()
+  const { killPane, renamePane, togglePin, openImagePicker, readImageFile } = usePaneStore()
   const [content, setContent] = useState<ImageContent | null>(() => loadImageContent(pane.id))
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
+
+  // Listen for image file read results
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const msg = e.detail
+      if (msg.event === "file_read_result" && msg.success && msg.absolute_path) {
+        const name = msg.absolute_path.split(/[/\\]/).pop() || "Image"
+        const newContent: ImageContent = { dataUrl: msg.data!, name }
+        saveImageContent(pane.id, newContent)
+        setContent(newContent)
+        setIsLoading(false)
+      } else if (msg.event === "file_read_result" && !msg.success) {
+        setError(msg.error || "Failed to read file")
+        setIsLoading(false)
+      }
+    }
+    window.addEventListener("terminal-output" as any, handler)
+    return () => window.removeEventListener("terminal-output" as any, handler)
+  }, [pane.id])
 
   const handleRename = (newTitle: string) => renamePane(pane.id, newTitle)
 
@@ -145,6 +164,15 @@ export function ImagePane({ pane }: ImagePaneProps) {
       {/* Toolbar */}
       <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-[#252525] bg-[#111]">
         <button
+          onClick={() => openImagePicker()}
+          className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs rounded flex items-center gap-1.5"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          Open Folder
+        </button>
+        <button
           onClick={() => fileInputRef.current?.click()}
           className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs rounded flex items-center gap-1.5"
         >
@@ -159,7 +187,7 @@ export function ImagePane({ pane }: ImagePaneProps) {
         >
           Clear
         </button>
-        <span className="ml-auto text-[10px] text-[#555]">Paste (Ctrl+V) · Drag & Drop · Open File</span>
+        <span className="ml-auto text-[10px] text-[#555]">Paste (Ctrl+V) · Drag & Drop</span>
       </div>
 
       <input

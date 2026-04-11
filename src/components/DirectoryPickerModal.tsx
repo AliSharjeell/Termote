@@ -7,15 +7,20 @@ import { ChevronUp, Folder, FolderOpen, File, X, Search } from "lucide-react"
 export function DirectoryPickerModal() {
   const [searchQuery, setSearchQuery] = useState("")
   const explorerOpen = usePaneStore((state) => state.explorerOpen)
+  const imagePickerOpen = usePaneStore((state) => state.imagePickerOpen)
   const explorerCurrentPath = usePaneStore((state) => state.explorerCurrentPath)
   const explorerContents = usePaneStore((state) => state.explorerContents)
   const closeExplorer = usePaneStore((state) => state.closeExplorer)
+  const closeImagePicker = usePaneStore((state) => state.closeImagePicker)
   const fetchDirectory = usePaneStore((state) => state.fetchDirectory)
   const spawnAtDirectory = usePaneStore((state) => state.spawnAtDirectory)
+  const readImageFile = usePaneStore((state) => state.readImageFile)
 
-  const filteredContents = searchQuery
+  const isImagePickerMode = imagePickerOpen
+
+  const filteredContents = isImagePickerMode
     ? explorerContents.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        !item.is_dir && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(item.name)
       )
     : explorerContents
 
@@ -33,7 +38,13 @@ export function DirectoryPickerModal() {
   }
 
   const handleItemClick = (item: { absolute_path: string; is_dir: boolean }) => {
-    if (item.is_dir) {
+    if (isImagePickerMode) {
+      if (!item.is_dir) {
+        // Read the image file directly
+        readImageFile(item.absolute_path)
+        closeImagePicker()
+      }
+    } else if (item.is_dir) {
       fetchDirectory(item.absolute_path)
     }
   }
@@ -58,7 +69,7 @@ export function DirectoryPickerModal() {
               <ChevronUp className="h-5 w-5" />
             </button>
             <div className="flex flex-col">
-              <span className="text-xs text-[#808080]">Select folder</span>
+              <span className="text-xs text-[#808080]">{isImagePickerMode ? "Select image" : "Select folder"}</span>
               <span className="max-w-[400px] truncate text-sm text-[#CCCCCC] font-mono">
                 {explorerCurrentPath || "Drives"}
               </span>
@@ -101,7 +112,9 @@ export function DirectoryPickerModal() {
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
                     item.is_dir
                       ? "text-[#CCCCCC] hover:bg-[#27272A] cursor-pointer"
-                      : "text-[#606060] cursor-default"
+                      : /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(item.name)
+                        ? "text-[#CCCCCC] hover:bg-[#27272A] cursor-pointer"
+                        : "text-[#606060] cursor-default opacity-40"
                   }`}
                 >
                   {item.is_dir ? (
@@ -119,18 +132,20 @@ export function DirectoryPickerModal() {
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-[#333333] px-4 py-3">
           <button
-            onClick={closeExplorer}
+            onClick={isImagePickerMode ? closeImagePicker : closeExplorer}
             className="rounded-lg bg-[#27272A] px-4 py-2 text-sm text-[#CCCCCC] hover:bg-[#333333] transition-colors"
           >
-            Cancel
+            {isImagePickerMode ? "Done" : "Cancel"}
           </button>
-          <button
-            onClick={handleSpawnHere}
-            disabled={!explorerCurrentPath}
-            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Spawn Terminal Here
-          </button>
+          {!isImagePickerMode && (
+            <button
+              onClick={handleSpawnHere}
+              disabled={!explorerCurrentPath}
+              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Spawn Terminal Here
+            </button>
+          )}
         </div>
       </div>
     </div>

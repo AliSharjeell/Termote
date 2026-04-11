@@ -172,6 +172,8 @@ interface PaneState {
   closeBrowserModal: () => void
   spawnBrowserPane: (url: string) => void
   closeExplorer: () => void
+  openImagePicker: () => void
+  closeImagePicker: () => void
   fetchDirectory: (path: string) => void
   handleDirectoryContents: (path: string, items: DirectoryItem[]) => void
   spawnAtDirectory: (dir: string) => void
