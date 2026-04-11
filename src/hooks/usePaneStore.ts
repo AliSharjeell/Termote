@@ -697,6 +697,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       }
       set({ panes: updatedPanes, activePanes: updatedActivePanes, sourceControlRepos: updatedRepos, selectedSourceControlRepo: newSelected })
       savePanes(updatedPanes)
+      saveActivePanes(updatedActivePanes)
     }
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "kill", pane_id: paneId }))

@@ -181,7 +181,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
                   else newSet.add(group.id)
                   setExpandedGroups(newSet)
                 }}>
-                  <span className="text-xs text-[#CCCCCC] shrink-0">{isExpanded ? "▾" : "▸"}</span>
+                  <span className="text-xs text-[#CCCCCC] shrink-0 w-5 h-5 flex items-center justify-center rounded border border-[#444]">{isExpanded ? "▾" : "▸"}</span>
                   <span className="truncate text-sm text-[#CCCCCC]">{group.name}</span>
                   <span className="ml-auto text-xs text-[#CCCCCC]">{groupPanes.length}</span>
                 </div>
