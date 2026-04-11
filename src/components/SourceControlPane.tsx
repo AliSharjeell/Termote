@@ -375,15 +375,22 @@ export function SourceControlPane() {
             </div>
           </div>
           {history.length > 0 ? (
-            <div className="overflow-y-auto" style={{ maxHeight: "60px" }}>
+            <div className="overflow-y-auto flex-1 min-h-0">
               <div className="px-2 py-1">
                 {history.map((commit, i) => {
                   const isFirst = i === 0;
+                  const hasNext = i < history.length - 1;
                   return (
-                    <div key={commit.hash} className="flex gap-2 items-center py-0.5">
-                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isFirst ? 'bg-[#888888]' : 'bg-[#555555]'}`}></div>
-                      <span className="text-[10px] text-[#888888] font-mono shrink-0">{commit.short_hash}</span>
-                      <span className="text-[10px] text-[#666666] truncate">{commit.message}</span>
+                    <div key={commit.hash} className="flex gap-0 items-start py-0.5 relative">
+                      {/* Graph line */}
+                      <div className="flex flex-col items-center shrink-0 w-4">
+                        {hasNext && <div className="w-px h-2 bg-[#333333]"></div>}
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${isFirst ? 'bg-[#16C60C]' : 'bg-[#444444]'}`}></div>
+                        {hasNext && <div className="w-px h-2 bg-[#333333]"></div>}
+                      </div>
+                      <span className="text-[10px] text-[#888888] font-mono shrink-0 ml-1">{commit.short_hash}</span>
+                      <span className="text-[10px] text-[#555555] mx-1">·</span>
+                      <span className="text-[10px] text-[#888888] truncate flex-1">{commit.message}</span>
                     </div>
                   );
                 })}
