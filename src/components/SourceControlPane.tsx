@@ -205,6 +205,13 @@ export function SourceControlPane() {
         </div>
       </div>
 
+      {/* Current directory path */}
+      {selectedSourceControlRepo && (
+        <div className="px-3 py-1 text-[9px] text-[#555555] border-b border-[#1a1a1a] truncate" title={selectedSourceControlRepo}>
+          {selectedSourceControlRepo}
+        </div>
+      )}
+
       {/* Repo selector (if multiple repos) */}
       {sourceControlRepos.length > 1 && (
         <div className="px-3 py-1.5 border-b border-[#252525] bg-[#0d0d0d]">
