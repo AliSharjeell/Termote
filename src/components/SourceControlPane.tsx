@@ -184,7 +184,7 @@ export function SourceControlPane() {
           <button
             onClick={handlePull}
             title="Pull"
-            className="p-1 rounded hover:bg-[#333] text-[#666666] hover:text-white"
+            className="p-1 rounded hover:bg-[#333] text-[#CCCCCC] hover:text-white"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12l7 7 7-7"/>
@@ -193,7 +193,7 @@ export function SourceControlPane() {
           <button
             onClick={handlePush}
             title="Push"
-            className="p-1 rounded hover:bg-[#333] text-[#666666] hover:text-white"
+            className="p-1 rounded hover:bg-[#333] text-[#CCCCCC] hover:text-white"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 19V5M5 12l7-7 7 7"/>
@@ -274,7 +274,7 @@ export function SourceControlPane() {
               <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#111111]">
                 <button
                   onClick={() => handleStage([file.path], true)}
-                  className="text-[10px] text-[#888888] opacity-0 group-hover:opacity-100 hover:text-white"
+                  className="text-[10px] text-[#CCCCCC] opacity-0 group-hover:opacity-100 hover:text-white"
                   title="Unstage"
                 >
                   −
@@ -304,7 +304,7 @@ export function SourceControlPane() {
               <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#111111]">
                 <button
                   onClick={() => handleStage([file.path], false)}
-                  className="text-[10px] text-[#888888] opacity-0 group-hover:opacity-100 hover:text-white"
+                  className="text-[10px] text-[#CCCCCC] opacity-0 group-hover:opacity-100 hover:text-white"
                   title="Stage"
                 >
                   +
@@ -334,7 +334,7 @@ export function SourceControlPane() {
               <div key={file.path} className="group flex items-center gap-2 px-3 py-1 hover:bg-[#111111]">
                 <button
                   onClick={() => handleStage([file.path], false)}
-                  className="text-[10px] text-[#888888] opacity-0 group-hover:opacity-100 hover:text-white"
+                  className="text-[10px] text-[#CCCCCC] opacity-0 group-hover:opacity-100 hover:text-white"
                   title="Add to staging"
                 >
                   +
