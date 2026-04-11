@@ -108,6 +108,7 @@ interface PaneState {
   // Selected source control repo path
   selectedSourceControlRepo: string | null
   // Port manager
+  portProcesses: Array<{
     port: number
     pid: number
     process_name: string
@@ -1120,7 +1121,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       // Send spawn_at_dir action
       ws.send(JSON.stringify({ action: "spawn_at_dir", shell: "powershell", dir }))
       // Select the group so new panes show
-      selectGroup(null)
+      get().selectGroup(null)
     }
   },
 
