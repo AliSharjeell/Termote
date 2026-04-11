@@ -43,8 +43,8 @@ export function NotePane({ pane }: NotePaneProps) {
         onRename={handleRename}
         onPin={() => togglePin(pane.id)}
       />
-      <div className="flex-1 overflow-hidden [&_.bn-editor]:bg-[#0d0d0d] [&_.bn-editor_.ProseMirror]:bg-[#0d0d0d] [&_.bn-editor_.ProseMirror]:text-white [&_.bn-editor_.ProseMirror]:outline-none [&_.bn-editor_.ProseMirror]:px-4 [&_.bn-editor_.ProseMirror]:py-3">
-        <BlockNoteView editor={editor} onChange={() => {
+      <div className="flex-1 overflow-hidden">
+        <BlockNoteView editor={editor} theme="dark" onChange={() => {
           try {
             localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify(editor.document))
           } catch {}
