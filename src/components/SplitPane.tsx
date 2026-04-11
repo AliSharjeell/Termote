@@ -115,7 +115,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
-            className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white"
+            className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
           >
             <PanelLeft size={14} />
           </button>
@@ -212,8 +212,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           onClick={() => { selectGroup(null); window.location.reload() }}
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
-              ? "text-white bg-[#252525]"
-              : "text-white hover:bg-[#1f1f1f]"
+              ? "text-[#CCCCCC] bg-[#252525]"
+              : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
           }`}
         >
           <button
@@ -226,8 +226,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             }}
             className={`text-xs border rounded px-1 shrink-0 ${
               selectedGroupId === null
-                ? "text-white border-[#555]"
-                : "text-[#666] hover:text-white border-[#252525]"
+                ? "text-[#CCCCCC] border-[#555]"
+                : "text-[#CCCCCC] hover:text-white border-[#252525]"
             }`}
             title="Expand"
           >
@@ -242,7 +242,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               <div
                 key={pane.id}
                 className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                  selectedTab === pane.id ? "text-white font-medium bg-[#1f1f1f] rounded" : "text-white hover:text-[#ccc]"
+                  selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
                 }`}
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
@@ -265,8 +265,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
-              ? "text-white bg-[#252525]"
-              : "text-white hover:bg-[#1f1f1f]"
+              ? "text-[#CCCCCC] bg-[#252525]"
+              : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
           }`}
         >
           <button
@@ -295,7 +295,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               <div
                 key={pane.id}
                 className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                  selectedTab === pane.id ? "text-white font-medium bg-[#1f1f1f] rounded" : "text-white hover:text-[#ccc]"
+                  selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
                 }`}
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
@@ -366,7 +366,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                     <div
                       key={pane.id}
                       className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                        selectedTab === pane.id ? "text-white font-medium bg-[#1f1f1f] rounded" : "text-white hover:text-[#ccc]"
+                        selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
                       }`}
                       onClick={() => usePaneStore.getState().selectTab(pane.id)}
                     >
@@ -446,7 +446,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <button
               onClick={toggleGitSidebar}
               title="Expand git sidebar"
-              className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white"
+              className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
             >
               <PanelRight size={14} />
             </button>
