@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { PanelLeft, PanelRight } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { XtermPane } from "./XtermPane"
