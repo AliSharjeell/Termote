@@ -396,7 +396,7 @@ export function SourceControlPane() {
         {/* Outgoing compact */}
         {state?.outgoing_commits && state.outgoing_commits.length > 0 && (
           <div className="border-t border-[#1a1a1a] shrink-0">
-            <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
+            <div className="px-3 py-1 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#111111] flex items-center justify-between">
               <span>Outgoing ({state.outgoing_commits.length})</span>
               <span className="text-[#CCCCCC]">{state.remote || "origin"}</span>
             </div>
