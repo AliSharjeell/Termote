@@ -178,6 +178,8 @@ interface PaneState {
   // File transfer actions
   uploadFile: (paneId: string, fileName: string, data: string) => void
   handleFileUploaded: (paneId: string, fileName: string) => void
+  readImageFile: (absolute_path: string) => void
+  handleImageFileRead: (result: { success: boolean; absolute_path: string; data?: string; error?: string }) => void
   // Git actions
   getGitStatus: (paneId: string) => void
   gitCommit: (paneId: string, message: string) => void
@@ -1159,6 +1161,17 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   handleFileUploaded: (paneId, fileName) => {
     console.log(`[Termote] File uploaded: ${fileName} to pane ${paneId}`)
+  },
+
+  readImageFile: (absolute_path) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "read_file", absolute_path }))
+    }
+  },
+
+  handleImageFileRead: (result) => {
+    console.log("[Termote] Image file read:", result.success ? "success" : result.error)
   },
 
   getGitStatus: (paneId) => {

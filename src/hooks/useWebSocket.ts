@@ -30,6 +30,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleDeviceKicked,
     handleDeviceBanned,
     handleFileUploaded,
+    handleImageFileRead,
     handleGitStatus,
     handleGitLog,
     handleSourceControlState,
@@ -99,6 +100,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "file_uploaded":
           handleFileUploaded(message.pane_id, message.file_name)
           break
+        case "file_read_result":
+          handleImageFileRead(message)
+          break
         case "git_status":
           handleGitStatus(message)
           break
@@ -126,7 +130,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
       }
     },
-    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleGitReposFound, handlePortProcesses, handleProcessKilled]
+    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleGitReposFound, handlePortProcesses, handleProcessKilled]
   )
 
   const connect = useCallback(() => {
