@@ -379,8 +379,8 @@ export function SourceControlPane() {
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isFirst ? 'bg-[#16C60C]' : 'bg-[#333333]'}`}></div>
                         {hasNext && <div className="w-px h-3 bg-[#2a2a2a]"></div>}
                       </div>
-                      <span className="text-[10px] text-[#666666] font-mono shrink-0 ml-2 w-16 truncate">{commit.short_hash}</span>
-                      <span className="text-[10px] text-[#888888] truncate flex-1 leading-tight">{commit.message}</span>
+                      <span className="text-[10px] text-[#CCCCCC] font-mono shrink-0 ml-2 w-16 truncate">{commit.short_hash}</span>
+                      <span className="text-[10px] text-[#CCCCCC] truncate flex-1 leading-tight">{commit.message}</span>
                     </div>
                   );
                 })}
