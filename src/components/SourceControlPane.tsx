@@ -326,7 +326,7 @@ export function SourceControlPane() {
         {/* Untracked */}
         {state?.untracked && state.untracked.length > 0 && (
           <div>
-            <div className="px-3 py-1.5 text-[10px] text-[#999999] uppercase tracking-wider bg-[#0d0d0d] flex items-center gap-2">
+            <div className="px-3 py-1.5 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#0d0d0d] flex items-center gap-2">
               <span>Untracked</span>
               <span className="ml-auto">({state.untracked.length})</span>
             </div>
@@ -339,7 +339,7 @@ export function SourceControlPane() {
                 >
                   +
                 </button>
-                <span className="text-xs text-[#999999] truncate font-mono" title={file.path}>
+                <span className="text-xs text-[#CCCCCC] truncate font-mono" title={file.path}>
                   {file.path.split("/").pop() || file.path}
                 </span>
               </div>
