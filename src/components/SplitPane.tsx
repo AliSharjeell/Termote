@@ -119,7 +119,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           >
             <PanelLeft size={14} />
           </button>
-          <span className="text-[8px] text-[#555]">{sortedActivePanes.length}panes</span>
+          <span className="text-[8px] text-[#CCCCCC]">{sortedActivePanes.length}panes</span>
           {portProcesses.length > 0 && (
             <span className="text-[8px] text-[#16C60C]">{portProcesses.length}ports</span>
           )}
