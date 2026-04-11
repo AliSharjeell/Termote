@@ -173,15 +173,6 @@ export function ImagePane({ pane }: ImagePaneProps) {
           Open Folder
         </button>
         <button
-          onClick={() => fileInputRef.current?.click()}
-          className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs rounded flex items-center gap-1.5"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
-          Open File
-        </button>
-        <button
           onClick={clearImage}
           className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs rounded"
         >
