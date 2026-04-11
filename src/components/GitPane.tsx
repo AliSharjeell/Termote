@@ -119,8 +119,8 @@ export function GitPane() {
     }
   }
 
-  const handleViewTree = (paneId: string) => {
-    gitLog(paneId)
+  const handleViewTree = (paneId: string, dir: string) => {
+    gitLog(paneId, dir)
   }
 
   const toggleRepoExpanded = (dir: string) => {
@@ -270,7 +270,7 @@ export function GitPane() {
                   {tab === "tree" && (
                     <div className="bg-[#0C0C0C]">
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleViewTree(paneId) }}
+                        onClick={(e) => { e.stopPropagation(); handleViewTree(paneWithDir?.id, dir) }}
                         className="w-full px-3 py-2 text-xs text-[#58A6FF] hover:bg-[#1a1a1a] text-left"
                       >
                         {log ? "Refresh" : "View commits"}

@@ -176,7 +176,7 @@ interface PaneState {
   gitStage: (paneId: string, files: string[], unstage: boolean) => void
   gitPush: (paneId: string) => void
   gitPull: (paneId: string) => void
-  gitLog: (paneId: string) => void
+  gitLog: (paneId: string, dir: string) => void
   getSourceControlState: (path: string) => void
   findGitRepos: (path: string) => void
   setSelectedSourceControlRepo: (path: string | null) => void
@@ -535,6 +535,19 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Merge browser pane IDs into activePanes so they're preserved across state updates
     const browserPaneIds = survivingBrowserPanes.map(p => p.id)
     const mergedActivePanes = [...new Set([...activePanes, ...browserPaneIds])]
+    // Prune repos whose cwd is no longer used by any open pane
+    const remainingCwds = new Set(
+      updatedPanes
+        .filter(p => mergedActivePanes.includes(p.id) && p.cwd)
+        .map(p => p.cwd!)
+    )
+    const updatedRepos = state.sourceControlRepos.filter(r => remainingCwds.has(r.path))
+    // If selected repo was removed, switch to another
+    let newSelected = state.selectedSourceControlRepo
+    if (newSelected && !updatedRepos.find(r => r.path === newSelected)) {
+      newSelected = updatedRepos.length > 0 ? updatedRepos[0].path : null
+      saveSourceControlSelected(newSelected)
+    }
     // Persist panes and groups to localStorage
     savePanes(updatedPanes)
     saveActivePanes(mergedActivePanes)
@@ -546,7 +559,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       activePanes: mergedActivePanes,
       floatingPanes,
       selectedTab,
-      groups: finalGroups
+      groups: finalGroups,
+      sourceControlRepos: updatedRepos,
+      selectedSourceControlRepo: newSelected,
     })
   },
 
@@ -622,8 +637,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   killPane: (paneId) => {
-    const { ws, isAuthenticated, panes } = get()
+    const { ws, isAuthenticated, panes, sourceControlRepos, selectedSourceControlRepo } = get()
     const pane = panes.find(p => p.id === paneId)
+    const paneCwd = pane?.cwd
     // Frontend-only panes: browser, note, image, whiteboard have no backend process
     const isFrontendOnly = pane?.url != null ||
       pane?.shell === "note" ||
@@ -632,7 +648,20 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     if (isFrontendOnly) {
       const updatedPanes = panes.filter(p => p.id !== paneId)
       const updatedActivePanes = get().activePanes.filter(id => id !== paneId)
-      set({ panes: updatedPanes, activePanes: updatedActivePanes })
+      // Remove repos whose cwd is no longer used by any open pane
+      const remainingCwds = new Set(
+        updatedPanes
+          .filter(p => get().activePanes.includes(p.id) && p.cwd)
+          .map(p => p.cwd!)
+      )
+      const updatedRepos = sourceControlRepos.filter(r => remainingCwds.has(r.path))
+      // If selected repo was removed, switch to another
+      let newSelected = selectedSourceControlRepo
+      if (newSelected && !updatedRepos.find(r => r.path === newSelected)) {
+        newSelected = updatedRepos.length > 0 ? updatedRepos[0].path : null
+        saveSourceControlSelected(newSelected)
+      }
+      set({ panes: updatedPanes, activePanes: updatedActivePanes, sourceControlRepos: updatedRepos, selectedSourceControlRepo: newSelected })
       savePanes(updatedPanes)
     }
     if (ws && isAuthenticated) {
@@ -1094,10 +1123,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
-  gitLog: (paneId) => {
+  gitLog: (paneId, dir) => {
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
-      ws.send(JSON.stringify({ action: "git_log", pane_id: paneId }))
+      ws.send(JSON.stringify({ action: "git_log", pane_id: paneId, dir }))
     }
   },
 

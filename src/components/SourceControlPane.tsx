@@ -56,8 +56,8 @@ export function SourceControlPane() {
 
   // Fetch git log when selected repo or active pane changes
   useEffect(() => {
-    if (activePaneId) {
-      gitLog(activePaneId)
+    if (selectedSourceControlRepo && activePaneId) {
+      gitLog(activePaneId, selectedSourceControlRepo)
     }
   }, [activePaneId, selectedSourceControlRepo, gitLog])
 
@@ -354,10 +354,10 @@ export function SourceControlPane() {
       </div>
 
       {/* Bottom section - History + Outgoing, compact */}
-      <div className="border-t border-[#252525] flex-1 flex flex-col min-h-0 overflow-hidden mt-2">
+      <div className="border-t border-[#252525] flex-1 flex flex-col min-h-0 overflow-hidden mt-4">
         {/* History compact */}
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <div className="px-3 py-1 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between shrink-0">
+          <div className="px-3 py-2 text-[10px] text-[#888888] uppercase tracking-wider bg-[#111111] flex items-center justify-between shrink-0 border-b border-[#1a1a1a]">
             <span>History ({history.length})</span>
             <div className="flex items-center gap-2 text-[#555555]">
               <span>↑ {state?.ahead || 0}</span>
@@ -366,21 +366,20 @@ export function SourceControlPane() {
           </div>
           {history.length > 0 ? (
             <div className="overflow-y-auto flex-1 min-h-0">
-              <div className="px-2 py-1">
+              <div className="px-2 py-2">
                 {history.map((commit, i) => {
                   const isFirst = i === 0;
                   const hasNext = i < history.length - 1;
                   return (
-                    <div key={commit.hash} className="flex gap-0 items-start py-0.5 relative">
+                    <div key={commit.hash} className="flex gap-0 items-start py-1.5 relative">
                       {/* Graph line */}
-                      <div className="flex flex-col items-center shrink-0 w-4">
-                        {hasNext && <div className="w-px h-2 bg-[#333333]"></div>}
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${isFirst ? 'bg-[#16C60C]' : 'bg-[#444444]'}`}></div>
-                        {hasNext && <div className="w-px h-2 bg-[#333333]"></div>}
+                      <div className="flex flex-col items-center shrink-0 w-5">
+                        {hasNext && <div className="w-px h-3 bg-[#2a2a2a]"></div>}
+                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isFirst ? 'bg-[#16C60C]' : 'bg-[#333333]'}`}></div>
+                        {hasNext && <div className="w-px h-3 bg-[#2a2a2a]"></div>}
                       </div>
-                      <span className="text-[10px] text-[#888888] font-mono shrink-0 ml-1">{commit.short_hash}</span>
-                      <span className="text-[10px] text-[#555555] mx-1">·</span>
-                      <span className="text-[10px] text-[#888888] truncate flex-1">{commit.message}</span>
+                      <span className="text-[10px] text-[#666666] font-mono shrink-0 ml-2 w-16 truncate">{commit.short_hash}</span>
+                      <span className="text-[10px] text-[#888888] truncate flex-1 leading-tight">{commit.message}</span>
                     </div>
                   );
                 })}
