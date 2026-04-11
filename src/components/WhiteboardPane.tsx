@@ -105,6 +105,11 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     if (ctx) redraw(ctx, content)
   }, [content, redraw])
 
+  const toWorld = (sx: number, sy: number, ctx: CanvasRenderingContext2D, c: WbContent) => ({
+    x: (sx - ctx.canvas.width / 2 - c.viewX) / c.viewScale + ctx.canvas.width / 2,
+    y: (sy - ctx.canvas.height / 2 - c.viewY) / c.viewScale + ctx.canvas.height / 2,
+  })
+
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (tool === "pan") {
       isPanRef.current = true
@@ -113,8 +118,10 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     }
     isDrawingRef.current = true
     const canvas = canvasRef.current!
-    const rect = canvas.getBoundingClientRect()
-    currentRef.current = [{ x: e.clientX - rect.left, y: e.clientY - rect.top }]
+    const ctx = canvas.getContext("2d")!
+    const c = contentRef.current
+    const world = toWorld(e.clientX, e.clientY, ctx, c)
+    currentRef.current = [world]
   }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -131,14 +138,12 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     }
     if (!isDrawingRef.current) return
     const canvas = canvasRef.current!
-    const rect = canvas.getBoundingClientRect()
-    const wx = e.clientX - rect.left
-    const wy = e.clientY - rect.top
-    const prev = currentRef.current[currentRef.current.length - 1]
-    currentRef.current.push({ x: wx, y: wy })
-
     const ctx = canvas.getContext("2d")!
     const c = contentRef.current
+    const world = toWorld(e.clientX, e.clientY, ctx, c)
+    const prev = currentRef.current[currentRef.current.length - 1]
+    currentRef.current.push(world)
+
     ctx.save()
     ctx.translate(ctx.canvas.width / 2 + c.viewX, ctx.canvas.height / 2 + c.viewY)
     ctx.scale(c.viewScale, c.viewScale)
@@ -149,7 +154,7 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     ctx.lineJoin = "round"
     ctx.beginPath()
     ctx.moveTo(prev.x, prev.y)
-    ctx.lineTo(wx, wy)
+    ctx.lineTo(world.x, world.y)
     ctx.stroke()
     ctx.restore()
   }
