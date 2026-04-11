@@ -115,10 +115,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
-            className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white text-[9px] font-mono"
+            className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white"
           >
-            <PanelLeft size={12} />
-            <span className="text-[7px] mt-0.5">left</span>
+            <PanelLeft size={14} />
           </button>
           <span className="text-[8px] text-[#555]">{sortedActivePanes.length}panes</span>
           {portProcesses.length > 0 && (
@@ -132,10 +131,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <button
               onClick={toggleSidebar}
               title="Collapse sidebar"
-              className="text-[#666] hover:text-white text-[9px] font-mono flex items-center gap-0.5"
+              className="text-[#666] hover:text-white"
             >
-              <PanelLeft size={12} />
-              <span>left</span>
+              <PanelLeft size={14} />
             </button>
           </div>
           <button
@@ -448,10 +446,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <button
               onClick={toggleGitSidebar}
               title="Expand git sidebar"
-              className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white text-[9px] font-mono"
+              className="w-8 h-8 flex flex-col items-center justify-center text-[#888] hover:text-white"
             >
               <PanelRight size={14} />
-              <span className="text-[7px] mt-0.5">right</span>
             </button>
           </div>
         ) : (

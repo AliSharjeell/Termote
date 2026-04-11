@@ -148,14 +148,13 @@ export function SourceControlPane() {
   return (
     <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
       {/* Collapse button row */}
-      <div className="flex justify-end px-2 py-1 border-b border-[#1a1a1a]">
+      <div className="flex justify-start px-2 py-1 border-b border-[#1a1a1a]">
         <button
           onClick={toggleGitSidebar}
           title="Collapse git sidebar"
-          className="text-[#666] hover:text-white text-[9px] font-mono flex items-center gap-0.5"
+          className="text-[#666] hover:text-white"
         >
-          <span>right</span>
-          <PanelRight size={12} />
+          <PanelRight size={14} />
         </button>
       </div>
       {/* Header */}
