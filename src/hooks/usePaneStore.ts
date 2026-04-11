@@ -189,6 +189,7 @@ interface PaneState {
   gitPush: (paneId: string) => void
   gitPull: (paneId: string) => void
   gitLog: (paneId: string, dir: string) => void
+  spawnLazygit: (paneId: string, cwd: string) => void
   getSourceControlState: (path: string) => void
   findGitRepos: (path: string) => void
   setSelectedSourceControlRepo: (path: string | null) => void
@@ -1217,6 +1218,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "git_log", pane_id: paneId, dir }))
+    }
+  },
+
+  spawnLazygit: (paneId, cwd) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "spawn_lazygit", pane_id: paneId, cwd }))
     }
   },
 

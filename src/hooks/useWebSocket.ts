@@ -82,6 +82,11 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
         case "directory_picker_cancelled":
           break
+        case "lazygit_spawned":
+          // Auto-select the new Lazygit pane when it's spawned
+          console.log("[Termote] Lazygit spawned as pane:", message.pane_id)
+          // The state_update will already add the pane, selectTab ensures it's visible
+          break
         case "directory_contents":
           handleDirectoryContents(message.path, message.items)
           break

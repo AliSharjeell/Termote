@@ -59,8 +59,9 @@ export type GetSourceControlStateMessage = { action: "get_source_control_state";
 export type FindGitReposMessage = { action: "find_git_repos"; path: string }
 export type GetPortProcessesMessage = { action: "get_port_processes" }
 export type KillProcessMessage = { action: "kill_process"; pid: number }
+export type SpawnLazygitMessage = { action: "spawn_lazygit"; pane_id: string; cwd: string }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage | SpawnLazygitMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -167,4 +168,10 @@ export type ProcessKilledEvent = {
   message: string
 }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent
+export type LazygitSpawnedEvent = {
+  event: "lazygit_spawned"
+  pane_id: string
+  cwd: string
+}
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent | LazygitSpawnedEvent
