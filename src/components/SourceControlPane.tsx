@@ -137,8 +137,8 @@ export function SourceControlPane() {
 
   return (
     <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] w-64 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525]">
+      {/* Collapse button row */}
+      <div className="flex justify-end px-2 py-1 border-b border-[#1a1a1a]">
         <button
           onClick={toggleGitSidebar}
           title="Collapse git sidebar"
@@ -146,6 +146,9 @@ export function SourceControlPane() {
         >
           ‹
         </button>
+      </div>
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#aaaaaa]">
           <circle cx="12" cy="12" r="4"/>
           <line x1="1.05" y1="12" x2="7" y2="12"/>
