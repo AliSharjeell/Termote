@@ -296,7 +296,7 @@ export function SourceControlPane() {
         {/* Modified/Unstaged */}
         {state?.unstaged && state.unstaged.length > 0 && (
           <div>
-            <div className="px-3 py-1.5 text-[10px] text-[#aaaaaa] uppercase tracking-wider bg-[#111111] flex items-center gap-2">
+            <div className="px-3 py-1.5 text-[10px] text-[#CCCCCC] uppercase tracking-wider bg-[#111111] flex items-center gap-2">
               <span>Modified</span>
               <span className="ml-auto">({state.unstaged.length})</span>
             </div>
