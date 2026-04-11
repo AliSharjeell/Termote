@@ -557,9 +557,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Also preserve existing groups if backend sends empty array (backend might not persist groups)
     const hasGroups = groups && groups.length > 0
     const finalGroups = hasGroups ? groups : state.groups
-    // Merge browser pane IDs into activePanes so they're preserved across state updates
-    const browserPaneIds = survivingFrontendPanes.map(p => p.id)
-    const mergedActivePanes = [...new Set([...activePanes, ...browserPaneIds])]
+    // Merge all frontend pane IDs (browser, note, image, whiteboard) so they're preserved
+    const frontendPaneIds = survivingFrontendPanes.map(p => p.id)
+    const mergedActivePanes = [...new Set([...activePanes, ...frontendPaneIds])]
     // Prune repos whose cwd is no longer used by any open pane
     const remainingCwds = new Set(
       updatedPanes
