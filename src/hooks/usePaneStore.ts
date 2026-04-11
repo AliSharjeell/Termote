@@ -1121,16 +1121,21 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   handleGitReposFound: (repos) => {
-    saveSourceControlRepos(repos)
     set((state) => {
+      // Merge new repos with existing ones, avoiding duplicates by path
+      const existingPaths = new Set(state.sourceControlRepos.map(r => r.path))
+      const newRepos = repos.filter(r => !existingPaths.has(r.path))
+      const merged = [...state.sourceControlRepos, ...newRepos]
+      saveSourceControlRepos(merged)
+
       // Auto-select first repo if none selected or previous selection not in new list
       let selected = state.selectedSourceControlRepo
-      if (!selected || !repos.find(r => r.path === selected)) {
-        selected = repos.length > 0 ? repos[0].path : null
+      if (!selected || !merged.find(r => r.path === selected)) {
+        selected = merged.length > 0 ? merged[0].path : null
         saveSourceControlSelected(selected)
       }
       return {
-        sourceControlRepos: repos,
+        sourceControlRepos: merged,
         selectedSourceControlRepo: selected,
       }
     })
