@@ -16,7 +16,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null)
 
-  // Keyboard shortcuts for sidebar toggles
+  // Keyboard shortcuts for sidebar toggles and tab close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && e.key === "1") {
@@ -27,10 +27,17 @@ export function TabBar({ searchQuery }: TabBarProps) {
         e.preventDefault()
         toggleTabsGitSidebar()
       }
+      if (e.ctrlKey && e.key === "w") {
+        e.preventDefault()
+        // Close the selected tab (kill pane)
+        if (selectedTab) {
+          usePaneStore.getState().killPane(selectedTab)
+        }
+      }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [toggleTabsSidebar, toggleTabsGitSidebar])
+  }, [toggleTabsSidebar, toggleTabsGitSidebar, selectedTab])
 
   // Search filter
   const searchFiltered = searchQuery
