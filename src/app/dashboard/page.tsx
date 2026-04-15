@@ -163,75 +163,63 @@ function DashboardContent() {
   const [bootStatus, setBootStatus] = useState<'init' | 'checking' | 'starting' | 'connecting' | 'done'>('init')
 
   useEffect(() => {
-    try {
-      const isTauri = isTauriBuild()
-
-      if (!isTauri) {
-        // In browser mode, use tunnel from URL params or localStorage
-        const storedUrl = localStorage.getItem("tunnelUrl")
-        const storedToken = localStorage.getItem("authToken")
-        if (storedUrl && storedToken) {
-          setTunnelUrl(storedUrl)
-          setAuthToken(storedToken)
-        }
-        setIsReady(true)
-        return
-      }
-
-      // In Tauri mode, use default local WebSocket
-      setTunnelUrl(WEBSOCKET_URL)
-      setAuthToken('termote-local')
-      setIsReady(true)
-    } catch (err) {
-      console.error('[Boot] Setup error:', err)
-      setIsReady(true) // Still show dashboard on error
-    }
+    console.log('[Boot] Starting initialization')
 
     // Fallback timeout - ensure dashboard shows even if Tauri commands hang
     const timeout = setTimeout(() => {
-      console.log('[Boot] Timeout fallback - forcing dashboard show')
+      console.warn('[Boot] Timeout hit - forcing isReady=true')
       setIsReady(true)
       setBootStatus('done')
     }, 5000)
 
-    return () => clearTimeout(timeout)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Track backend start progress
-  useEffect(() => {
-    console.log('[Boot] Effect running, isTauriBuild:', isTauriBuild())
-
-    if (!isTauriBuild()) {
-      console.log('[Boot] Not Tauri build, skipping backend check')
-      return
-    }
-
-    setBootStatus('checking')
-
-    const checkAndStartServer = async () => {
+    const init = async () => {
       try {
-        console.log('[Boot] Checking server status...')
+        const isTauri = isTauriBuild()
+        console.log('[Boot] isTauri:', isTauri)
+
+        if (!isTauri) {
+          const storedUrl = localStorage.getItem("tunnelUrl")
+          const storedToken = localStorage.getItem("authToken")
+          if (storedUrl && storedToken) {
+            setTunnelUrl(storedUrl)
+            setAuthToken(storedToken)
+          }
+          setIsReady(true)
+          clearTimeout(timeout)
+          return
+        }
+
+        // In Tauri mode, use default local WebSocket
+        setTunnelUrl(WEBSOCKET_URL)
+        setAuthToken('termote-local')
+
+        console.log('[Boot] Calling check_status...')
         const running = await invoke<boolean>('check_status')
-        console.log('[Boot] Server status:', running)
+        console.log('[Boot] check_status returned:', running)
         setServerRunning(running)
 
         if (!running) {
-          setBootStatus('starting')
           console.log('[Boot] Starting server...')
+          setBootStatus('starting')
           await invoke('start_server')
           console.log('[Boot] Server started')
           setServerRunning(true)
         }
 
         setBootStatus('connecting')
+        setIsReady(true)
+        clearTimeout(timeout)
       } catch (err) {
-        console.error('[Boot] Failed to check/start server:', err)
-        setBootStatus('connecting') // Try connecting anyway
+        console.error('[Boot] Init error:', err)
+        setIsReady(true)
+        setBootStatus('done')
+        clearTimeout(timeout)
       }
     }
 
-    checkAndStartServer()
+    init()
+    return () => clearTimeout(timeout)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Connect to WebSocket
