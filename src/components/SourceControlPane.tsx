@@ -97,6 +97,7 @@ export function SourceControlPane() {
         const pCwd = normalizePath(p.cwd)
         const sel = normalizePath(item.cwd)
         if (pCwd === sel || pCwd.startsWith(sel + "/")) {
+          console.log("[SourceControlPane] Fetching git status for pane:", p.id, "cwd:", p.cwd)
           getGitStatus(p.id)
         }
       }
@@ -107,6 +108,11 @@ export function SourceControlPane() {
     setSidebarMode("list")
     setSelectedLabel(null)
   }
+
+  // Helper to trigger git status fetch for a pane
+  const fetchStatusForPane = useCallback((paneId: string) => {
+    getGitStatus(paneId)
+  }, [getGitStatus])
 
   // === LazyGit mode ===
   if (sidebarMode === "lazygit") {
@@ -156,7 +162,7 @@ export function SourceControlPane() {
               if (!status) {
                 return (
                   <div key={pane.id} className="px-3 py-4 text-xs text-[#666]">
-                    Loading git status...
+                    Loading git status for {pane.cwd}...
                   </div>
                 )
               }
