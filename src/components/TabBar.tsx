@@ -32,17 +32,26 @@ export function TabBar({ searchQuery }: TabBarProps) {
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
+  const [gitSidebarWidth, setGitSidebarWidth] = useState(280)
   const [isResizing, setIsResizing] = useState(false)
+  const [isGitResizing, setIsGitResizing] = useState(false)
 
   // Sidebar resize handlers
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return
-      const newWidth = Math.min(Math.max(e.clientX, 140), 400)
-      setSidebarWidth(newWidth)
+      if (isResizing) {
+        const newWidth = Math.min(Math.max(e.clientX, 140), 400)
+        setSidebarWidth(newWidth)
+      } else if (isGitResizing) {
+        const newWidth = Math.min(Math.max(e.clientX, 180), 500)
+        setGitSidebarWidth(newWidth)
+      }
     }
-    const handleMouseUp = () => setIsResizing(false)
-    if (isResizing) {
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      setIsGitResizing(false)
+    }
+    if (isResizing || isGitResizing) {
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
     }
@@ -50,7 +59,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [isResizing])
+  }, [isResizing, isGitResizing])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -311,7 +320,14 @@ export function TabBar({ searchQuery }: TabBarProps) {
           </button>
         </div>
       ) : (
-        <SourceControlPane />
+        <div className="relative shrink-0" style={{ width: gitSidebarWidth }}>
+          {/* Resize handle */}
+          <div
+            className="absolute -left-1 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors z-10"
+            onMouseDown={() => setIsGitResizing(true)}
+          />
+          <SourceControlPane />
+        </div>
       )}
     </div>
   )
