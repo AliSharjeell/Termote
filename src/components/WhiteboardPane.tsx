@@ -31,7 +31,7 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     return null
   }, [pane.id])
 
-  const onChange = useCallback((elements: any[]) => {
+  const onChange = useCallback((elements: any[], _state: any) => {
     try {
       localStorage.setItem(WB_KEY(pane.id), JSON.stringify({ elements }))
     } catch {}
