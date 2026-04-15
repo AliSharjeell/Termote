@@ -33,16 +33,30 @@ export function SourceControlPane() {
   // Which pane/label is selected to show in lazygit view
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
 
-  // Kick off git repo discovery on mount
+  // Kick off git repo discovery on mount — also re-scan if panes exist but repos are empty
   useEffect(() => {
-    if (sourceControlRepos.length === 0) {
+    const hasPanesWithCwds = panes.some(p =>
+      activePanes.includes(p.id) &&
+      p.cwd &&
+      (p.cwd.startsWith("/") || /^[A-Z]:/i.test(p.cwd)) &&
+      !["note", "image", "whiteboard"].includes(p.shell) &&
+      !p.url
+    )
+    if (sourceControlRepos.length === 0 || hasPanesWithCwds) {
       setIsScanning(true)
+      // Re-discover repos for common locations
       findGitRepos("C:/Users/alish")
       findGitRepos("C:/AppsNew")
+      // Also scan each open pane's cwd
+      panes.forEach(p => {
+        if (p.cwd && (p.cwd.startsWith("/") || /^[A-Z]:/i.test(p.cwd))) {
+          findGitRepos(p.cwd)
+        }
+      })
     }
     const timer = setTimeout(() => setIsScanning(false), 3000)
     return () => clearTimeout(timer)
-  }, [])
+  }, [panes.length])
 
   // Get open terminal panes that are in git repos
   const gitPaneItems: GitPaneItem[] = panes
