@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem } from "@/lib/types"
+import type { Terminal } from "@xterm/xterm"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -108,6 +109,8 @@ interface PaneState {
   }>
   // Selected source control repo path
   selectedSourceControlRepo: string | null
+  // Lazygit terminal instances keyed by pane ID (for embedded sidebar rendering)
+  lazygitTerminals: Record<string, { terminal: Terminal }>
   // Port manager
   portProcesses: Array<{
     port: number
@@ -194,6 +197,8 @@ interface PaneState {
   findGitRepos: (path: string) => void
   setSelectedSourceControlRepo: (path: string | null) => void
   handleGitReposFound: (repos: Array<{path: string; name: string; branch: string | null}>) => void
+  setLazygitTerminal: (paneId: string, terminal: Terminal) => void
+  removeLazygitTerminal: (paneId: string) => void
   handlePortProcesses: (processes: Array<{port: number; pid: number; process_name: string; cwd?: string}>) => void
   handleProcessKilled: (pid: number, success: boolean) => void
   handleGitStatus: (status: {
@@ -511,6 +516,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   sourceControlStates: {},
   sourceControlRepos: loadSourceControlRepos(),
   selectedSourceControlRepo: loadSourceControlSelected(),
+  lazygitTerminals: {},
   portProcesses: [],
   aiCommand: loadAiCommand(),
 
@@ -1085,14 +1091,18 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   spawnBrowserPane: (url) => {
     const { panes, activePanes } = get()
     const id = `browser-${Date.now()}`
-    // Build proxy URL using tunnel
+    // Build proxy URL using tunnel - path-based format: /proxy/<scheme>/<host><path>
     let proxyUrl: string | null = null
     const stored = localStorage.getItem("tunnelUrl")
     if (stored) {
       try {
         const wsUrl = new URL(stored)
         const baseUrl = `${wsUrl.protocol === "wss:" ? "https" : "http"}://${wsUrl.host}`
-        proxyUrl = `${baseUrl}/proxy?url=${encodeURIComponent(url)}`
+        // Parse the target URL and construct path-based proxy URL
+        const target = new URL(url)
+        const scheme = target.protocol === "https:" ? "https" : "http"
+        const proxyPath = `${baseUrl}/proxy/${scheme}/${target.host}${target.pathname}${target.search}`
+        proxyUrl = proxyPath
       } catch {
         // fall through - proxyUrl stays null
       }
@@ -1265,6 +1275,22 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         sourceControlRepos: merged,
         selectedSourceControlRepo: selected,
       }
+    })
+  },
+
+  setLazygitTerminal: (paneId, terminal) => {
+    set((state) => ({
+      lazygitTerminals: {
+        ...state.lazygitTerminals,
+        [paneId]: { terminal },
+      },
+    }))
+  },
+
+  removeLazygitTerminal: (paneId) => {
+    set((state) => {
+      const { [paneId]: _, ...rest } = state.lazygitTerminals
+      return { lazygitTerminals: rest }
     })
   },
 
