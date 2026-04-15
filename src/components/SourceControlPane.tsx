@@ -23,7 +23,9 @@ export function SourceControlPane() {
     panes,
     activePanes,
     sourceControlRepos,
-    toggleGitSidebar,
+    effectiveToggleGitSidebar,
+    toggleTabsGitSidebar,
+    tabsGitSidebarCollapsed,
     findGitRepos,
     setLazygitTerminal,
     removeLazygitTerminal,
@@ -31,6 +33,10 @@ export function SourceControlPane() {
     lazySidebarPaneId,
     setLazygitSidebarPaneId,
   } = usePaneStore()
+
+  // Use the correct toggle based on which sidebar is active (tabs vs panes)
+  const isTabsMode = tabsGitSidebarCollapsed !== undefined
+  const effectiveToggleGitSidebar = isTabsMode && tabsGitSidebarCollapsed !== undefined ? toggleTabsGitSidebar : effectiveToggleGitSidebar
 
   const [isScanning, setIsScanning] = useState(false)
   // Sidebar mode: "list" or "lazygit"
@@ -195,7 +201,7 @@ export function SourceControlPane() {
             <span>Back</span>
           </button>
           <button
-            onClick={toggleGitSidebar}
+            onClick={effectiveToggleGitSidebar}
             title="Collapse git sidebar"
             className="text-[#CCCCCC] hover:text-white"
           >
@@ -231,7 +237,7 @@ export function SourceControlPane() {
       {/* Collapse button row */}
       <div className="flex justify-start px-2 py-1 border-b border-[#1a1a1a]">
         <button
-          onClick={toggleGitSidebar}
+          onClick={effectiveToggleGitSidebar}
           title="Collapse git sidebar"
           className="text-[#CCCCCC] hover:text-white"
         >
