@@ -1,7 +1,7 @@
 "use client"
 
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { PanelRight, FolderGit2, RefreshCw, ArrowLeft } from "lucide-react"
 
 interface GitPaneItem {
