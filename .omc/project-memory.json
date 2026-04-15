@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775850374776,
+  "lastScanned": 1776279918027,
   "projectRoot": "C:\\AppsNew\\TermoteFull\\TermoteUI",
   "techStack": {
     "languages": [
@@ -50,7 +50,10 @@
       "dev": "next dev",
       "build": "next build",
       "start": "next start",
-      "lint": "eslint"
+      "lint": "eslint",
+      "tauri": "tauri",
+      "tauri:dev": "tauri dev",
+      "tauri:build": "tauri build"
     }
   },
   "conventions": {
@@ -73,11 +76,24 @@
   },
   "customNotes": [],
   "directoryMap": {
+    "out": {
+      "path": "out",
+      "purpose": "Build output",
+      "fileCount": 18,
+      "lastAccessed": 1776279917956,
+      "keyFiles": [
+        "404.html",
+        "favicon.ico",
+        "file.svg",
+        "globe.svg",
+        "google20d370399c9772c8.html"
+      ]
+    },
     "public": {
       "path": "public",
       "purpose": "Public files",
       "fileCount": 7,
-      "lastAccessed": 1775850374613,
+      "lastAccessed": 1776279917957,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -90,14 +106,26 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1775850374614,
+      "lastAccessed": 1776279917964,
       "keyFiles": []
+    },
+    "src-tauri": {
+      "path": "src-tauri",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1776279917964,
+      "keyFiles": [
+        "build.rs",
+        "Cargo.lock",
+        "Cargo.toml",
+        "tauri.conf.json"
+      ]
     },
     "src\\app": {
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 7,
-      "lastAccessed": 1775850374622,
+      "lastAccessed": 1776279917965,
       "keyFiles": [
         "favicon.ico",
         "globals.css",
@@ -107,104 +135,78 @@
     "src\\components": {
       "path": "src\\components",
       "purpose": "UI components",
-      "fileCount": 14,
-      "lastAccessed": 1775850374622,
+      "fileCount": 21,
+      "lastAccessed": 1776279917966,
       "keyFiles": [
+        "BrowserPane.tsx",
         "BrowserPickerModal.tsx",
-        "DirectoryPickerModal.tsx",
-        "GitPane.tsx"
+        "DevicePreviewModal.tsx"
       ]
     },
     "src\\lib": {
       "path": "src\\lib",
       "purpose": "Library code",
-      "fileCount": 4,
-      "lastAccessed": 1775850374623,
+      "fileCount": 5,
+      "lastAccessed": 1776279917966,
       "keyFiles": [
         "messages.ts",
         "posts.ts",
-        "terminalRegistry.ts"
+        "tauriDetect.ts"
+      ]
+    },
+    "src-tauri\\src": {
+      "path": "src-tauri\\src",
+      "purpose": "Source code",
+      "fileCount": 2,
+      "lastAccessed": 1776279917967,
+      "keyFiles": [
+        "lib.rs",
+        "main.rs"
       ]
     }
   },
   "hotPaths": [
     {
-      "path": "src\\hooks\\usePaneStore.ts",
-      "accessCount": 48,
-      "lastAccessed": 1775859495228,
-      "type": "directory"
-    },
-    {
-      "path": "src\\components\\SplitPane.tsx",
-      "accessCount": 39,
-      "lastAccessed": 1775859730218,
+      "path": "src\\app\\dashboard\\page.tsx",
+      "accessCount": 27,
+      "lastAccessed": 1776288162390,
       "type": "file"
     },
     {
-      "path": "src\\components\\SourceControlPane.tsx",
-      "accessCount": 19,
-      "lastAccessed": 1775859616855,
+      "path": "src\\lib\\tauriDetect.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776287727432,
       "type": "file"
-    },
-    {
-      "path": "src\\lib\\types.ts",
-      "accessCount": 11,
-      "lastAccessed": 1775858948305,
-      "type": "directory"
     },
     {
       "path": "src\\hooks\\useWebSocket.ts",
-      "accessCount": 10,
-      "lastAccessed": 1775856298091,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\dashboard\\page.tsx",
-      "accessCount": 8,
-      "lastAccessed": 1775859681746,
-      "type": "directory"
-    },
-    {
-      "path": "src\\components\\BrowserPane.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1775859152206,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\GitPane.tsx",
       "accessCount": 3,
-      "lastAccessed": 1775853736426,
+      "lastAccessed": 1776288182804,
       "type": "file"
     },
     {
-      "path": "src\\components\\XtermPane.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1775859089228,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\BrowserPickerModal.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775859017938,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\PaneTitleBar.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775859119392,
-      "type": "directory"
-    },
-    {
-      "path": "src",
+      "path": "src-tauri\\src\\lib.rs",
       "accessCount": 1,
-      "lastAccessed": 1775858101550,
-      "type": "directory"
+      "lastAccessed": 1776279948839,
+      "type": "file"
     },
     {
-      "path": "src\\components",
+      "path": "src-tauri\\capabilities\\default.json",
       "accessCount": 1,
-      "lastAccessed": 1775858129601,
-      "type": "directory"
+      "lastAccessed": 1776279958034,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useTermoteConnection.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776279988215,
+      "type": "file"
+    },
+    {
+      "path": "src-tauri\\tauri.conf.json",
+      "accessCount": 1,
+      "lastAccessed": 1776284711440,
+      "type": "file"
     }
   ],
   "userDirectives": []

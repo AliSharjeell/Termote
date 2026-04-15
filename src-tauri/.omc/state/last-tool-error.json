@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"ls -la \\\"C:\\\\AppsNew\\\\TermoteFull\\\\TermoteUI\\\\src-tauri\\\\target\\\\release\\\\bundle\\\\nsis\\\\Termote_0.1.0_x64-setup.exe\\\"\",\"description\":\"Check installer exists\"}",
+  "error": "Exit code 2\nls: cannot access 'C:\\AppsNew\\TermoteFull\\TermoteUI\\src-tauri\\target\\release\\bundle\\nsis\\Termote_0.1.0_x64-setup.exe': No such file or directory",
+  "timestamp": "2026-04-15T21:35:30.375Z",
+  "retry_count": 1
+}
