@@ -261,15 +261,17 @@ function loadPersistedState() {
     const gitSidebarJson = localStorage.getItem(GIT_SIDEBAR_KEY)
     const tabsSidebarJson = localStorage.getItem(TABS_SIDEBAR_KEY)
     const tabsGitSidebarJson = localStorage.getItem(TABS_GIT_SIDEBAR_KEY)
+    const tabsViewMode = (viewModeJson as "auto" | "tabs" | "panes") || "panes"
     return {
       pinnedPaneIds: pinnedJson ? JSON.parse(pinnedJson) : [],
-      viewMode: (viewModeJson as "auto" | "tabs" | "panes") || "panes",
+      viewMode: tabsViewMode,
       paneGroupMap: paneGroupsJson ? JSON.parse(paneGroupsJson) : {},
       selectedGroupId: selectedGroupJson || null,
       sidebarCollapsed: sidebarJson === "true",
       gitSidebarCollapsed: gitSidebarJson === "true",
-      tabsSidebarCollapsed: tabsSidebarJson === "true",
-      tabsGitSidebarCollapsed: tabsGitSidebarJson === "true",
+      // For tabs mode, default to collapsed unless explicitly saved
+      tabsSidebarCollapsed: tabsSidebarJson ? tabsSidebarJson === "true" : tabsViewMode === "tabs",
+      tabsGitSidebarCollapsed: tabsGitSidebarJson ? tabsGitSidebarJson === "true" : tabsViewMode === "tabs",
     }
   } catch {
     return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false }
