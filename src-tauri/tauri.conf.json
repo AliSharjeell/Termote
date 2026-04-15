@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "identifier": "com.termote.app",
   "build": {
-    "devtools": true,
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run dev",
