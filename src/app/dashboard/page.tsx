@@ -94,22 +94,6 @@ function DashboardContent() {
   useEffect(() => {
     if (!isTauriBuild()) return
 
-    const checkAndStartServer = async () => {
-      try {
-        const running = await invoke<boolean>('check_status')
-        setServerRunning(running)
-        if (!running) {
-          await invoke('start_server')
-          setServerRunning(true)
-        }
-      } catch (err) {
-        console.error('Failed to check/start server:', err)
-      }
-    }
-
-    // Initial check
-    checkAndStartServer()
-
     // Periodic check
     checkIntervalRef.current = setInterval(async () => {
       try {
@@ -176,6 +160,7 @@ function DashboardContent() {
   const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
   const [authToken, setAuthToken] = useState<string | null>(null)
   const [isReady, setIsReady] = useState(false)
+  const [bootStatus, setBootStatus] = useState<'init' | 'checking' | 'starting' | 'connecting' | 'done'>('init')
 
   useEffect(() => {
     if (!isTauriBuild()) {
@@ -197,6 +182,34 @@ function DashboardContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Track backend start progress
+  useEffect(() => {
+    if (!isTauriBuild()) return
+
+    setBootStatus('checking')
+
+    const checkAndStartServer = async () => {
+      try {
+        setBootStatus('checking')
+        const running = await invoke<boolean>('check_status')
+        setServerRunning(running)
+
+        if (!running) {
+          setBootStatus('starting')
+          await invoke('start_server')
+          setServerRunning(true)
+        }
+
+        setBootStatus('connecting')
+      } catch (err) {
+        console.error('Failed to check/start server:', err)
+        setBootStatus('connecting') // Try connecting anyway
+      }
+    }
+
+    checkAndStartServer()
+  }, [])
+
   // Connect to WebSocket
   const { disconnect, tunnelStatus } = useWebSocket({
     url: tunnelUrl,
@@ -214,11 +227,30 @@ function DashboardContent() {
   }, [disconnect])
 
   if (!isReady) {
+    const statusMessages = {
+      init: { text: 'Initializing...', icon: Zap },
+      checking: { text: 'Checking server status...', icon: Zap },
+      starting: { text: 'Starting backend server...', icon: Play },
+      connecting: { text: 'Connecting to server...', icon: Zap },
+      done: { text: 'Ready!', icon: Zap },
+    }
+    const status = statusMessages[bootStatus]
+    const StatusIcon = status.icon
+
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#080808]">
-        <div className="text-[#CCCCCC] flex items-center gap-2">
-          <Zap className="h-5 w-5 animate-pulse" />
-          Starting Termote...
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-[#080808]">
+        <div className="mb-8 flex items-center gap-3">
+          <StatusIcon className="h-6 w-6 animate-pulse text-[#16C60C]" />
+          <span className="text-xl font-medium text-[#CCCCCC]">Termote</span>
+        </div>
+        <div className="flex items-center gap-2 text-[#A1A1AA]">
+          <StatusIcon className="h-4 w-4 animate-pulse" />
+          <span className="text-sm">{status.text}</span>
+        </div>
+        <div className="mt-4 flex items-center gap-1">
+          <div className="h-1 w-2 rounded-full bg-[#16C60C] animate-pulse" />
+          <div className="h-1 w-2 rounded-full bg-[#16C60C] animate-pulse [animation-delay:150ms]" />
+          <div className="h-1 w-2 rounded-full bg-[#16C60C] animate-pulse [animation-delay:300ms]" />
         </div>
       </div>
     )
