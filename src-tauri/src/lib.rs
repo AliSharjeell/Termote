@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 use std::process::Command;
-use tauri::Manager;
+use tauri::{Manager, State};
 
 struct ServerState {
     running: bool,
@@ -89,24 +89,27 @@ fn stop_server(state: State<'_, Mutex<ServerState>>) -> Result<String, String> {
 
 #[tauri::command]
 fn restart_server(state: State<'_, Mutex<ServerState>>) -> Result<String, String> {
-    let mut state = state.lock().unwrap();
-
-    if let Some(mut child) = state.server_process.take() {
-        let _ = child.kill();
-    }
-    state.running = false;
-    drop(state);
-
     let exe = get_backend_exe();
     log::info!("Restarting Termote server: {}", exe);
 
-    let mut state = state.lock().unwrap();
-    let child = Command::new(&exe)
+    // Take the child process and clear state under the lock
+    {
+        let mut s = state.lock().unwrap();
+        if let Some(mut c) = s.server_process.take() {
+            let _ = c.kill();
+        }
+        s.running = false;
+    }
+
+    // Spawn new process
+    let new_child = Command::new(&exe)
         .spawn()
         .map_err(|e| format!("Failed to restart server: {}", e))?;
 
-    state.server_process = Some(child);
-    state.running = true;
+    // Put child in state under lock
+    let mut s = state.lock().unwrap();
+    s.server_process = Some(new_child);
+    s.running = true;
 
     Ok("Server restarted successfully".to_string())
 }
