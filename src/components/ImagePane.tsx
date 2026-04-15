@@ -38,8 +38,18 @@ function clearImageContent(id: string) {
 }
 
 export function ImagePane({ pane }: ImagePaneProps) {
-  const { killPane, renamePane, togglePin, openImagePicker, readImageFile } = usePaneStore()
-  const [content, setContent] = useState<ImageContent | null>(() => loadImageContent(pane.id))
+  const { killPane, renamePane, togglePin, openImagePicker, readImageFile, updatePaneContent } = usePaneStore()
+  // Initialize from pane.imageData (backend) first, then localStorage fallback
+  const [content, setContent] = useState<ImageContent | null>(() => {
+    if (pane.imageData) {
+      try {
+        return JSON.parse(pane.imageData)
+      } catch {
+        return pane.imageData // plain base64 string
+      }
+    }
+    return loadImageContent(pane.id)
+  })
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -78,9 +88,12 @@ export function ImagePane({ pane }: ImagePaneProps) {
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string
       const newContent: ImageContent = { dataUrl, name: file.name }
+      const data = JSON.stringify(newContent)
       saveImageContent(pane.id, newContent)
       setContent(newContent)
       setIsLoading(false)
+      // Push to backend for persistence and sync
+      updatePaneContent(pane.id, undefined, undefined, data)
     }
     reader.onerror = () => {
       setError("Failed to read file")

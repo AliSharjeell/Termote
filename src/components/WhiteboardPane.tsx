@@ -18,6 +18,14 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const initialData = useCallback(() => {
+    // Backend-persisted content takes priority
+    if (pane.whiteboardData) {
+      try {
+        return JSON.parse(pane.whiteboardData)
+      } catch {
+        // If parsing fails, fall back to localStorage
+      }
+    }
     try {
       const raw = localStorage.getItem(WB_KEY(pane.id))
       if (raw) {
@@ -27,9 +35,11 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     return { elements: [] }
   }, [pane.id])
 
-  const onChange = useCallback((elements: any[], _state: any) => {
+  const onChange = useCallback((elements: readonly any[], _state: any) => {
     try {
-      localStorage.setItem(WB_KEY(pane.id), JSON.stringify({ elements }))
+      const data = JSON.stringify({ elements: [...elements] })
+      localStorage.setItem(WB_KEY(pane.id), data)
+      usePaneStore.getState().updatePaneContent(pane.id, undefined, data, undefined)
     } catch {}
   }, [pane.id])
 

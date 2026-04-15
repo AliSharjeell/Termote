@@ -19,6 +19,17 @@ export function NotePane({ pane }: NotePaneProps) {
 
   const editor = useCreateBlockNote({
     initialContent: (() => {
+      // Backend-persisted content takes priority
+      if (pane.noteContent) {
+        try {
+          const parsed = JSON.parse(pane.noteContent)
+          if (parsed.content) return parsed.content
+          if (parsed.document) return parsed.document
+          return parsed
+        } catch {
+          return pane.noteContent
+        }
+      }
       try {
         const raw = localStorage.getItem(NOTE_KEY(pane.id))
         if (raw) {
@@ -100,6 +111,8 @@ export function NotePane({ pane }: NotePaneProps) {
             try {
               const doc = editor.document
               localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify({ content: doc }))
+              // Push content to backend for persistence and sync
+              usePaneStore.getState().updatePaneContent(pane.id, JSON.stringify({ content: doc }), undefined, undefined)
             } catch (e) {
               console.error("[NotePane] save error:", e)
             }

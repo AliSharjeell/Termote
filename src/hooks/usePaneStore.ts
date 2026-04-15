@@ -138,6 +138,7 @@ interface PaneState {
   sendInput: (paneId: string, data: string) => void
   sendResize: (paneId: string, cols: number, rows: number) => void
   sendRefocus: (paneId: string, cols: number, rows: number) => void
+  updatePaneContent: (paneId: string, noteContent?: string, whiteboardData?: string, imageData?: string) => void
   refocusAll: (dimensions: Record<string, { cols: number, rows: number }>) => void
   moveToFloating: (paneId: string) => void
   moveToActive: (paneId: string) => void
@@ -767,6 +768,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
       ws.send(JSON.stringify({ action: "refocus", pane_id: paneId, cols, rows }))
+    }
+  },
+
+  updatePaneContent: (paneId, noteContent, whiteboardData, imageData) => {
+    const { ws, isAuthenticated } = get()
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "update_pane_content", pane_id: paneId, note_content: noteContent ?? null, whiteboard_data: whiteboardData ?? null, image_data: imageData ?? null }))
     }
   },
 
