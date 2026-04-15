@@ -159,10 +159,10 @@ function DashboardContent() {
               // Reload to reinitialize terminals fresh in new mode
               window.location.reload()
             }}
-            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+            className={`rounded px-3 py-1.5 text-xs transition-all border ${
               viewMode === "tabs"
-                ? "bg-white text-black shadow-sm"
-                : "text-[#A1A1AA] hover:text-white"
+                ? "bg-[#CCCCCC] text-black border-[#CCCCCC]"
+                : "text-[#CCCCCC] border-transparent hover:border-[#888]"
             }`}
             title="Tabs view"
           >
@@ -174,10 +174,10 @@ function DashboardContent() {
               // Reload to reinitialize terminals fresh in new mode
               window.location.reload()
             }}
-            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+            className={`rounded px-3 py-1.5 text-xs transition-all border ${
               viewMode === "panes"
-                ? "bg-white text-black shadow-sm"
-                : "text-[#A1A1AA] hover:text-white"
+                ? "bg-[#CCCCCC] text-black border-[#CCCCCC]"
+                : "text-[#CCCCCC] border-transparent hover:border-[#888]"
             }`}
             title="Panes view"
           >

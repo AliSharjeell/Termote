@@ -41,7 +41,7 @@ export function BrowserPickerModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70">
       <div className="flex w-[500px] flex-col rounded-2xl bg-[#161616] shadow-xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-3">
@@ -68,6 +68,25 @@ export function BrowserPickerModal() {
             autoFocus
             className="w-full rounded-lg bg-[#27272A] px-3 py-2 text-sm text-white placeholder-[#808080] outline-none border border-[#333333] focus:border-white"
           />
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {["3000", "3001", "5173", "5174", "5175", "8080", "4200", "8000"].map((port) => {
+              const portUrl = `http://localhost:${port}`
+              const isActive = url === portUrl
+              return (
+                <button
+                  key={port}
+                  onClick={() => setUrl(portUrl)}
+                  className={`rounded-md px-2 py-1 text-xs transition-colors ${
+                    isActive
+                      ? "bg-white text-black"
+                      : "bg-[#27272A] text-[#CCCCCC] hover:bg-[#333333]"
+                  }`}
+                >
+                  :{port}
+                </button>
+              )
+            })}
+          </div>
           <p className="mt-2 text-xs text-[#808080]">
             Opens the URL in an embedded browser pane on this device.
           </p>
