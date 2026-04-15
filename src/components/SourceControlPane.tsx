@@ -35,11 +35,9 @@ export function SourceControlPane() {
   const [sidebarMode, setSidebarMode] = useState<"list" | "lazygit">("list")
   // Which pane/label is selected to show in lazygit view
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
-  // The lazygit pane spawned for the selected repo
-  const [lazygitPaneId, setLazygitPaneId] = useState<string | null>(null)
   // Ref for the embedded xterm container in the sidebar
   const xtermRef = useRef<HTMLDivElement>(null)
-  // The lazygit pane id that the sidebar terminal is attached to
+  // The sentinel key used for the sidebar embedded lazygit terminal
   const sidebarTerminalPaneRef = useRef<string | null>(null)
 
   // Kick off git repo discovery on mount — also re-scan if panes exist but repos are empty
@@ -102,12 +100,14 @@ export function SourceControlPane() {
       xtermRef.current.innerHTML = ""
     }
 
-    // Spawn lazygit in a new pane
-    const paneId = item.paneId
-    console.log("[SourceControlPane] Spawning lazygit for:", item.cwd, "paneId:", paneId)
-    spawnLazygit(paneId, item.cwd)
+    // Spawn lazygit — backend creates a new pane with a fresh UUID
+    // We use item.paneId as a sentinel; the backend ignores it
+    console.log("[SourceControlPane] Spawning lazygit for:", item.cwd)
+    spawnLazygit(item.paneId, item.cwd)
 
-    // Create an embedded xterm terminal for this lazygit pane
+    // Create an embedded xterm terminal for the lazygit output
+    // The backend will send output from a pane whose ID we don't know yet,
+    // so we'll match by listening for ALL pane output and routing to our terminal
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: 11,
@@ -118,15 +118,13 @@ export function SourceControlPane() {
         cursor: "#cccccc",
       },
       scrollback: 1000,
-      disableStdin: true, // read-only display
     })
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
 
-    // Store in pane store so the event listener can write to it
-    setLazygitTerminal(paneId, terminal)
-    sidebarTerminalPaneRef.current = paneId
-    setLazygitPaneId(paneId)
+    // Store with a sentinel key — the event listener will route all output here
+    setLazygitTerminal("lazygit", terminal)
+    sidebarTerminalPaneRef.current = "lazygit"
 
     // Open terminal in the ref element after paint
     requestAnimationFrame(() => {
@@ -138,32 +136,26 @@ export function SourceControlPane() {
   }
 
   const handleBack = () => {
-    // Clean up the embedded lazygit terminal
-    if (lazygitPaneId) {
-      removeLazygitTerminal(lazygitPaneId)
-      if (xtermRef.current) {
-        xtermRef.current.innerHTML = ""
-      }
+    removeLazygitTerminal("lazygit")
+    if (xtermRef.current) {
+      xtermRef.current.innerHTML = ""
     }
     sidebarTerminalPaneRef.current = null
-    setLazygitPaneId(null)
     setSidebarMode("list")
     setSelectedLabel(null)
   }
 
-  // Listen for PTY output for the embedded lazygit terminal
+  // Listen for PTY output from ALL panes and route to the embedded lazygit terminal.
+  // The backend's spawn_lazygit creates a new pane with a fresh UUID we can't predict,
+  // so we capture ALL output and display it in the embedded sidebar terminal.
   useEffect(() => {
     if (sidebarMode !== "lazygit") return
 
     const handleOutput = (e: Event) => {
       const customEvent = e as CustomEvent<{ paneId: string; data: string }>
-      const currentPaneId = sidebarTerminalPaneRef.current
-      if (!currentPaneId) return
-      if (customEvent.detail.paneId === currentPaneId) {
-        const instance = usePaneStore.getState().lazygitTerminals[currentPaneId]
-        if (instance) {
-          instance.terminal.write(customEvent.detail.data)
-        }
+      const instance = usePaneStore.getState().lazygitTerminals["lazygit"]
+      if (instance) {
+        instance.terminal.write(customEvent.detail.data)
       }
     }
 
