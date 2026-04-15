@@ -214,8 +214,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
             )
           })}
 
-          {/* Ungrouped panes */}
-          {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
+          {/* All panes - same as SplitPane "All Panes" section */}
+          {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
             <div
               key={pane.id}
               className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ${
