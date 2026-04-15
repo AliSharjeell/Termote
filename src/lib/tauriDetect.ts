@@ -1,5 +1,6 @@
 export function detectTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI__' in window;
+  if (typeof window === 'undefined') return false;
+  return '__TAURI__' in window || '__TAURI_INTERNALS__' in window;
 }
 
 export function isTauriBuild(): boolean {
