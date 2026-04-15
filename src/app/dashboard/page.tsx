@@ -162,7 +162,7 @@ function DashboardContent() {
             className={`rounded-full px-3 py-1.5 text-xs transition-all border ${
               viewMode === "tabs"
                 ? "bg-[#CCCCCC] text-black border-[#CCCCCC]"
-                : "text-[#CCCCCC] border-transparent hover:border-[#888]"
+                : "text-[#CCCCCC] hover:border-transparent"
             }`}
             title="Tabs view"
           >
@@ -177,7 +177,7 @@ function DashboardContent() {
             className={`rounded-full px-3 py-1.5 text-xs transition-all border ${
               viewMode === "panes"
                 ? "bg-[#CCCCCC] text-black border-[#CCCCCC]"
-                : "text-[#CCCCCC] border-transparent hover:border-[#888]"
+                : "text-[#CCCCCC] hover:border-transparent"
             }`}
             title="Panes view"
           >
