@@ -89,7 +89,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
           >
             <PanelLeft size={14} />
           </button>
-          <span className="text-[8px] text-[#CCCCCC]">{panes.length} panes</span>
         </div>
       ) : (
         <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">

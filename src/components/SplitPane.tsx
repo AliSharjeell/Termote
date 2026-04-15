@@ -148,10 +148,6 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           >
             <PanelLeft size={14} />
           </button>
-          <span className="text-[8px] text-[#CCCCCC]">{sortedActivePanes.length}panes</span>
-          {portProcesses.length > 0 && (
-            <span className="text-[8px] text-[#16C60C]">{portProcesses.length}ports</span>
-          )}
         </div>
       ) : (
       <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2" style={{ width: sidebarWidth }}>
