@@ -164,7 +164,9 @@ function DashboardContent() {
 
   useEffect(() => {
     try {
-      if (!isTauriBuild()) {
+      const isTauri = isTauriBuild()
+
+      if (!isTauri) {
         // In browser mode, use tunnel from URL params or localStorage
         const storedUrl = localStorage.getItem("tunnelUrl")
         const storedToken = localStorage.getItem("authToken")
@@ -184,6 +186,14 @@ function DashboardContent() {
       console.error('[Boot] Setup error:', err)
       setIsReady(true) // Still show dashboard on error
     }
+
+    // Fallback timeout - ensure dashboard shows even if Tauri commands hang
+    const timeout = setTimeout(() => {
+      console.log('[Boot] Timeout fallback - forcing dashboard show')
+      setIsReady(true)
+    }, 5000)
+
+    return () => clearTimeout(timeout)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
