@@ -254,6 +254,9 @@ interface PaneState {
 
 // Load persisted state from localStorage
 function loadPersistedState() {
+  if (typeof window === 'undefined') {
+    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false }
+  }
   try {
     const pinnedJson = localStorage.getItem(STORAGE_KEY)
     const viewModeJson = localStorage.getItem(VIEW_MODE_KEY)
