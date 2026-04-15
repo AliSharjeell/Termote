@@ -22,6 +22,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [sidebarWidth, setSidebarWidth] = useState(224)
+  const [isResizing, setIsResizing] = useState(false)
 
   // Filter by group if a group is selected
   const filteredPanes = searchQuery
@@ -62,6 +64,24 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     observer.observe(containerRef.current)
     return () => observer.disconnect()
   }, [])
+
+  // Sidebar resize handlers
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      const newWidth = Math.min(Math.max(e.clientX, 140), 400)
+      setSidebarWidth(newWidth)
+    }
+    const handleMouseUp = () => setIsResizing(false)
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+    }
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [isResizing])
 
   // Show empty state only if there are no panes at all
   const hasAnyPanes = panes.length > 0
@@ -125,7 +145,13 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           )}
         </div>
       ) : (
-      <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 w-56">
+      <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2" style={{ width: sidebarWidth }}>
+        {/* Resize handle */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors"
+          style={{ left: sidebarWidth - 4 }}
+          onMouseDown={() => setIsResizing(true)}
+        />
         <div className="flex flex-col gap-1 mb-2">
           <div className="flex items-center justify-start px-1 mb-1">
             <button
