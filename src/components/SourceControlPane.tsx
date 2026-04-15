@@ -23,7 +23,7 @@ export function SourceControlPane() {
     panes,
     activePanes,
     sourceControlRepos,
-    effectiveToggleGitSidebar,
+    toggleGitSidebar,
     toggleTabsGitSidebar,
     tabsGitSidebarCollapsed,
     findGitRepos,
