@@ -25,6 +25,7 @@ export function SourceControlPane() {
     spawnLazygit,
     findGitRepos,
     gitStatuses,
+    getGitStatus,
   } = usePaneStore()
 
   const [isScanning, setIsScanning] = useState(false)
@@ -90,6 +91,16 @@ export function SourceControlPane() {
     setSidebarMode("lazygit")
     // Spawn lazygit in that pane
     spawnLazygit(item.paneId, item.cwd)
+    // Fetch git status for all open panes in this repo
+    panes.forEach(p => {
+      if (activePanes.includes(p.id) && p.cwd) {
+        const pCwd = normalizePath(p.cwd)
+        const sel = normalizePath(item.cwd)
+        if (pCwd === sel || pCwd.startsWith(sel + "/")) {
+          getGitStatus(p.id)
+        }
+      }
+    })
   }
 
   const handleBack = () => {
