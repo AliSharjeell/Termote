@@ -56,7 +56,7 @@ export function DirectoryPickerModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70">
       <div className="flex h-[70vh] w-[600px] flex-col rounded-2xl bg-[#161616] shadow-xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-3">
