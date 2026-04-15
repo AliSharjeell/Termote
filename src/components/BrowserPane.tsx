@@ -59,7 +59,7 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
       {showPreview && (
         <DevicePreviewModal
           url={pane.url}
-          proxyUrl={pane.proxyUrl}
+          proxyUrl={pane.proxyUrl ?? null}
           onClose={() => setShowPreview(false)}
         />
       )}
