@@ -1,7 +1,9 @@
 "use client"
 
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
+import { Terminal } from "@xterm/xterm"
+import { FitAddon } from "@xterm/addon-fit"
 import { PanelRight, FolderGit2, RefreshCw, ArrowLeft } from "lucide-react"
 
 interface GitPaneItem {
@@ -23,8 +25,9 @@ export function SourceControlPane() {
     sourceControlRepos,
     toggleGitSidebar,
     findGitRepos,
-    gitStatuses,
-    getGitStatus,
+    setLazygitTerminal,
+    removeLazygitTerminal,
+    spawnLazygit,
   } = usePaneStore()
 
   const [isScanning, setIsScanning] = useState(false)
@@ -32,6 +35,12 @@ export function SourceControlPane() {
   const [sidebarMode, setSidebarMode] = useState<"list" | "lazygit">("list")
   // Which pane/label is selected to show in lazygit view
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
+  // The lazygit pane spawned for the selected repo
+  const [lazygitPaneId, setLazygitPaneId] = useState<string | null>(null)
+  // Ref for the embedded xterm container in the sidebar
+  const xtermRef = useRef<HTMLDivElement>(null)
+  // The lazygit pane id that the sidebar terminal is attached to
+  const sidebarTerminalPaneRef = useRef<string | null>(null)
 
   // Kick off git repo discovery on mount — also re-scan if panes exist but repos are empty
   useEffect(() => {
@@ -87,30 +96,80 @@ export function SourceControlPane() {
     if (!item.isRepo) return
     setSelectedLabel(item.cwd)
     setSidebarMode("lazygit")
-    // Use getState() directly to avoid stale closure issues
-    const state = usePaneStore.getState()
-    console.log("[SourceControlPane] handleSelectItem for:", item.cwd, "paneId:", item.paneId)
-    state.panes.forEach(p => {
-      if (state.activePanes.includes(p.id) && p.cwd) {
-        const pCwd = normalizePath(p.cwd)
-        const sel = normalizePath(item.cwd)
-        if (pCwd === sel || pCwd.startsWith(sel + "/")) {
-          console.log("[SourceControlPane] Fetching git status for pane:", p.id, "cwd:", p.cwd)
-          state.getGitStatus(p.id)
-        }
+
+    // Clear previous xterm content
+    if (xtermRef.current) {
+      xtermRef.current.innerHTML = ""
+    }
+
+    // Spawn lazygit in a new pane
+    const paneId = item.paneId
+    console.log("[SourceControlPane] Spawning lazygit for:", item.cwd, "paneId:", paneId)
+    spawnLazygit(paneId, item.cwd)
+
+    // Create an embedded xterm terminal for this lazygit pane
+    const terminal = new Terminal({
+      cursorBlink: true,
+      fontSize: 11,
+      fontFamily: "monospace",
+      theme: {
+        background: "#0d0d0d",
+        foreground: "#cccccc",
+        cursor: "#cccccc",
+      },
+      scrollback: 1000,
+      disableStdin: true, // read-only display
+    })
+    const fitAddon = new FitAddon()
+    terminal.loadAddon(fitAddon)
+
+    // Store in pane store so the event listener can write to it
+    setLazygitTerminal(paneId, terminal)
+    sidebarTerminalPaneRef.current = paneId
+    setLazygitPaneId(paneId)
+
+    // Open terminal in the ref element after paint
+    requestAnimationFrame(() => {
+      if (xtermRef.current) {
+        terminal.open(xtermRef.current)
+        fitAddon.fit()
       }
     })
   }
 
   const handleBack = () => {
+    // Clean up the embedded lazygit terminal
+    if (lazygitPaneId) {
+      removeLazygitTerminal(lazygitPaneId)
+      if (xtermRef.current) {
+        xtermRef.current.innerHTML = ""
+      }
+    }
+    sidebarTerminalPaneRef.current = null
+    setLazygitPaneId(null)
     setSidebarMode("list")
     setSelectedLabel(null)
   }
 
-  // Helper to trigger git status fetch for a pane
-  const fetchStatusForPane = useCallback((paneId: string) => {
-    getGitStatus(paneId)
-  }, [getGitStatus])
+  // Listen for PTY output for the embedded lazygit terminal
+  useEffect(() => {
+    if (sidebarMode !== "lazygit") return
+
+    const handleOutput = (e: Event) => {
+      const customEvent = e as CustomEvent<{ paneId: string; data: string }>
+      const currentPaneId = sidebarTerminalPaneRef.current
+      if (!currentPaneId) return
+      if (customEvent.detail.paneId === currentPaneId) {
+        const instance = usePaneStore.getState().lazygitTerminals[currentPaneId]
+        if (instance) {
+          instance.terminal.write(customEvent.detail.data)
+        }
+      }
+    }
+
+    window.addEventListener("terminal-output", handleOutput)
+    return () => window.removeEventListener("terminal-output", handleOutput)
+  }, [sidebarMode])
 
   // === LazyGit mode ===
   if (sidebarMode === "lazygit") {
@@ -135,82 +194,18 @@ export function SourceControlPane() {
           </button>
         </div>
 
-        {/* Lazygit view — shows git status for the selected repo */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Lazygit view — embedded xterm terminal */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           {selectedLabel && (
             <div className="px-3 py-2 border-b border-[#252525]">
               <div className="text-[10px] text-[#CCCCCC] truncate" title={selectedLabel}>
                 {selectedLabel.split(/[/\\]/).pop()}
               </div>
-              <div className="text-[9px] text-[#666]">Git Status</div>
+              <div className="text-[9px] text-[#666]">Lazygit</div>
             </div>
           )}
-          {/* Show git status for all open panes that match selected repo dir */}
-          {panes
-            .filter(p => {
-              const isActive = activePanes.includes(p.id)
-              const hasCwd = p.cwd && (p.cwd.startsWith("/") || /^[A-Z]:/i.test(p.cwd))
-              const isRealShell = p.shell !== "note" && p.shell !== "image" && p.shell !== "whiteboard" && !p.url
-              if (!isActive || !hasCwd || !isRealShell) return false
-              const cwd = normalizePath(p.cwd || "")
-              return selectedLabel && (cwd === normalizePath(selectedLabel) || cwd.startsWith(normalizePath(selectedLabel) + "/"))
-            })
-            .map(pane => {
-              const status = gitStatuses[pane.id]
-              if (!status) {
-                return (
-                  <div key={pane.id} className="px-3 py-4 text-xs text-[#666]">
-                    Loading git status for {pane.cwd}...
-                  </div>
-                )
-              }
-              return (
-                <div key={pane.id} className="border-b border-[#222]">
-                  {/* Staged */}
-                  {status.staged.length > 0 && (
-                    <div>
-                      <div className="px-3 py-1 text-[9px] text-[#3FB950] uppercase tracking-wider bg-[#0f1a0f] sticky top-0">
-                        Staged ({status.staged.length})
-                      </div>
-                      {status.staged.map(f => (
-                        <div key={f} className="px-3 py-0.5 text-[10px] text-[#CCCCCC] font-mono truncate hover:bg-[#1a1a1a]">
-                          + {f}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {/* Unstaged */}
-                  {status.unstaged.length > 0 && (
-                    <div>
-                      <div className="px-3 py-1 text-[9px] text-[#F85149] uppercase tracking-wider bg-[#1a0f0f] sticky top-0">
-                        Modified ({status.unstaged.length})
-                      </div>
-                      {status.unstaged.map(f => (
-                        <div key={f} className="px-3 py-0.5 text-[10px] text-[#CCCCCC] font-mono truncate hover:bg-[#1a1a1a]">
-                          ~ {f}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {/* Untracked */}
-                  {status.untracked.length > 0 && (
-                    <div>
-                      <div className="px-3 py-1 text-[9px] text-[#D29922] uppercase tracking-wider bg-[#1a1508] sticky top-0">
-                        Untracked ({status.untracked.length})
-                      </div>
-                      {status.untracked.map(f => (
-                        <div key={f} className="px-3 py-0.5 text-[10px] text-[#CCCCCC] font-mono truncate hover:bg-[#1a1a1a]">
-                          ? {f}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {status.staged.length === 0 && status.unstaged.length === 0 && status.untracked.length === 0 && (
-                    <div className="px-3 py-4 text-xs text-[#666]">No changes</div>
-                  )}
-                </div>
-              )
-            })}
+          {/* Embedded xterm for lazygit output */}
+          <div ref={xtermRef} className="flex-1 overflow-hidden p-1" />
         </div>
 
         {/* Footer */}
