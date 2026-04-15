@@ -191,6 +191,7 @@ function DashboardContent() {
     const timeout = setTimeout(() => {
       console.log('[Boot] Timeout fallback - forcing dashboard show')
       setIsReady(true)
+      setBootStatus('done')
     }, 5000)
 
     return () => clearTimeout(timeout)
@@ -199,25 +200,33 @@ function DashboardContent() {
 
   // Track backend start progress
   useEffect(() => {
-    if (!isTauriBuild()) return
+    console.log('[Boot] Effect running, isTauriBuild:', isTauriBuild())
+
+    if (!isTauriBuild()) {
+      console.log('[Boot] Not Tauri build, skipping backend check')
+      return
+    }
 
     setBootStatus('checking')
 
     const checkAndStartServer = async () => {
       try {
-        setBootStatus('checking')
+        console.log('[Boot] Checking server status...')
         const running = await invoke<boolean>('check_status')
+        console.log('[Boot] Server status:', running)
         setServerRunning(running)
 
         if (!running) {
           setBootStatus('starting')
+          console.log('[Boot] Starting server...')
           await invoke('start_server')
+          console.log('[Boot] Server started')
           setServerRunning(true)
         }
 
         setBootStatus('connecting')
       } catch (err) {
-        console.error('Failed to check/start server:', err)
+        console.error('[Boot] Failed to check/start server:', err)
         setBootStatus('connecting') // Try connecting anyway
       }
     }
