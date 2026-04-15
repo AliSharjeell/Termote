@@ -84,12 +84,14 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
         case "lazygit_spawned":
           // Capture the real lazygit pane ID for the sidebar terminal
-          console.log("[Termote] Lazygit spawned as pane:", message.pane_id)
+          console.log("[Termote] Lazygit spawned as pane:", message.pane_id, "has sentinel:", !!usePaneStore.getState().lazygitTerminals["sentinel"])
           {
             const { setLazygitSidebarPaneId, lazygitTerminals } = usePaneStore.getState()
             setLazygitSidebarPaneId(message.pane_id)
+            console.log("[Termote] lazySidebarPaneId set to:", message.pane_id)
             // Move the sidebar terminal from sentinel key to the real pane ID
             if (lazygitTerminals["sentinel"]) {
+              console.log("[Termote] Moving sentinel terminal to real pane ID")
               usePaneStore.getState().setLazygitTerminal(message.pane_id, lazygitTerminals["sentinel"].terminal)
               usePaneStore.getState().removeLazygitTerminal("sentinel")
             }

@@ -162,11 +162,16 @@ export function SourceControlPane() {
     const handleOutput = (e: Event) => {
       const customEvent = e as CustomEvent<{ paneId: string; data: string }>
       const targetPaneId = usePaneStore.getState().lazySidebarPaneId
-      if (!targetPaneId) return // Not spawned yet
+      if (!targetPaneId) {
+        console.log("[SourceControlPane] No pane ID yet, dropping output")
+        return // Not spawned yet
+      }
       if (customEvent.detail.paneId === targetPaneId) {
         const instance = usePaneStore.getState().lazygitTerminals[targetPaneId]
         if (instance) {
           instance.terminal.write(customEvent.detail.data)
+        } else {
+          console.log("[SourceControlPane] No terminal for pane:", targetPaneId)
         }
       }
     }
