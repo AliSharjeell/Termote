@@ -183,7 +183,7 @@ export function SourceControlPane() {
   // === LazyGit mode ===
   if (sidebarMode === "lazygit") {
     return (
-      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] overflow-hidden" style={{ width: "100%", height: "100%" }}>
+      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] overflow-hidden" style={{ width: 280, height: "100%" }}>
         {/* Back button row */}
         <div className="flex items-center justify-between px-2 py-1 border-b border-[#1a1a1a]">
           <button
@@ -227,7 +227,7 @@ export function SourceControlPane() {
 
   // === List mode ===
   return (
-    <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] overflow-hidden" style={{ width: "100%", height: "100%" }}>
+    <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] overflow-hidden" style={{ width: 280, height: "100%" }}>
       {/* Collapse button row */}
       <div className="flex justify-start px-2 py-1 border-b border-[#1a1a1a]">
         <button
