@@ -1,15 +1,16 @@
 "use client"
 
-export const dynamic = 'force-dynamic'
+import dynamic from 'next/dynamic'
+
+const SplitPane = dynamic(() => import('@/components/SplitPane').then(m => ({ default: m.SplitPane })), { ssr: false })
+const TabBar = dynamic(() => import('@/components/TabBar').then(m => ({ default: m.TabBar })), { ssr: false })
+const ProfileSidebar = dynamic(() => import('@/components/ProfileSidebar').then(m => ({ default: m.ProfileSidebar })), { ssr: false })
+const SecurityModal = dynamic(() => import('@/components/SecurityModal').then(m => ({ default: m.SecurityModal })), { ssr: false })
+const DirectoryPickerModal = dynamic(() => import('@/components/DirectoryPickerModal').then(m => ({ default: m.DirectoryPickerModal })), { ssr: false })
+const BrowserPickerModal = dynamic(() => import('@/components/BrowserPickerModal').then(m => ({ default: m.BrowserPickerModal })), { ssr: false })
 
 import { Suspense, useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { SplitPane } from "@/components/SplitPane"
-import { TabBar } from "@/components/TabBar"
-import { ProfileSidebar } from "@/components/ProfileSidebar"
-import { SecurityModal } from "@/components/SecurityModal"
-import { DirectoryPickerModal } from "@/components/DirectoryPickerModal"
-import { BrowserPickerModal } from "@/components/BrowserPickerModal"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
