@@ -194,6 +194,7 @@ function DashboardContent() {
     setTunnelUrl(WEBSOCKET_URL)
     setAuthToken('termote-local')
     setIsReady(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Connect to WebSocket

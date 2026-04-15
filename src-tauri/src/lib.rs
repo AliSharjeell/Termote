@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 use std::process::Command;
-use tauri::{Manager, State};
+use tauri::State;
 
 struct ServerState {
     running: bool,
@@ -17,6 +17,13 @@ impl Default for ServerState {
 }
 
 fn get_backend_exe() -> String {
+    // Check user's actual Termote project first - this is the real backend
+    let termote_project_exe = "C:\\Users\\alish\\termote\\target\\release\\termote.exe";
+    if std::path::Path::new(termote_project_exe).exists() {
+        return termote_project_exe.to_string();
+    }
+
+    // Fallback: check parent of current exe directory
     let exe_path = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|p| p.to_path_buf()))
@@ -28,8 +35,8 @@ fn get_backend_exe() -> String {
         }
     }
 
+    // Fallback to fixed locations
     let locations = vec![
-        "C:\\Users\\alish\\termote\\target\\release\\termote.exe",
         "C:\\Users\\alish\\.termote-bin\\termote.exe",
     ];
 
