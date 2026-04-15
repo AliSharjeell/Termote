@@ -35,20 +35,20 @@ export function SourceControlPane() {
 
   // Kick off git repo discovery on mount — also re-scan if panes exist but repos are empty
   useEffect(() => {
-    const hasPanesWithCwds = panes.some(p =>
-      activePanes.includes(p.id) &&
+    // Use get() directly to avoid stale closures
+    const state = usePaneStore.getState()
+    const hasPanesWithCwds = state.panes.some(p =>
+      state.activePanes.includes(p.id) &&
       p.cwd &&
       (p.cwd.startsWith("/") || /^[A-Z]:/i.test(p.cwd)) &&
       !["note", "image", "whiteboard"].includes(p.shell) &&
       !p.url
     )
-    if (sourceControlRepos.length === 0 || hasPanesWithCwds) {
+    if (state.sourceControlRepos.length === 0 || hasPanesWithCwds) {
       setIsScanning(true)
-      // Re-discover repos for common locations
       findGitRepos("C:/Users/alish")
       findGitRepos("C:/AppsNew")
-      // Also scan each open pane's cwd
-      panes.forEach(p => {
+      state.panes.forEach(p => {
         if (p.cwd && (p.cwd.startsWith("/") || /^[A-Z]:/i.test(p.cwd))) {
           findGitRepos(p.cwd)
         }
@@ -85,20 +85,18 @@ export function SourceControlPane() {
 
   const handleSelectItem = (item: GitPaneItem) => {
     if (!item.isRepo) return
-    // Switch sidebar to lazygit mode for this item
     setSelectedLabel(item.cwd)
     setSidebarMode("lazygit")
-    // NOTE: we do NOT spawn lazygit here — we just show git status in the sidebar.
-    // The existing terminal pane stays open. User can run lazygit themselves
-    // in the terminal, or we can spawn a separate lazygit pane if needed.
-    // Fetch git status for all open panes in this repo
-    panes.forEach(p => {
-      if (activePanes.includes(p.id) && p.cwd) {
+    // Use getState() directly to avoid stale closure issues
+    const state = usePaneStore.getState()
+    console.log("[SourceControlPane] handleSelectItem for:", item.cwd, "paneId:", item.paneId)
+    state.panes.forEach(p => {
+      if (state.activePanes.includes(p.id) && p.cwd) {
         const pCwd = normalizePath(p.cwd)
         const sel = normalizePath(item.cwd)
         if (pCwd === sel || pCwd.startsWith(sel + "/")) {
           console.log("[SourceControlPane] Fetching git status for pane:", p.id, "cwd:", p.cwd)
-          getGitStatus(p.id)
+          state.getGitStatus(p.id)
         }
       }
     })
