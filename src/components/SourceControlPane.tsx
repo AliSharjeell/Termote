@@ -35,8 +35,7 @@ export function SourceControlPane() {
   } = usePaneStore()
 
   // Use the correct toggle based on which sidebar is active (tabs vs panes)
-  const isTabsMode = tabsGitSidebarCollapsed !== undefined
-  const effectiveToggleGitSidebar = isTabsMode && tabsGitSidebarCollapsed !== undefined ? toggleTabsGitSidebar : effectiveToggleGitSidebar
+  const effectiveToggleGitSidebar = tabsGitSidebarCollapsed !== undefined ? toggleTabsGitSidebar : toggleGitSidebar
 
   const [isScanning, setIsScanning] = useState(false)
   // Sidebar mode: "list" or "lazygit"
