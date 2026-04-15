@@ -54,13 +54,15 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
         onRename={(n) => renamePane(pane.id, n)}
         onPin={() => togglePin(pane.id)}
       />
-      <div className="flex-1 overflow-hidden" style={{ height: "calc(100vh - 120px)" }}>
+      <div className="flex-1 overflow-hidden" style={{ height: "100%", minHeight: 0 }}>
         {ExcalidrawComponent ? (
-          <ExcalidrawComponent
-            initialData={initialData()}
-            onChange={onChange}
-            theme="dark"
-          />
+          <div style={{ width: "100%", height: "100%" }}>
+            <ExcalidrawComponent
+              initialData={initialData()}
+              onChange={onChange}
+              theme="dark"
+            />
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full text-[#CCCCCC]">Loading...</div>
         )}
