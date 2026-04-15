@@ -3,6 +3,8 @@ import Link from "next/link"
 import { ArrowLeft, Calendar, Clock, Terminal, Globe, LayoutGrid } from "lucide-react"
 import { posts, categories, getFeaturedPost, getNonFeaturedPosts } from "@/lib/posts"
 import { Navbar } from "@/components/Navbar"
+import { isTauriBuild } from "@/lib/tauriDetect"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Blog - Termote News, Tips & Tutorials",
@@ -15,6 +17,11 @@ export const metadata: Metadata = {
 }
 
 export default function BlogIndexPage() {
+  // Hide blog in Tauri app - redirect to home
+  if (isTauriBuild()) {
+    redirect("/")
+  }
+
   const featuredPost = getFeaturedPost()
   const allPosts = getNonFeaturedPosts()
 

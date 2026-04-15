@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, Calendar, Clock, ArrowRight } from "lucide-react"
 import { Navbar } from "@/components/Navbar"
+import { isTauriBuild } from "@/lib/tauriDetect"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Why I Built Termote: An SSH Alternative - Termote Blog",
@@ -14,6 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default function WhyTermotePost() {
+  if (isTauriBuild()) redirect("/")
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <Navbar />

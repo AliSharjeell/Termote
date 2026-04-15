@@ -1,5 +1,8 @@
-"use client"
+'use client'
 
+import { useEffect, useState, useRef } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import { isTauriBuild } from '@/lib/tauriDetect'
 import dynamic from 'next/dynamic'
 
 const SplitPane = dynamic(() => import('@/components/SplitPane').then(m => ({ default: m.SplitPane })), { ssr: false })
@@ -9,79 +12,189 @@ const SecurityModal = dynamic(() => import('@/components/SecurityModal').then(m 
 const DirectoryPickerModal = dynamic(() => import('@/components/DirectoryPickerModal').then(m => ({ default: m.DirectoryPickerModal })), { ssr: false })
 const BrowserPickerModal = dynamic(() => import('@/components/BrowserPickerModal').then(m => ({ default: m.BrowserPickerModal })), { ssr: false })
 
-import { Suspense, useEffect, useState, useRef } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User, RefreshCw, Search } from "lucide-react"
+import { User, Search, Play, Square, RotateCw, Zap } from "lucide-react"
+
+// Tauri backend check interval
+const BACKEND_CHECK_INTERVAL = 5000
+const WEBSOCKET_URL = 'ws://localhost:8080'
+
+function ServerControls({ serverRunning, onStart, onStop, onRestart, loading }: {
+  serverRunning: boolean
+  onStart: () => void
+  onStop: () => void
+  onRestart: () => void
+  loading: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {loading ? (
+        <span className="text-xs text-[#A1A1AA]">Checking...</span>
+      ) : serverRunning ? (
+        <>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#16C60C]" style={{ boxShadow: '0 0 6px #16C60C' }} />
+            <span className="text-xs text-[#16C60C]">Server Running</span>
+          </div>
+          <button
+            onClick={onRestart}
+            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors"
+            title="Restart Server"
+          >
+            <RotateCw className="h-3 w-3" />
+            Restart
+          </button>
+          <button
+            onClick={onStop}
+            className="flex items-center gap-1 rounded-full bg-red-900/50 px-2.5 py-1 text-xs text-red-400 hover:bg-red-900 transition-colors"
+            title="Stop Server"
+          >
+            <Square className="h-3 w-3 fill-current" />
+            Stop
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#E74856]" style={{ boxShadow: '0 0 6px #E74856' }} />
+            <span className="text-xs text-[#E74856]">Server Stopped</span>
+          </div>
+          <button
+            onClick={onStart}
+            className="flex items-center gap-1 rounded-full bg-green-900/50 px-2.5 py-1 text-xs text-green-400 hover:bg-green-900 transition-colors"
+            title="Start Server"
+          >
+            <Play className="h-3 w-3 fill-current" />
+            Start
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
 
 function DashboardContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const isMobile = useIsMobile()
   const isLandscape = useIsLandscape()
-  const [isReady, setIsReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [serverRunning, setServerRunning] = useState(false)
+  const [checkingServer, setCheckingServer] = useState(false)
+  const [wsConnected, setWsConnected] = useState(false)
+
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
 
-  // Set default view based on orientation on first load only if no explicit preference saved
+  // Auto-start backend and check status in Tauri mode
+  useEffect(() => {
+    if (!isTauriBuild()) return
+
+    const checkAndStartServer = async () => {
+      try {
+        const running = await invoke<boolean>('check_status')
+        setServerRunning(running)
+        if (!running) {
+          await invoke('start_server')
+          setServerRunning(true)
+        }
+      } catch (err) {
+        console.error('Failed to check/start server:', err)
+      }
+    }
+
+    // Initial check
+    checkAndStartServer()
+
+    // Periodic check
+    checkIntervalRef.current = setInterval(async () => {
+      try {
+        const running = await invoke<boolean>('check_status')
+        setServerRunning(running)
+      } catch (err) {
+        console.error('Server check failed:', err)
+      }
+    }, BACKEND_CHECK_INTERVAL)
+
+    return () => {
+      if (checkIntervalRef.current) clearInterval(checkIntervalRef.current)
+    }
+  }, [])
+
+  const handleServerStart = async () => {
+    setCheckingServer(true)
+    try {
+      await invoke('start_server')
+      setServerRunning(true)
+    } catch (err) {
+      console.error('Start failed:', err)
+    } finally {
+      setCheckingServer(false)
+    }
+  }
+
+  const handleServerStop = async () => {
+    setCheckingServer(true)
+    try {
+      await invoke('stop_server')
+      setServerRunning(false)
+    } catch (err) {
+      console.error('Stop failed:', err)
+    } finally {
+      setCheckingServer(false)
+    }
+  }
+
+  const handleServerRestart = async () => {
+    setCheckingServer(true)
+    try {
+      await invoke('restart_server')
+      setServerRunning(true)
+    } catch (err) {
+      console.error('Restart failed:', err)
+    } finally {
+      setCheckingServer(false)
+    }
+  }
+
+  // Set default view based on orientation on first load
   const initialLoadRef = useRef(false)
   useEffect(() => {
-    if (!initialLoadRef.current && isReady) {
+    if (!initialLoadRef.current && viewMode === "auto") {
       initialLoadRef.current = true
-      // Only apply orientation-based default if viewMode is still "auto" (no user preference saved)
-      if (viewMode === "auto") {
-        setViewMode(isLandscape ? "panes" : "tabs")
-      }
-      // If viewMode is "tabs" or "panes", user already has an explicit preference - do nothing
+      setViewMode(isLandscape ? "panes" : "tabs")
     }
-  }, [isReady, isLandscape, setViewMode, viewMode])
+  }, [isLandscape, setViewMode, viewMode])
 
-  // Determine which view to show based on viewMode
   const showTabs = viewMode === "tabs"
-  const showPanes = viewMode === "panes"
 
-  // Get connection info from sessionStorage or URL params
+  // Get connection info from localStorage (set by backend on startup)
   const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
   const [authToken, setAuthToken] = useState<string | null>(null)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    // First check URL params (from QR code /launch link)
-    const urlParam = searchParams.get("tunnel")
-    const tokenParam = searchParams.get("token")
-
-    let url = urlParam
-    let token = tokenParam
-
-    // Fall back to localStorage for persistence across reloads
-    if (!url || !token) {
-      url = localStorage.getItem("tunnelUrl")
-      token = localStorage.getItem("authToken")
-    }
-
-    // If we have URL params, save to localStorage for future reloads
-    // Decode the tunnel URL since it's sent URL-encoded from the landing page
-    if (urlParam && tokenParam) {
-      const decodedUrl = decodeURIComponent(urlParam)
-      localStorage.setItem("tunnelUrl", decodedUrl)
-      localStorage.setItem("authToken", tokenParam)
-      // Clear URL params for security - don't expose token in address bar
-      window.history.replaceState({}, "", "/dashboard")
-    }
-
-    if (!url || !token) {
-      router.push("/")
+    if (!isTauriBuild()) {
+      // In browser mode, use tunnel from URL params or localStorage
+      const storedUrl = localStorage.getItem("tunnelUrl")
+      const storedToken = localStorage.getItem("authToken")
+      if (storedUrl && storedToken) {
+        setTunnelUrl(storedUrl)
+        setAuthToken(storedToken)
+      }
+      setIsReady(true)
       return
     }
 
-    setTunnelUrl(url)
-    setAuthToken(token)
+    // In Tauri mode, use default local WebSocket
+    setTunnelUrl(WEBSOCKET_URL)
+    setAuthToken('termote-local')
     setIsReady(true)
-  }, [router, searchParams])
+  }, [])
 
   // Connect to WebSocket
   const { disconnect, tunnelStatus } = useWebSocket({
@@ -89,69 +202,65 @@ function DashboardContent() {
     token: authToken,
   })
 
-  // Cleanup on unmount
+  useEffect(() => {
+    if (isConnected) setWsConnected(true)
+  }, [isConnected])
+
   useEffect(() => {
     return () => {
-      disconnect()
+      if (disconnect) disconnect()
     }
   }, [disconnect])
 
-  const handleSignOut = () => {
-    localStorage.removeItem("tunnelUrl")
-    localStorage.removeItem("authToken")
-    disconnect()
-    router.push("/")
-  }
-
-  // Show loading state
   if (!isReady) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#080808]">
-        <div className="text-[#CCCCCC]">Loading...</div>
+        <div className="text-[#CCCCCC] flex items-center gap-2">
+          <Zap className="h-5 w-5 animate-pulse" />
+          Starting Termote...
+        </div>
       </div>
     )
   }
+
+  // Tauri mode - show connection status (connected to local backend)
+  const isTauri = isTauriBuild()
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#080808]">
       {/* Connection status bar */}
       <div className="relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2">
-        {/* Status + Focus - left side */}
-        <div className="flex items-center gap-2">
-          <div
-            className={`h-2 w-2 rounded-full shrink-0 ${
-              isConnected
-                ? isAuthenticated
-                  ? "bg-[#16C60C]"
-                  : "bg-[#DCDCAA]"
-                : tunnelStatus === "connecting"
-                  ? "bg-[#DCDCAA] animate-pulse"
-                  : "bg-[#E74856]"
-            }`}
-            style={{
-              boxShadow: isConnected
-                ? isAuthenticated
-                  ? "0 0 6px #16C60C"
-                  : "0 0 6px #DCDCAA"
-                : tunnelStatus === "connecting"
-                  ? "0 0 6px #DCDCAA"
-                  : "0 0 6px #E74856"
-            }}
-          />
-          <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
-          {tunnelStatus === "connecting" && !isConnected && (
-            <span className="text-xs text-[#DCDCAA]">Connecting...</span>
+        {/* Status + Server Controls - left side */}
+        <div className="flex items-center gap-4">
+          {isTauri ? (
+            <ServerControls
+              serverRunning={serverRunning}
+              onStart={handleServerStart}
+              onStop={handleServerStop}
+              onRestart={handleServerRestart}
+              loading={checkingServer}
+            />
+          ) : (
+            <>
+              <div
+                className={`h-2 w-2 rounded-full shrink-0 ${
+                  isConnected
+                    ? isAuthenticated
+                      ? "bg-[#16C60C]"
+                      : "bg-[#DCDCAA]"
+                    : tunnelStatus === "connecting"
+                      ? "bg-[#DCDCAA] animate-pulse"
+                      : "bg-[#E74856]"
+                }`}
+                style={{
+                  boxShadow: isConnected
+                    ? isAuthenticated ? "0 0 6px #16C60C" : "0 0 6px #DCDCAA"
+                    : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
+                }}
+              />
+              <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
+            </>
           )}
-          {tunnelStatus === "failed" && (
-            <span className="text-xs text-[#E74856]">Connection failed - retrying...</span>
-          )}
-          <button
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2 py-1 text-xs text-[#A1A1AA] hover:bg-[#252525] hover:text-white transition-colors ml-1"
-            title="Focus - reset terminal size to this device"
-          >
-            <RefreshCw className="h-3 w-3" />
-          </button>
         </div>
 
         {/* View mode toggle - centered */}
@@ -159,7 +268,6 @@ function DashboardContent() {
           <button
             onClick={() => {
               setViewMode("tabs")
-              // Reload to reinitialize terminals fresh in new mode
               window.location.reload()
             }}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
@@ -167,14 +275,12 @@ function DashboardContent() {
                 ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
                 : "text-[#CCCCCC] hover:text-white"
             }`}
-            title="Tabs view"
           >
             Tabs
           </button>
           <button
             onClick={() => {
               setViewMode("panes")
-              // Reload to reinitialize terminals fresh in new mode
               window.location.reload()
             }}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
@@ -182,7 +288,6 @@ function DashboardContent() {
                 ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
                 : "text-[#CCCCCC] hover:text-white"
             }`}
-            title="Panes view"
           >
             Panes
           </button>
@@ -236,17 +341,17 @@ function DashboardContent() {
           onClose={() => setSidebarOpen(false)}
           tunnelUrl={tunnelUrl}
           authToken={authToken}
-          onSignOut={handleSignOut}
+          onSignOut={() => {
+            localStorage.removeItem("tunnelUrl")
+            localStorage.removeItem("authToken")
+            window.location.reload()
+          }}
         />
       )}
 
-      {/* Security Modal */}
+      {/* Modals */}
       <SecurityModal />
-
-      {/* Directory Picker Modal */}
       <DirectoryPickerModal />
-
-      {/* Browser Picker Modal */}
       <BrowserPickerModal />
     </div>
   )

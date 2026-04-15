@@ -3,6 +3,8 @@ import Link from "next/link"
 import { ArrowLeft, Globe, Calendar, Clock } from "lucide-react"
 import { getPostsByCategory } from "@/lib/posts"
 import { Navbar } from "@/components/Navbar"
+import { isTauriBuild } from "@/lib/tauriDetect"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Remote Access - SSH Alternatives & Browser-Based Terminal",
@@ -15,6 +17,7 @@ export const metadata: Metadata = {
 }
 
 export default function RemoteAccessIndex() {
+  if (isTauriBuild()) redirect("/")
   const posts = getPostsByCategory("remote-access")
 
   return (

@@ -3,6 +3,8 @@ import Link from "next/link"
 import { ArrowLeft, Terminal, Calendar, Clock } from "lucide-react"
 import { getPostsByCategory } from "@/lib/posts"
 import { Navbar } from "@/components/Navbar"
+import { isTauriBuild } from "@/lib/tauriDetect"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "AI Coding Agents - Terminal-Based AI Tools & Remote Access",
@@ -15,6 +17,7 @@ export const metadata: Metadata = {
 }
 
 export default function AICodingAgentsIndex() {
+  if (isTauriBuild()) redirect("/")
   const posts = getPostsByCategory("ai-coding-agents")
 
   return (

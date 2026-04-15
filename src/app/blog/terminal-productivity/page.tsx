@@ -3,6 +3,8 @@ import Link from "next/link"
 import { ArrowLeft, LayoutGrid, Calendar, Clock } from "lucide-react"
 import { getPostsByCategory } from "@/lib/posts"
 import { Navbar } from "@/components/Navbar"
+import { isTauriBuild } from "@/lib/tauriDetect"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Terminal Productivity - Organize Panes, Groups & Multi-Terminal Workflows",
@@ -15,6 +17,7 @@ export const metadata: Metadata = {
 }
 
 export default function TerminalProductivityIndex() {
+  if (isTauriBuild()) redirect("/")
   const posts = getPostsByCategory("terminal-productivity")
 
   return (
