@@ -25,10 +25,16 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     try {
       const raw = localStorage.getItem(WB_KEY(pane.id))
       if (raw) {
-        return JSON.parse(raw)
+        const data = JSON.parse(raw)
+        // Ensure proper format for excalidraw
+        if (data.elements || data.appState) {
+          return data
+        }
+        // If it's just elements wrapped, return properly
+        return data
       }
     } catch {}
-    return null
+    return {}
   }, [pane.id])
 
   const onChange = useCallback((elements: any[], _state: any) => {
@@ -48,7 +54,7 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
         onRename={(n) => renamePane(pane.id, n)}
         onPin={() => togglePin(pane.id)}
       />
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" style={{ height: "calc(100vh - 120px)" }}>
         {ExcalidrawComponent ? (
           <ExcalidrawComponent
             initialData={initialData()}
