@@ -3,9 +3,7 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
-import { useCallback } from "react"
-import { Excalidraw } from "@excalidraw/excalidraw"
-import "@excalidraw/excalidraw/index.css"
+import { useCallback, useState, useEffect } from "react"
 
 interface WhiteboardPaneProps {
   pane: Pane
@@ -15,6 +13,13 @@ const WB_KEY = (id: string) => `wb-excalidraw-${id}`
 
 export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
   const { killPane, renamePane, togglePin } = usePaneStore()
+  const [ExcalidrawComponent, setExcalidrawComponent] = useState<any>(null)
+
+  useEffect(() => {
+    import("@excalidraw/excalidraw").then((mod) => {
+      setExcalidrawComponent(() => mod.Excalidraw)
+    })
+  }, [])
 
   const initialData = useCallback(() => {
     try {
@@ -44,11 +49,15 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
         onPin={() => togglePin(pane.id)}
       />
       <div className="flex-1 overflow-hidden">
-        <Excalidraw
-          initialData={initialData()}
-          onChange={onChange}
-          theme="dark"
-        />
+        {ExcalidrawComponent ? (
+          <ExcalidrawComponent
+            initialData={initialData()}
+            onChange={onChange}
+            theme="dark"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-[#CCCCCC]">Loading...</div>
+        )}
       </div>
     </div>
   )

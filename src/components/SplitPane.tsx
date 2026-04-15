@@ -90,7 +90,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [isResizing, isGitResizing, handleMouseMove])
+  }, [isResizing, isGitResizing])
 
   // Show empty state only if there are no panes at all
   const hasAnyPanes = panes.length > 0
