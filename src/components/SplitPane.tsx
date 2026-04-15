@@ -23,7 +23,9 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
+  const [gitSidebarWidth, setGitSidebarWidth] = useState(280)
   const [isResizing, setIsResizing] = useState(false)
+  const [isGitResizing, setIsGitResizing] = useState(false)
 
   // Filter by group if a group is selected
   const filteredPanes = searchQuery
@@ -68,12 +70,19 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   // Sidebar resize handlers
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return
-      const newWidth = Math.min(Math.max(e.clientX, 140), 400)
-      setSidebarWidth(newWidth)
+      if (isResizing) {
+        const newWidth = Math.min(Math.max(e.clientX, 140), 400)
+        setSidebarWidth(newWidth)
+      } else if (isGitResizing) {
+        const newWidth = Math.min(Math.max(containerSize.width - e.clientX, 180), 500)
+        setGitSidebarWidth(newWidth)
+      }
     }
-    const handleMouseUp = () => setIsResizing(false)
-    if (isResizing) {
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      setIsGitResizing(false)
+    }
+    if (isResizing || isGitResizing) {
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
     }
@@ -81,7 +90,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [isResizing])
+  }, [isResizing, isGitResizing, handleMouseMove])
 
   // Show empty state only if there are no panes at all
   const hasAnyPanes = panes.length > 0
@@ -480,7 +489,14 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             </button>
           </div>
         ) : (
-          <SourceControlPane />
+          <div className="relative shrink-0" style={{ width: gitSidebarWidth }}>
+            {/* Resize handle */}
+            <div
+              className="absolute -left-1 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors z-10"
+              onMouseDown={() => setIsGitResizing(true)}
+            />
+            <SourceControlPane />
+          </div>
         )}
       </div>
     </div>
