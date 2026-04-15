@@ -22,7 +22,6 @@ export function SourceControlPane() {
     activePanes,
     sourceControlRepos,
     toggleGitSidebar,
-    spawnLazygit,
     findGitRepos,
     gitStatuses,
     getGitStatus,
@@ -89,8 +88,9 @@ export function SourceControlPane() {
     // Switch sidebar to lazygit mode for this item
     setSelectedLabel(item.cwd)
     setSidebarMode("lazygit")
-    // Spawn lazygit in that pane
-    spawnLazygit(item.paneId, item.cwd)
+    // NOTE: we do NOT spawn lazygit here — we just show git status in the sidebar.
+    // The existing terminal pane stays open. User can run lazygit themselves
+    // in the terminal, or we can spawn a separate lazygit pane if needed.
     // Fetch git status for all open panes in this repo
     panes.forEach(p => {
       if (activePanes.includes(p.id) && p.cwd) {
