@@ -3,45 +3,34 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
-import { useEffect, useRef, useCallback } from "react"
-import { Tldraw } from "tldraw"
-import "tldraw/tldraw.css"
+import { useCallback } from "react"
+import Excalidraw from "@excalidraw/excalidraw"
+import "@excalidraw/excalidraw/index.css"
 
 interface WhiteboardPaneProps {
   pane: Pane
 }
 
-const WB_KEY = (id: string) => `wb-${id}`
+const WB_KEY = (id: string) => `wb-excalidraw-${id}`
 
 export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
   const { killPane, renamePane, togglePin } = usePaneStore()
-  const containerRef = useRef<HTMLDivElement>(null)
 
-  const handleMount = useCallback(
-    (editor: any) => {
-      try {
-        editor.user.updateUserPreferences({ colorScheme: "dark" })
-      } catch {}
+  const initialData = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(WB_KEY(pane.id))
+      if (raw) {
+        return JSON.parse(raw)
+      }
+    } catch {}
+    return null
+  }, [pane.id])
 
-      try {
-        const raw = localStorage.getItem(WB_KEY(pane.id))
-        if (raw) {
-          const snapshot = JSON.parse(raw)
-          editor.store.loadSnapshot(snapshot)
-        }
-      } catch {}
-      editor.store.listen(
-        () => {
-          try {
-            const snapshot = editor.store.getSnapshot()
-            localStorage.setItem(WB_KEY(pane.id), JSON.stringify(snapshot))
-          } catch {}
-        },
-        { source: "user" }
-      )
-    },
-    [pane.id]
-  )
+  const onChange = useCallback((elements: any[]) => {
+    try {
+      localStorage.setItem(WB_KEY(pane.id), JSON.stringify({ elements }))
+    } catch {}
+  }, [pane.id])
 
   return (
     <div className="flex flex-col h-full bg-[#0C0C0C]">
@@ -54,8 +43,12 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
         onRename={(n) => renamePane(pane.id, n)}
         onPin={() => togglePin(pane.id)}
       />
-      <div className="flex-1 overflow-hidden [&_.tl-canvas]:!bg-[#1a1a1a]">
-        <Tldraw onMount={handleMount} />
+      <div className="flex-1 overflow-hidden">
+        <Excalidraw
+          initialData={initialData()}
+          onChange={onChange}
+          theme="dark"
+        />
       </div>
     </div>
   )
