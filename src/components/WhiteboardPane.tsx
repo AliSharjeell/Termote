@@ -4,7 +4,7 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
 import { useCallback } from "react"
-import Excalidraw from "@excalidraw/excalidraw"
+import { Excalidraw } from "@excalidraw/excalidraw"
 import "@excalidraw/excalidraw/index.css"
 
 interface WhiteboardPaneProps {
