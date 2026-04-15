@@ -271,7 +271,8 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     return () => {
       disconnect()
     }
-  }, [connect, disconnect])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return {
     disconnect,
