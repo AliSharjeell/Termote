@@ -163,22 +163,27 @@ function DashboardContent() {
   const [bootStatus, setBootStatus] = useState<'init' | 'checking' | 'starting' | 'connecting' | 'done'>('init')
 
   useEffect(() => {
-    if (!isTauriBuild()) {
-      // In browser mode, use tunnel from URL params or localStorage
-      const storedUrl = localStorage.getItem("tunnelUrl")
-      const storedToken = localStorage.getItem("authToken")
-      if (storedUrl && storedToken) {
-        setTunnelUrl(storedUrl)
-        setAuthToken(storedToken)
+    try {
+      if (!isTauriBuild()) {
+        // In browser mode, use tunnel from URL params or localStorage
+        const storedUrl = localStorage.getItem("tunnelUrl")
+        const storedToken = localStorage.getItem("authToken")
+        if (storedUrl && storedToken) {
+          setTunnelUrl(storedUrl)
+          setAuthToken(storedToken)
+        }
+        setIsReady(true)
+        return
       }
-      setIsReady(true)
-      return
-    }
 
-    // In Tauri mode, use default local WebSocket
-    setTunnelUrl(WEBSOCKET_URL)
-    setAuthToken('termote-local')
-    setIsReady(true)
+      // In Tauri mode, use default local WebSocket
+      setTunnelUrl(WEBSOCKET_URL)
+      setAuthToken('termote-local')
+      setIsReady(true)
+    } catch (err) {
+      console.error('[Boot] Setup error:', err)
+      setIsReady(true) // Still show dashboard on error
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
