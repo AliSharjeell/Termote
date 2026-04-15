@@ -28,6 +28,8 @@ export function SourceControlPane() {
     setLazygitTerminal,
     removeLazygitTerminal,
     spawnLazygit,
+    lazySidebarPaneId,
+    setLazygitSidebarPaneId,
   } = usePaneStore()
 
   const [isScanning, setIsScanning] = useState(false)
@@ -122,9 +124,11 @@ export function SourceControlPane() {
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
 
-    // Store with a sentinel key — the event listener will route all output here
-    setLazygitTerminal("lazygit", terminal)
-    sidebarTerminalPaneRef.current = "lazygit"
+    // Store with a sentinel key — when LazygitSpawned arrives, the
+    // websocket handler moves it to the real pane ID
+    setLazygitTerminal("sentinel", terminal)
+    setLazygitSidebarPaneId(null)
+    sidebarTerminalPaneRef.current = null
 
     // Open terminal in the ref element after paint
     requestAnimationFrame(() => {
@@ -136,7 +140,12 @@ export function SourceControlPane() {
   }
 
   const handleBack = () => {
-    removeLazygitTerminal("lazygit")
+    const paneId = usePaneStore.getState().lazySidebarPaneId
+    if (paneId) {
+      removeLazygitTerminal(paneId)
+    }
+    removeLazygitTerminal("sentinel")
+    setLazygitSidebarPaneId(null)
     if (xtermRef.current) {
       xtermRef.current.innerHTML = ""
     }
@@ -145,17 +154,20 @@ export function SourceControlPane() {
     setSelectedLabel(null)
   }
 
-  // Listen for PTY output from ALL panes and route to the embedded lazygit terminal.
-  // The backend's spawn_lazygit creates a new pane with a fresh UUID we can't predict,
-  // so we capture ALL output and display it in the embedded sidebar terminal.
+  // Listen for PTY output from the spawned lazygit pane only.
+  // lazySidebarPaneId is set when LazygitSpawned arrives from the backend.
   useEffect(() => {
     if (sidebarMode !== "lazygit") return
 
     const handleOutput = (e: Event) => {
       const customEvent = e as CustomEvent<{ paneId: string; data: string }>
-      const instance = usePaneStore.getState().lazygitTerminals["lazygit"]
-      if (instance) {
-        instance.terminal.write(customEvent.detail.data)
+      const targetPaneId = usePaneStore.getState().lazySidebarPaneId
+      if (!targetPaneId) return // Not spawned yet
+      if (customEvent.detail.paneId === targetPaneId) {
+        const instance = usePaneStore.getState().lazygitTerminals[targetPaneId]
+        if (instance) {
+          instance.terminal.write(customEvent.detail.data)
+        }
       }
     }
 

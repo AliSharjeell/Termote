@@ -83,9 +83,17 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "directory_picker_cancelled":
           break
         case "lazygit_spawned":
-          // Auto-select the new Lazygit pane when it's spawned
+          // Capture the real lazygit pane ID for the sidebar terminal
           console.log("[Termote] Lazygit spawned as pane:", message.pane_id)
-          // The state_update will already add the pane, selectTab ensures it's visible
+          {
+            const { setLazygitSidebarPaneId, lazygitTerminals } = usePaneStore.getState()
+            setLazygitSidebarPaneId(message.pane_id)
+            // Move the sidebar terminal from sentinel key to the real pane ID
+            if (lazygitTerminals["sentinel"]) {
+              usePaneStore.getState().setLazygitTerminal(message.pane_id, lazygitTerminals["sentinel"].terminal)
+              usePaneStore.getState().removeLazygitTerminal("sentinel")
+            }
+          }
           break
         case "directory_contents":
           handleDirectoryContents(message.path, message.items)

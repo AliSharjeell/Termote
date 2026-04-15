@@ -111,6 +111,8 @@ interface PaneState {
   selectedSourceControlRepo: string | null
   // Lazygit terminal instances keyed by pane ID (for embedded sidebar rendering)
   lazygitTerminals: Record<string, { terminal: Terminal }>
+  // The actual pane ID of the spawned lazygit (set when LazygitSpawned event arrives)
+  lazySidebarPaneId: string | null
   // Port manager
   portProcesses: Array<{
     port: number
@@ -199,6 +201,7 @@ interface PaneState {
   handleGitReposFound: (repos: Array<{path: string; name: string; branch: string | null}>) => void
   setLazygitTerminal: (paneId: string, terminal: Terminal) => void
   removeLazygitTerminal: (paneId: string) => void
+  setLazygitSidebarPaneId: (paneId: string | null) => void
   handlePortProcesses: (processes: Array<{port: number; pid: number; process_name: string; cwd?: string}>) => void
   handleProcessKilled: (pid: number, success: boolean) => void
   handleGitStatus: (status: {
@@ -517,6 +520,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   sourceControlRepos: loadSourceControlRepos(),
   selectedSourceControlRepo: loadSourceControlSelected(),
   lazygitTerminals: {},
+  lazySidebarPaneId: null,
   portProcesses: [],
   aiCommand: loadAiCommand(),
 
@@ -1292,6 +1296,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       const { [paneId]: _, ...rest } = state.lazygitTerminals
       return { lazygitTerminals: rest }
     })
+  },
+
+  setLazygitSidebarPaneId: (paneId) => {
+    set({ lazySidebarPaneId: paneId })
   },
 
   handlePortProcesses: (processes) => {
