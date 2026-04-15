@@ -49,6 +49,24 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           })
           setLayout(message.panes, message.active_panes, message.floating_panes, message.groups ?? [])
           break
+        case "full_state_sync":
+          console.log("[Termote] full_state_sync:", {
+            panesCount: message.panes?.length,
+            groupsCount: message.groups?.length,
+            scrollbackCount: Object.keys(message.scrollback_buffers ?? {}).length,
+          })
+          setLayout(message.panes, message.active_panes, message.floating_panes, message.groups ?? [])
+          // Replay scrollback buffers to populate terminal history
+          if (message.scrollback_buffers) {
+            Object.entries(message.scrollback_buffers).forEach(([paneId, data]) => {
+              window.dispatchEvent(
+                new CustomEvent("terminal-output", {
+                  detail: { paneId, data },
+                })
+              )
+            })
+          }
+          break
         case "output":
           window.dispatchEvent(
             new CustomEvent("terminal-output", {
@@ -142,6 +160,15 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
         case "process_killed":
           handleProcessKilled(message.pid, message.success)
+          break
+        case "pane_content_updated":
+          // Update pane content in store
+          usePaneStore.getState().setPaneContent(
+            message.pane_id,
+            message.note_content ?? null,
+            message.whiteboard_data ?? null,
+            message.image_data ?? null
+          )
           break
       }
     },

@@ -185,6 +185,7 @@ interface PaneState {
   // File transfer actions
   uploadFile: (paneId: string, fileName: string, data: string) => void
   handleFileUploaded: (paneId: string, fileName: string) => void
+  setPaneContent: (paneId: string, noteContent: string | null, whiteboardData: string | null, imageData: string | null) => void
   readImageFile: (absolute_path: string) => void
   handleImageFileRead: (result: { success: boolean; absolute_path: string; data?: string; error?: string }) => void
   // Git actions
@@ -1182,6 +1183,19 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   handleFileUploaded: (paneId, fileName) => {
     console.log(`[Termote] File uploaded: ${fileName} to pane ${paneId}`)
+  },
+
+  setPaneContent: (paneId, noteContent, whiteboardData, imageData) => {
+    const state = get()
+    const pane = state.panes.find(p => p.id === paneId)
+    if (pane) {
+      set({ panes: state.panes.map(p => p.id === paneId ? {
+        ...p,
+        noteContent: noteContent ?? p.noteContent,
+        whiteboardData: whiteboardData ?? p.whiteboardData,
+        imageData: imageData ?? p.imageData,
+      } : p) })
+    }
   },
 
   readImageFile: (absolute_path) => {

@@ -18,6 +18,9 @@ export interface Pane {
   cwd?: string | null
   url?: string | null
   proxyUrl?: string | null
+  noteContent?: string | null
+  whiteboardData?: string | null
+  imageData?: string | null
 }
 
 export interface DeviceInfo {
@@ -174,4 +177,21 @@ export type LazygitSpawnedEvent = {
   cwd: string
 }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent | LazygitSpawnedEvent
+export type FullStateSyncEvent = {
+  event: "full_state_sync"
+  panes: Pane[]
+  active_panes: string[]
+  floating_panes: string[]
+  groups: PaneGroup[]
+  scrollback_buffers: Record<string, string>
+}
+
+export type PaneContentUpdatedEvent = {
+  event: "pane_content_updated"
+  pane_id: string
+  note_content?: string
+  whiteboard_data?: string
+  image_data?: string
+}
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent | LazygitSpawnedEvent | FullStateSyncEvent | PaneContentUpdatedEvent
