@@ -31,7 +31,8 @@
     "active": true,
     "targets": "all",
     "externalBin": [
-      "binaries/termote-backend"
+      "binaries/termote-backend",
+      "binaries/devtunnel"
     ],
     "resources": [
       "../out"

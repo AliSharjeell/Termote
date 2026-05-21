@@ -221,7 +221,7 @@ fn ensure_backend_running(app: &AppHandle, runtime: &State<'_, Mutex<RuntimeStat
     Ok(snapshot(&state))
 }
 
-fn find_devtunnel() -> Option<PathBuf> {
+fn find_devtunnel(app: &AppHandle) -> Option<PathBuf> {
     if let Some(path) = env::var_os("DEVTUNNEL_PATH") {
         let path = PathBuf::from(path);
         if path.exists() {
@@ -230,6 +230,32 @@ fn find_devtunnel() -> Option<PathBuf> {
     }
 
     let executable = if cfg!(windows) { "devtunnel.exe" } else { "devtunnel" };
+    let mut bundled_candidates = Vec::new();
+
+    if let Ok(current_exe) = env::current_exe() {
+        if let Some(dir) = current_exe.parent() {
+            bundled_candidates.push(dir.join(executable));
+        }
+    }
+
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        bundled_candidates.push(resource_dir.join(executable));
+    }
+
+    #[cfg(windows)]
+    {
+        if let Ok(cwd) = env::current_dir() {
+            let sidecar_name = "devtunnel-x86_64-pc-windows-msvc.exe";
+            bundled_candidates.push(cwd.join("src-tauri").join("binaries").join(sidecar_name));
+            bundled_candidates.push(cwd.join("binaries").join(sidecar_name));
+            bundled_candidates.push(cwd.join("..").join("binaries").join(sidecar_name));
+        }
+    }
+
+    if let Some(path) = bundled_candidates.into_iter().find(|path| path.exists()) {
+        return Some(path);
+    }
+
     if cfg!(windows) {
         if let Some(profile) = env::var_os("USERPROFILE") {
             let installed = PathBuf::from(profile).join("termote").join("bin").join(executable);
@@ -381,7 +407,7 @@ async fn start_remote_access(app: AppHandle, runtime: State<'_, Mutex<RuntimeSta
         }
     }
 
-    let devtunnel = find_devtunnel().ok_or_else(|| {
+    let devtunnel = find_devtunnel(&app).ok_or_else(|| {
         "Microsoft Dev Tunnels CLI was not found. Install it and ensure `devtunnel` is on PATH, or set DEVTUNNEL_PATH.".to_string()
     })?;
 
