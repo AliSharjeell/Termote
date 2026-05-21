@@ -230,7 +230,7 @@ fn ensure_backend_running(app: &AppHandle, runtime: &State<'_, Mutex<RuntimeStat
     // Kill any stale backend process left on our port from a previous session/install.
     // Without this, our new sidecar can't bind the port, and the frontend connects
     // to the OLD backend with a WRONG auth token → perpetual auth failures.
-    kill_process_on_port(BACKEND_PORT);
+    kill_processes_on_ports(&[BACKEND_PORT, 9091]);
 
     let (token, frontend, config) = {
         let state = runtime.lock().map_err(|e| e.to_string())?;
