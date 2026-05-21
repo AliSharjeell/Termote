@@ -129,16 +129,33 @@ fn frontend_dir(app: &AppHandle) -> PathBuf {
         }
     }
 
+    // Collect all candidate directories to check
+    let mut candidates = Vec::new();
+
+    // Check relative to the exe itself (NSIS installs put everything alongside the exe)
+    if let Ok(current_exe) = env::current_exe() {
+        if let Some(exe_dir) = current_exe.parent() {
+            candidates.push(exe_dir.join("out"));
+            candidates.push(exe_dir.join("_up_").join("out"));
+        }
+    }
+
+    // Check Tauri resource directory and common subdirectory layouts
     let resource_dir = app
         .path()
         .resource_dir()
         .unwrap_or_else(|_| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
-    let bundled_out = resource_dir.join("out");
-    if bundled_out.exists() {
-        bundled_out
-    } else {
-        resource_dir
+    candidates.push(resource_dir.join("out"));
+    candidates.push(resource_dir.join("_up_").join("out"));
+
+    for candidate in &candidates {
+        if candidate.exists() {
+            return candidate.clone();
+        }
     }
+
+    // Final fallback - return the resource dir itself
+    resource_dir
 }
 
 fn config_dir(app: &AppHandle) -> PathBuf {

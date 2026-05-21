@@ -169,8 +169,10 @@ function DashboardContent() {
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
     setRuntime(snapshot)
     setServerRunning(snapshot.backendRunning)
-    // Use the wsUrl from the snapshot - it already handles local vs tunnel correctly
-    setTunnelUrl(snapshot.backendRunning ? snapshot.wsUrl : null)
+    // In Tauri mode, ALWAYS connect locally - the snapshot.wsUrl changes to the
+    // devtunnel WSS URL when remote access is active, which would break our local connection.
+    // Only browser/mobile clients use the tunnel URL for WebSocket.
+    setTunnelUrl(snapshot.backendRunning ? LOCAL_WS_URL : null)
     setShareUrl(snapshot.tunnelUrl || snapshot.backendUrl)
     setAuthToken(snapshot.authToken)
   }, [])
