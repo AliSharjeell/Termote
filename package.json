@@ -5,6 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prepare:sidecars": "node scripts/prepare-sidecars.mjs",
+    "prepare:sidecars:dev": "node scripts/prepare-sidecars.mjs --profile=debug",
+    "dev:tauri": "npm run prepare:sidecars:dev && next dev",
+    "build:tauri": "npm run build && npm run prepare:sidecars",
     "start": "next start",
     "lint": "eslint",
     "tauri": "tauri",

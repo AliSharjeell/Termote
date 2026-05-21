@@ -10,10 +10,11 @@ interface ProfileSidebarProps {
   onClose: () => void
   tunnelUrl: string
   authToken: string
+  mobileUrl?: string
   onSignOut: () => void
 }
 
-export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOut }: ProfileSidebarProps) {
+export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUrl: providedMobileUrl, onSignOut }: ProfileSidebarProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showUrl, setShowUrl] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState(false)
@@ -22,7 +23,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, onSignOu
   const [customCommand, setCustomCommand] = useState("")
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
-  const mobileUrl = `https://termote.vercel.app/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
+  const mobileUrl = providedMobileUrl || `${tunnelUrl.replace(/\/$/, "")}/dashboard/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
   const aiCommand = usePaneStore((state) => state.aiCommand)
   const setAiCommand = usePaneStore((state) => state.setAiCommand)
 

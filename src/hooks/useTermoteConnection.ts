@@ -8,16 +8,31 @@ export type ConnectionMode = 'tauri' | 'browser';
 export interface TermoteStatus {
   isTauri: boolean;
   serverRunning: boolean;
+  tunnelRunning: boolean;
   mode: ConnectionMode;
   wsUrl: string | null;
+  mobileUrl: string | null;
   error: string | null;
+}
+
+export interface RuntimeSnapshot {
+  backendRunning: boolean;
+  tunnelRunning: boolean;
+  backendUrl: string;
+  wsUrl: string;
+  authToken: string;
+  tunnelUrl: string | null;
+  mobileUrl: string;
 }
 
 export interface TermoteCommands {
   checkStatus: () => Promise<boolean>;
-  startServer: () => Promise<string>;
-  stopServer: () => Promise<string>;
-  restartServer: () => Promise<string>;
+  getRuntimeState: () => Promise<RuntimeSnapshot | null>;
+  startServer: () => Promise<RuntimeSnapshot>;
+  stopServer: () => Promise<RuntimeSnapshot>;
+  restartServer: () => Promise<RuntimeSnapshot>;
+  startRemoteAccess: () => Promise<RuntimeSnapshot>;
+  stopRemoteAccess: () => Promise<RuntimeSnapshot>;
   checkForUpdates: () => Promise<string>;
 }
 
@@ -26,7 +41,7 @@ function detectTauri(): boolean {
 }
 
 function getWsUrl(): string {
-  return 'ws://localhost:8080';
+  return 'ws://127.0.0.1:9090/ws';
 }
 
 export function useTermoteConnection(): {
@@ -36,8 +51,10 @@ export function useTermoteConnection(): {
   const [status, setStatus] = useState<TermoteStatus>({
     isTauri: false,
     serverRunning: false,
+    tunnelRunning: false,
     mode: 'browser',
     wsUrl: null,
+    mobileUrl: null,
     error: null,
   });
 
@@ -50,21 +67,39 @@ export function useTermoteConnection(): {
       }
       return false;
     },
+    getRuntimeState: async () => {
+      if (isTauri) {
+        return await invoke<RuntimeSnapshot>('get_runtime_state');
+      }
+      return null;
+    },
     startServer: async () => {
       if (isTauri) {
-        return await invoke<string>('start_server');
+        return await invoke<RuntimeSnapshot>('start_server');
       }
       throw new Error('Not in Tauri mode');
     },
     stopServer: async () => {
       if (isTauri) {
-        return await invoke<string>('stop_server');
+        return await invoke<RuntimeSnapshot>('stop_server');
       }
       throw new Error('Not in Tauri mode');
     },
     restartServer: async () => {
       if (isTauri) {
-        return await invoke<string>('restart_server');
+        return await invoke<RuntimeSnapshot>('restart_server');
+      }
+      throw new Error('Not in Tauri mode');
+    },
+    startRemoteAccess: async () => {
+      if (isTauri) {
+        return await invoke<RuntimeSnapshot>('start_remote_access');
+      }
+      throw new Error('Not in Tauri mode');
+    },
+    stopRemoteAccess: async () => {
+      if (isTauri) {
+        return await invoke<RuntimeSnapshot>('stop_remote_access');
       }
       throw new Error('Not in Tauri mode');
     },
@@ -80,15 +115,21 @@ export function useTermoteConnection(): {
     setStatus(prev => ({ ...prev, isTauri, mode: isTauri ? 'tauri' : 'browser' }));
 
     if (isTauri) {
-      invoke<boolean>('check_status')
-        .then(running => {
-          setStatus(prev => ({ ...prev, serverRunning: running }));
+      invoke<RuntimeSnapshot>('get_runtime_state')
+        .then(snapshot => {
+          setStatus(prev => ({
+            ...prev,
+            serverRunning: snapshot.backendRunning,
+            tunnelRunning: snapshot.tunnelRunning,
+            wsUrl: snapshot.wsUrl,
+            mobileUrl: snapshot.mobileUrl,
+          }));
         })
         .catch(err => {
           setStatus(prev => ({ ...prev, error: String(err) }));
         });
     } else {
-      setStatus(prev => ({ ...prev, wsUrl: getWsUrl() }));
+      setStatus(prev => ({ ...prev, wsUrl: getWsUrl(), mobileUrl: null }));
     }
   }, [isTauri]);
 

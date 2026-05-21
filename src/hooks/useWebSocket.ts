@@ -157,7 +157,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
       }
     },
-    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleGitReposFound, handlePortProcesses, handleProcessKilled]
+    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleSourceControlState, handleGitReposFound, handlePortProcesses, handleProcessKilled]
   )
 
   const connect = useCallback(() => {
@@ -252,12 +252,13 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
   }, [])
 
   useEffect(() => {
+    disconnect()
+    if (!url) return
     connect()
     return () => {
       disconnect()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [connect, disconnect, url, token])
 
   return {
     disconnect,

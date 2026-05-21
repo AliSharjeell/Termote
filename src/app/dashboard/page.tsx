@@ -16,11 +16,21 @@ import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User, Search, Play, Square, RotateCw, Zap } from "lucide-react"
+import { User, Search, Play, Square, RotateCw, Zap, Globe2, Copy, Check, Loader2 } from "lucide-react"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
-const WEBSOCKET_URL = 'ws://localhost:8080'
+const LOCAL_WS_URL = 'ws://127.0.0.1:9090/ws'
+
+type RuntimeSnapshot = {
+  backendRunning: boolean
+  tunnelRunning: boolean
+  backendUrl: string
+  wsUrl: string
+  authToken: string
+  tunnelUrl: string | null
+  mobileUrl: string
+}
 
 function ServerControls({ serverRunning, onStart, onStop, onRestart, loading }: {
   serverRunning: boolean
@@ -76,6 +86,59 @@ function ServerControls({ serverRunning, onStart, onStop, onRestart, loading }: 
   )
 }
 
+function RemoteAccessControls({ runtime, loading, error, copied, onStart, onStop, onCopy }: {
+  runtime: RuntimeSnapshot | null
+  loading: boolean
+  error: string | null
+  copied: boolean
+  onStart: () => void
+  onStop: () => void
+  onCopy: () => void
+}) {
+  const running = !!runtime?.tunnelRunning && !!runtime?.tunnelUrl
+
+  return (
+    <div className="flex items-center gap-2">
+      {error && <span className="max-w-48 truncate text-xs text-[#E74856]" title={error}>{error}</span>}
+      {running ? (
+        <>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-[#58A6FF]" style={{ boxShadow: "0 0 6px #58A6FF" }} />
+            <span className="text-xs text-[#58A6FF]">Mobile Access</span>
+          </div>
+          <button
+            onClick={onCopy}
+            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors"
+            title="Copy mobile link"
+          >
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <button
+            onClick={onStop}
+            disabled={loading}
+            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors disabled:opacity-50"
+            title="Stop mobile access"
+          >
+            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Square className="h-3 w-3 fill-current" />}
+            Stop
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={onStart}
+          disabled={loading}
+          className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors disabled:opacity-50"
+          title="Start Dev Tunnel for mobile access"
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe2 className="h-3 w-3" />}
+          Mobile Access
+        </button>
+      )}
+    </div>
+  )
+}
+
 function DashboardContent() {
   const isMobile = useIsMobile()
   const isLandscape = useIsLandscape()
@@ -84,11 +147,27 @@ function DashboardContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [serverRunning, setServerRunning] = useState(false)
   const [checkingServer, setCheckingServer] = useState(false)
-  const [wsConnected, setWsConnected] = useState(false)
+  const [runtime, setRuntime] = useState<RuntimeSnapshot | null>(null)
+  const [remoteLoading, setRemoteLoading] = useState(false)
+  const [remoteError, setRemoteError] = useState<string | null>(null)
+  const [copiedMobileUrl, setCopiedMobileUrl] = useState(false)
+  const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [authToken, setAuthToken] = useState<string | null>(null)
+  const [isReady, setIsReady] = useState(false)
+  const [bootStatus, setBootStatus] = useState<'init' | 'checking' | 'starting' | 'connecting' | 'done'>('init')
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
+
+  const applyRuntimeSnapshot = (snapshot: RuntimeSnapshot) => {
+    setRuntime(snapshot)
+    setServerRunning(snapshot.backendRunning)
+    setTunnelUrl(snapshot.backendRunning ? LOCAL_WS_URL : null)
+    setShareUrl(snapshot.tunnelUrl || snapshot.backendUrl)
+    setAuthToken(snapshot.authToken)
+  }
 
   // Auto-start backend and check status in Tauri mode
   useEffect(() => {
@@ -98,7 +177,8 @@ function DashboardContent() {
     checkIntervalRef.current = setInterval(async () => {
       try {
         const running = await invoke<boolean>('check_status')
-        setServerRunning(running)
+        const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+        applyRuntimeSnapshot({ ...snapshot, backendRunning: running })
       } catch (err) {
         console.error('Server check failed:', err)
       }
@@ -113,7 +193,8 @@ function DashboardContent() {
     setCheckingServer(true)
     try {
       await invoke('start_server')
-      setServerRunning(true)
+      const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+      applyRuntimeSnapshot(snapshot)
     } catch (err) {
       console.error('Start failed:', err)
     } finally {
@@ -125,7 +206,8 @@ function DashboardContent() {
     setCheckingServer(true)
     try {
       await invoke('stop_server')
-      setServerRunning(false)
+      const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+      applyRuntimeSnapshot(snapshot)
     } catch (err) {
       console.error('Stop failed:', err)
     } finally {
@@ -137,11 +219,49 @@ function DashboardContent() {
     setCheckingServer(true)
     try {
       await invoke('restart_server')
-      setServerRunning(true)
+      const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+      applyRuntimeSnapshot(snapshot)
     } catch (err) {
       console.error('Restart failed:', err)
     } finally {
       setCheckingServer(false)
+    }
+  }
+
+  const handleRemoteStart = async () => {
+    setRemoteLoading(true)
+    setRemoteError(null)
+    try {
+      const snapshot = await invoke<RuntimeSnapshot>('start_remote_access')
+      applyRuntimeSnapshot(snapshot)
+    } catch (err) {
+      setRemoteError(String(err))
+    } finally {
+      setRemoteLoading(false)
+    }
+  }
+
+  const handleRemoteStop = async () => {
+    setRemoteLoading(true)
+    setRemoteError(null)
+    try {
+      const snapshot = await invoke<RuntimeSnapshot>('stop_remote_access')
+      applyRuntimeSnapshot(snapshot)
+    } catch (err) {
+      setRemoteError(String(err))
+    } finally {
+      setRemoteLoading(false)
+    }
+  }
+
+  const handleCopyMobileUrl = async () => {
+    if (!runtime?.mobileUrl) return
+    try {
+      await navigator.clipboard.writeText(runtime.mobileUrl)
+      setCopiedMobileUrl(true)
+      setTimeout(() => setCopiedMobileUrl(false), 2000)
+    } catch (err) {
+      setRemoteError(String(err))
     }
   }
 
@@ -155,12 +275,6 @@ function DashboardContent() {
   }, [isLandscape, setViewMode, viewMode])
 
   const showTabs = viewMode === "tabs"
-
-  // Get connection info from localStorage (set by backend on startup)
-  const [tunnelUrl, setTunnelUrl] = useState<string | null>(null)
-  const [authToken, setAuthToken] = useState<string | null>(null)
-  const [isReady, setIsReady] = useState(false)
-  const [bootStatus, setBootStatus] = useState<'init' | 'checking' | 'starting' | 'connecting' | 'done'>('init')
 
   useEffect(() => {
     console.log('[Boot] Starting initialization')
@@ -182,6 +296,7 @@ function DashboardContent() {
           const storedToken = localStorage.getItem("authToken")
           if (storedUrl && storedToken) {
             setTunnelUrl(storedUrl)
+            setShareUrl(storedUrl)
             setAuthToken(storedToken)
           }
           setIsReady(true)
@@ -189,21 +304,17 @@ function DashboardContent() {
           return
         }
 
-        // In Tauri mode, use default local WebSocket
-        setTunnelUrl(WEBSOCKET_URL)
-        setAuthToken('termote-local')
+        setBootStatus('checking')
+        const initialSnapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+        applyRuntimeSnapshot(initialSnapshot)
+        console.log('[Boot] runtime state:', initialSnapshot)
 
-        console.log('[Boot] Calling check_status...')
-        const running = await invoke<boolean>('check_status')
-        console.log('[Boot] check_status returned:', running)
-        setServerRunning(running)
-
-        if (!running) {
+        if (!initialSnapshot.backendRunning) {
           console.log('[Boot] Starting server...')
           setBootStatus('starting')
-          await invoke('start_server')
-          console.log('[Boot] Server started')
-          setServerRunning(true)
+          const startedSnapshot = await invoke<RuntimeSnapshot>('start_server')
+          applyRuntimeSnapshot(startedSnapshot)
+          console.log('[Boot] Server started:', startedSnapshot)
         }
 
         setBootStatus('connecting')
@@ -227,10 +338,6 @@ function DashboardContent() {
     url: tunnelUrl,
     token: authToken,
   })
-
-  useEffect(() => {
-    if (isConnected) setWsConnected(true)
-  }, [isConnected])
 
   useEffect(() => {
     return () => {
@@ -278,13 +385,24 @@ function DashboardContent() {
         {/* Status + Server Controls - left side */}
         <div className="flex items-center gap-4">
           {isTauri ? (
-            <ServerControls
-              serverRunning={serverRunning}
-              onStart={handleServerStart}
-              onStop={handleServerStop}
-              onRestart={handleServerRestart}
-              loading={checkingServer}
-            />
+            <>
+              <ServerControls
+                serverRunning={serverRunning}
+                onStart={handleServerStart}
+                onStop={handleServerStop}
+                onRestart={handleServerRestart}
+                loading={checkingServer}
+              />
+              <RemoteAccessControls
+                runtime={runtime}
+                loading={remoteLoading}
+                error={remoteError}
+                copied={copiedMobileUrl}
+                onStart={handleRemoteStart}
+                onStop={handleRemoteStop}
+                onCopy={handleCopyMobileUrl}
+              />
+            </>
           ) : (
             <>
               <div
@@ -380,12 +498,13 @@ function DashboardContent() {
       </div>
 
       {/* Profile Sidebar */}
-      {tunnelUrl && authToken && (
+      {shareUrl && authToken && (
         <ProfileSidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          tunnelUrl={tunnelUrl}
+          tunnelUrl={shareUrl}
           authToken={authToken}
+          mobileUrl={runtime?.mobileUrl}
           onSignOut={() => {
             localStorage.removeItem("tunnelUrl")
             localStorage.removeItem("authToken")
