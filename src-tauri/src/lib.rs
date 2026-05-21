@@ -185,6 +185,35 @@ fn wait_for_backend() -> Result<(), String> {
     Err("Backend did not become ready within 15 seconds".to_string())
 }
 
+/// Kill any process currently listening on the given port.
+/// Prevents stale backends from a previous session blocking our sidecar.
+fn kill_processes_on_ports(ports: &[u16]) {
+    use std::process::Command;
+
+    for &port in ports {
+        let output = Command::new("netstat")
+            .args(["-ano", "-p", "TCP"])
+            .output();
+
+        if let Ok(output) = output {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let target = format!(":{}", port);
+            for line in stdout.lines() {
+                if line.contains(&target) && line.contains("LISTENING") {
+                    let parts: Vec<&str> = line.split_whitespace().collect();
+                    if parts.len() >= 5 {
+                        let pid = parts[4];
+                        println!("Killing stale process {} on port {}", pid, port);
+                        let _ = Command::new("taskkill")
+                            .args(["/F", "/PID", pid])
+                            .output();
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn ensure_backend_running(app: &AppHandle, runtime: &State<'_, Mutex<RuntimeState>>) -> Result<RuntimeSnapshot, String> {
     {
         let mut state = runtime.lock().map_err(|e| e.to_string())?;
@@ -197,6 +226,11 @@ fn ensure_backend_running(app: &AppHandle, runtime: &State<'_, Mutex<RuntimeStat
             state.backend_running = false;
         }
     }
+
+    // Kill any stale backend process left on our port from a previous session/install.
+    // Without this, our new sidecar can't bind the port, and the frontend connects
+    // to the OLD backend with a WRONG auth token → perpetual auth failures.
+    kill_process_on_port(BACKEND_PORT);
 
     let (token, frontend, config) = {
         let state = runtime.lock().map_err(|e| e.to_string())?;
@@ -266,7 +300,6 @@ fn find_devtunnel(app: &AppHandle) -> Option<PathBuf> {
     if let Ok(resource_dir) = app.path().resource_dir() {
         bundled_candidates.push(resource_dir.join(executable));
     }
-
     #[cfg(windows)]
     {
         if let Ok(cwd) = env::current_dir() {

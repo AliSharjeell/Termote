@@ -96,25 +96,6 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   const hasAnyPanes = panes.length > 0
   const isGroupEmpty = sortedActivePanes.length === 0 && selectedGroupId !== null
 
-  if (sortedActivePanes.length === 0 && !hasAnyPanes) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[#080808]">
-        <div className="text-center text-[#CCCCCC]">
-          <p className="text-lg">No active panes</p>
-          <button
-            onClick={() => {
-              console.log("New Terminal clicked, isAuthenticated:", isAuthenticated)
-              usePaneStore.getState().spawnPane("powershell")
-            }}
-            className="mt-4 rounded-lg bg-white px-6 py-2.5 text-sm text-black hover:bg-gray-200 font-medium"
-          >
-            + New Terminal
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   const handleAddPane = () => {
     // Always add new pane to "All Panes" (null group), not current group
     if (selectedGroupId !== null) {
@@ -444,11 +425,24 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             background: "#181818",
           }}
         >
-        {isGroupEmpty ? (
-          <div className="flex items-center justify-center bg-[#080808]">
+        {(!hasAnyPanes || isGroupEmpty) ? (
+          <div className="flex h-full w-full items-center justify-center bg-[#080808]">
             <div className="text-center text-[#CCCCCC]">
-              <p className="text-sm">No panes in this group</p>
-              <p className="text-xs mt-1">Click the folder icon on a pane to add it</p>
+              <p className="text-sm">
+                {!hasAnyPanes ? "No active panes" : "No panes in this group"}
+              </p>
+              {!hasAnyPanes ? (
+                <button
+                  onClick={() => {
+                    usePaneStore.getState().spawnPane("powershell")
+                  }}
+                  className="mt-4 rounded-lg bg-white px-6 py-2.5 text-sm text-black hover:bg-gray-200 font-medium"
+                >
+                  + New Terminal
+                </button>
+              ) : (
+                <p className="text-xs mt-1">Click the folder icon on a pane to add it</p>
+              )}
             </div>
           </div>
         ) : (
