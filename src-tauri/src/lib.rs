@@ -96,7 +96,18 @@ fn public_ws_url(http_url: &str) -> String {
 
 fn mobile_url(tunnel_url: Option<&str>, token: &str) -> String {
     let base = tunnel_url.unwrap_or(&backend_url()).trim_end_matches('/').to_string();
-    format!("{}/dashboard/?tunnel={}&token={}", base, urlencoding::encode(&public_ws_url(&base)), urlencoding::encode(token))
+    let dashboard_path = if cfg!(debug_assertions) {
+        "/proxy/http/127.0.0.1:3000/dashboard/"
+    } else {
+        "/dashboard/"
+    };
+    format!(
+        "{}{}?tunnel={}&token={}",
+        base,
+        dashboard_path,
+        urlencoding::encode(&public_ws_url(&base)),
+        urlencoding::encode(token)
+    )
 }
 
 fn snapshot(state: &RuntimeState) -> RuntimeSnapshot {

@@ -220,8 +220,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <div className="h-px bg-[#252525] mb-1" />
 
         {/* All Panes */}
-        <button
-          onClick={() => { selectGroup(null); window.location.reload() }}
+        <div
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
               ? "text-[#CCCCCC] bg-[#252525]"
@@ -229,6 +228,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           }`}
         >
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation()
               const newSet = new Set(expandedGroups)
@@ -245,9 +245,15 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           >
             {expandedGroups.has("__all__") ? "▾" : "▸"}
           </button>
-          <span>All Panes</span>
-          <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => selectGroup(null)}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          >
+            <span>All Panes</span>
+            <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
+          </button>
+        </div>
         {expandedGroups.has("__all__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
@@ -277,8 +283,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         )}
 
         {/* Ungrouped */}
-        <button
-          onClick={() => { selectGroup("__ungrouped__"); window.location.reload() }}
+        <div
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
               ? "text-[#CCCCCC] bg-[#252525]"
@@ -286,6 +291,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           }`}
         >
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation()
               const newSet = new Set(expandedGroups)
@@ -302,9 +308,15 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           >
             {expandedGroups.has("__ungrouped__") ? "▾" : "▸"}
           </button>
-          <span>Ungrouped</span>
-          <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => selectGroup("__ungrouped__")}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          >
+            <span>Ungrouped</span>
+            <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
+          </button>
+        </div>
         {expandedGroups.has("__ungrouped__") && (
           <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5">
             {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
@@ -339,8 +351,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           const isExpanded = expandedGroups.has(group.id)
           return (
             <div key={group.id} className="group/row">
-              <button
-                onClick={() => { selectGroup(group.id); window.location.reload() }}
+              <div
                 className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
                     ? "text-[#CCCCCC] bg-[#252525]"
@@ -348,6 +359,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 }`}
               >
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation()
                     const newSet = new Set(expandedGroups)
@@ -364,9 +376,15 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 >
                   {isExpanded ? "▾" : "▸"}
                 </button>
-                <span className="truncate">{group.name}</span>
-                <span className="ml-auto text-xs text-[#CCCCCC]">{groupPanes.length}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => selectGroup(group.id)}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                >
+                  <span className="truncate">{group.name}</span>
+                  <span className="ml-auto text-xs text-[#CCCCCC]">{groupPanes.length}</span>
+                </button>
+              </div>
               {hoveredGroupId === group.id && (
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteGroup(group.id) }}

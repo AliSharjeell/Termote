@@ -319,12 +319,24 @@ function DashboardContent() {
         console.log('[Boot] isTauri:', isTauri)
 
         if (!isTauri) {
+          const params = new URLSearchParams(window.location.search)
+          const queryTunnel = params.get("tunnel")
+          const queryToken = params.get("token")
           const storedUrl = localStorage.getItem("tunnelUrl")
           const storedToken = localStorage.getItem("authToken")
-          if (storedUrl && storedToken) {
-            setTunnelUrl(storedUrl)
-            setShareUrl(storedUrl)
-            setAuthToken(storedToken)
+          const nextTunnel = queryTunnel || storedUrl
+          const nextToken = queryToken || storedToken
+
+          if (queryTunnel) {
+            localStorage.setItem("tunnelUrl", queryTunnel)
+          }
+          if (queryToken) {
+            localStorage.setItem("authToken", queryToken)
+          }
+          if (nextTunnel && nextToken) {
+            setTunnelUrl(nextTunnel)
+            setShareUrl(nextTunnel)
+            setAuthToken(nextToken)
           }
           setIsReady(true)
           clearTimeout(timeout)

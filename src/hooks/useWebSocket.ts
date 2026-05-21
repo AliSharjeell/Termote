@@ -9,8 +9,58 @@ interface UseWebSocketOptions {
   token: string | null
 }
 
+function toWebSocketUrl(url: string): string {
+  let wsUrl = url.trim()
+  if (wsUrl.startsWith("https://")) {
+    wsUrl = "wss://" + wsUrl.slice(8)
+  } else if (wsUrl.startsWith("http://")) {
+    wsUrl = "ws://" + wsUrl.slice(7)
+  }
+  if (!wsUrl.endsWith("/ws")) {
+    wsUrl = wsUrl.replace(/\/?$/, "/ws")
+  }
+  return wsUrl
+}
+
+function tunnelCheckUrl(wsUrl: string): string | null {
+  try {
+    const parsed = new URL(wsUrl)
+    parsed.protocol = parsed.protocol === "wss:" ? "https:" : "http:"
+    parsed.pathname = "/tunnel-check"
+    parsed.search = ""
+    parsed.hash = ""
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
+function shouldWarmTunnel(wsUrl: string): boolean {
+  try {
+    const hostname = new URL(wsUrl).hostname
+    return hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "::1"
+  } catch {
+    return false
+  }
+}
+
+async function warmTunnel(wsUrl: string) {
+  if (!shouldWarmTunnel(wsUrl)) return
+
+  const checkUrl = tunnelCheckUrl(wsUrl)
+  if (!checkUrl) return
+
+  try {
+    await fetch(checkUrl, { cache: "no-store" })
+  } catch (e) {
+    console.warn("[Termote] Tunnel warm-up failed; continuing with WebSocket connect:", e)
+  }
+}
+
 export function useWebSocket({ url, token }: UseWebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null)
+  const connectRef = useRef<(() => Promise<void>) | null>(null)
+  const connectionRunRef = useRef(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttemptRef = useRef(0)
@@ -160,24 +210,19 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleSourceControlState, handleGitReposFound, handlePortProcesses, handleProcessKilled]
   )
 
-  const connect = useCallback(() => {
-    if (!url) return
+  const connect = useCallback(async () => {
+    if (!url || !token) return
 
-    // Build WebSocket URL
-    let wsUrl = url
-    if (wsUrl.startsWith("https://")) {
-      wsUrl = "wss://" + wsUrl.slice(8)
-    } else if (wsUrl.startsWith("http://")) {
-      wsUrl = "ws://" + wsUrl.slice(7)
-    }
-    if (!wsUrl.endsWith("/ws")) {
-      wsUrl = wsUrl.replace(/\/?$/, "/ws")
-    }
+    const wsUrl = toWebSocketUrl(url)
+    const runId = ++connectionRunRef.current
 
     console.log("[Termote] Connecting to:", wsUrl, "attempt:", reconnectAttemptRef.current)
     setTunnelStatus("connecting")
 
     try {
+      await warmTunnel(wsUrl)
+      if (runId !== connectionRunRef.current) return
+
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
       setWebSocket(ws)
@@ -187,9 +232,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         reconnectAttemptRef.current = 0
         setConnected(true)
         setTunnelStatus("connected")
-        if (token) {
-          ws.send(JSON.stringify({ action: "auth", token }))
-        }
+        ws.send(JSON.stringify({ action: "auth", token }))
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ action: "ping" }))
@@ -207,6 +250,8 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       }
 
       ws.onclose = (event) => {
+        if (runId !== connectionRunRef.current) return
+
         console.log("[Termote] WebSocket closed, code:", event.code, "reason:", event.reason)
         setConnected(false)
         setAuthenticated(false)
@@ -225,7 +270,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
 
         console.log(`[Termote] Reconnecting in ${delay}ms (attempt ${reconnectAttemptRef.current})`)
         reconnectTimeoutRef.current = setTimeout(() => {
-          connect()
+          void connectRef.current?.()
         }, delay)
       }
 
@@ -239,6 +284,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
   }, [url, token, setWebSocket, setConnected, setAuthenticated, handleMessage])
 
   const disconnect = useCallback(() => {
+    connectionRunRef.current++
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
     }
@@ -252,10 +298,17 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
   }, [])
 
   useEffect(() => {
+    connectRef.current = connect
+  }, [connect])
+
+  useEffect(() => {
     disconnect()
-    if (!url) return
-    connect()
+    if (!url || !token) return
+    const connectTimer = setTimeout(() => {
+      void connect()
+    }, 0)
     return () => {
+      clearTimeout(connectTimer)
       disconnect()
     }
   }, [connect, disconnect, url, token])
@@ -266,7 +319,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
       reconnectAttemptRef.current = 0
       setTunnelStatus("idle")
       disconnect()
-      setTimeout(connect, 100)
+      setTimeout(() => {
+        void connectRef.current?.()
+      }, 100)
     },
     tunnelStatus,
   }
