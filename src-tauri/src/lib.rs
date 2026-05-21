@@ -350,6 +350,12 @@ async fn start_remote_access(app: AppHandle, runtime: State<'_, Mutex<RuntimeSta
         }
     }
 
+    let mut state = runtime.lock().map_err(|e| e.to_string())?;
+    if let Some(child) = state.tunnel.take() {
+        let _ = child.kill();
+    }
+    state.tunnel_url = None;
+    state.tunnel_running = false;
     Err("Timed out waiting for Dev Tunnel URL".to_string())
 }
 
