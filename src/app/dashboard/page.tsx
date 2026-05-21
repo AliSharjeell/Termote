@@ -148,6 +148,7 @@ function DashboardContent() {
   const [serverRunning, setServerRunning] = useState(false)
   const [checkingServer, setCheckingServer] = useState(false)
   const [runtime, setRuntime] = useState<RuntimeSnapshot | null>(null)
+  const [serverError, setServerError] = useState<string | null>(null)
   const [remoteLoading, setRemoteLoading] = useState(false)
   const [remoteError, setRemoteError] = useState<string | null>(null)
   const [copiedMobileUrl, setCopiedMobileUrl] = useState(false)
@@ -200,6 +201,7 @@ function DashboardContent() {
         const running = await invoke<boolean>('check_status')
         const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
         applyRuntimeSnapshot({ ...snapshot, backendRunning: running })
+        if (running) setServerError(null)
       } catch (err) {
         console.error('Server check failed:', err)
       }
@@ -213,12 +215,13 @@ function DashboardContent() {
 
   const handleServerStart = async () => {
     setCheckingServer(true)
+    setServerError(null)
     try {
-      await invoke('start_server')
-      const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+      const snapshot = await invoke<RuntimeSnapshot>('start_server')
       applyRuntimeSnapshot(snapshot)
     } catch (err) {
       console.error('Start failed:', err)
+      setServerError(`Start failed: ${String(err)}`)
     } finally {
       setCheckingServer(false)
     }
@@ -226,12 +229,13 @@ function DashboardContent() {
 
   const handleServerStop = async () => {
     setCheckingServer(true)
+    setServerError(null)
     try {
-      await invoke('stop_server')
-      const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+      const snapshot = await invoke<RuntimeSnapshot>('stop_server')
       applyRuntimeSnapshot(snapshot)
     } catch (err) {
       console.error('Stop failed:', err)
+      setServerError(`Stop failed: ${String(err)}`)
     } finally {
       setCheckingServer(false)
     }
@@ -239,12 +243,13 @@ function DashboardContent() {
 
   const handleServerRestart = async () => {
     setCheckingServer(true)
+    setServerError(null)
     try {
-      await invoke('restart_server')
-      const snapshot = await invoke<RuntimeSnapshot>('get_runtime_state')
+      const snapshot = await invoke<RuntimeSnapshot>('restart_server')
       applyRuntimeSnapshot(snapshot)
     } catch (err) {
       console.error('Restart failed:', err)
+      setServerError(`Restart failed: ${String(err)}`)
     } finally {
       setCheckingServer(false)
     }
@@ -344,6 +349,7 @@ function DashboardContent() {
         clearTimeout(timeout)
       } catch (err) {
         console.error('[Boot] Init error:', err)
+        setServerError(`Backend init failed: ${String(err)}`)
         setIsReady(true)
         setBootStatus('done')
         clearTimeout(timeout)
@@ -424,6 +430,12 @@ function DashboardContent() {
                 onStop={handleRemoteStop}
                 onCopy={handleCopyMobileUrl}
               />
+              {serverError && (
+                <div className="flex min-w-0 max-w-80 items-center gap-2 rounded-full bg-[#3b1117] px-3 py-1 text-xs text-[#FCA5A5]" title={serverError}>
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{serverError}</span>
+                </div>
+              )}
               {/* DevTunnel login status banner */}
               {devtunnelLoginStatus && devtunnelLoginStatus.status !== 'login_success' && devtunnelLoginStatus.status !== 'checking' && (
                 <div className="flex items-center gap-2 rounded-full bg-[#44380A] px-3 py-1 text-xs text-[#DCDCAA]">

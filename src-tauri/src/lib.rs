@@ -22,6 +22,7 @@ struct RuntimeState {
     auth_token: String,
     tunnel_url: Option<String>,
     backend_running: bool,
+    backend_started_at: Option<Instant>,
     tunnel_running: bool,
 }
 
@@ -33,6 +34,7 @@ impl Default for RuntimeState {
             auth_token: generate_token(),
             tunnel_url: None,
             backend_running: false,
+            backend_started_at: None,
             tunnel_running: false,
         }
     }
@@ -188,7 +190,9 @@ fn wait_for_backend() -> Result<(), String> {
 /// Kill any process currently listening on the given port.
 /// Prevents stale backends from a previous session blocking our sidecar.
 fn kill_processes_on_ports(ports: &[u16]) {
-    use std::process::Command;
+    use std::process::{Command, id};
+
+    let my_pid = id().to_string();
 
     for &port in ports {
         let output = Command::new("netstat")
@@ -203,9 +207,12 @@ fn kill_processes_on_ports(ports: &[u16]) {
                     let parts: Vec<&str> = line.split_whitespace().collect();
                     if parts.len() >= 5 {
                         let pid = parts[4];
+                        if pid == my_pid {
+                            continue;
+                        }
                         println!("Killing stale process {} on port {}", pid, port);
                         let _ = Command::new("taskkill")
-                            .args(["/F", "/PID", pid])
+                            .args(["/F", "/T", "/PID", pid])
                             .output();
                     }
                 }
@@ -215,27 +222,42 @@ fn kill_processes_on_ports(ports: &[u16]) {
 }
 
 fn ensure_backend_running(app: &AppHandle, runtime: &State<'_, Mutex<RuntimeState>>) -> Result<RuntimeSnapshot, String> {
-    {
+    let mut child_to_kill = None;
+    let token = {
         let mut state = runtime.lock().map_err(|e| e.to_string())?;
-        if state.backend_running && is_backend_ready() {
-            return Ok(snapshot(&state));
+
+        if state.backend.is_some() {
+            if is_backend_ready() {
+                state.backend_running = true;
+                return Ok(snapshot(&state));
+            }
+
+            let still_starting = state
+                .backend_started_at
+                .map(|started_at| started_at.elapsed() < Duration::from_secs(20))
+                .unwrap_or(false);
+            if still_starting {
+                state.backend_running = false;
+                return Ok(snapshot(&state));
+            }
+
+            child_to_kill = state.backend.take();
+            state.backend_running = false;
+            state.backend_started_at = None;
         }
 
-        if state.backend_running && !is_backend_ready() {
-            state.backend = None;
-            state.backend_running = false;
-        }
+        state.auth_token.clone()
+    };
+
+    if let Some(child) = child_to_kill {
+        let _ = child.kill();
     }
 
     // Kill any stale backend process left on our port from a previous session/install.
-    // Without this, our new sidecar can't bind the port, and the frontend connects
-    // to the OLD backend with a WRONG auth token → perpetual auth failures.
     kill_processes_on_ports(&[BACKEND_PORT, 9091]);
 
-    let (token, frontend, config) = {
-        let state = runtime.lock().map_err(|e| e.to_string())?;
-        (state.auth_token.clone(), frontend_dir(app), config_dir(app))
-    };
+    let frontend = frontend_dir(app);
+    let config = config_dir(app);
 
     std::fs::create_dir_all(&config).map_err(|e| format!("Failed to create config dir: {e}"))?;
 
@@ -271,12 +293,28 @@ fn ensure_backend_running(app: &AppHandle, runtime: &State<'_, Mutex<RuntimeStat
     {
         let mut state = runtime.lock().map_err(|e| e.to_string())?;
         state.backend = Some(child);
-        state.backend_running = true;
+        state.backend_running = false;
+        state.backend_started_at = Some(Instant::now());
     }
 
-    wait_for_backend()?;
+    if let Err(error) = wait_for_backend() {
+        let child = {
+            let mut state = runtime.lock().map_err(|e| e.to_string())?;
+            state.backend_running = false;
+            state.backend_started_at = None;
+            state.backend.take()
+        };
 
-    let state = runtime.lock().map_err(|e| e.to_string())?;
+        if let Some(child) = child {
+            let _ = child.kill();
+        }
+
+        return Err(error);
+    }
+
+    let mut state = runtime.lock().map_err(|e| e.to_string())?;
+    state.backend_running = true;
+    state.backend_started_at = None;
     Ok(snapshot(&state))
 }
 
@@ -490,18 +528,41 @@ async fn ensure_devtunnel_signed_in(app: &AppHandle, devtunnel: &PathBuf) -> Res
 
 #[tauri::command]
 fn get_runtime_state(runtime: State<'_, Mutex<RuntimeState>>) -> Result<RuntimeSnapshot, String> {
-    let state = runtime.lock().map_err(|e| e.to_string())?;
+    let mut state = runtime.lock().map_err(|e| e.to_string())?;
+    state.backend_running = state.backend.is_some() && is_backend_ready();
     Ok(snapshot(&state))
 }
 
 #[tauri::command]
 fn check_status(runtime: State<'_, Mutex<RuntimeState>>) -> Result<bool, String> {
-    let mut state = runtime.lock().map_err(|e| e.to_string())?;
-    let running = state.backend_running && is_backend_ready();
-    state.backend_running = running;
-    if !running {
-        state.backend = None;
+    let mut child_to_kill = None;
+    let running = {
+        let mut state = runtime.lock().map_err(|e| e.to_string())?;
+        let ready = state.backend.is_some() && is_backend_ready();
+
+        if ready {
+            state.backend_running = true;
+            state.backend_started_at = None;
+            true
+        } else {
+            let still_starting = state
+                .backend_started_at
+                .map(|started_at| started_at.elapsed() < Duration::from_secs(20))
+                .unwrap_or(false);
+
+            state.backend_running = false;
+            if state.backend.is_some() && !still_starting {
+                child_to_kill = state.backend.take();
+                state.backend_started_at = None;
+            }
+            false
+        }
+    };
+
+    if let Some(child) = child_to_kill {
+        let _ = child.kill();
     }
+
     Ok(running)
 }
 
@@ -512,23 +573,34 @@ fn start_server(app: AppHandle, runtime: State<'_, Mutex<RuntimeState>>) -> Resu
 
 #[tauri::command]
 fn stop_server(runtime: State<'_, Mutex<RuntimeState>>) -> Result<RuntimeSnapshot, String> {
-    let mut state = runtime.lock().map_err(|e| e.to_string())?;
-    if let Some(child) = state.backend.take() {
+    let child = {
+        let mut state = runtime.lock().map_err(|e| e.to_string())?;
+        state.backend_running = false;
+        state.backend_started_at = None;
+        state.backend.take()
+    };
+
+    if let Some(child) = child {
         let _ = child.kill();
     }
-    state.backend_running = false;
+
+    let state = runtime.lock().map_err(|e| e.to_string())?;
     Ok(snapshot(&state))
 }
 
 #[tauri::command]
 fn restart_server(app: AppHandle, runtime: State<'_, Mutex<RuntimeState>>) -> Result<RuntimeSnapshot, String> {
-    {
+    let child = {
         let mut state = runtime.lock().map_err(|e| e.to_string())?;
-        if let Some(child) = state.backend.take() {
-            let _ = child.kill();
-        }
         state.backend_running = false;
+        state.backend_started_at = None;
+        state.backend.take()
+    };
+
+    if let Some(child) = child {
+        let _ = child.kill();
     }
+
     ensure_backend_running(&app, &runtime)
 }
 
