@@ -29,6 +29,21 @@ const GROUP_COLORS = [
   "#0AF", // light blue
 ]
 
+function sendIfSocketOpen(ws: WebSocket | null, message: unknown, label: string) {
+  if (!ws) {
+    console.warn(`[Termote] Cannot send ${label}: WebSocket is not connected`)
+    return false
+  }
+
+  if (ws.readyState !== WebSocket.OPEN) {
+    console.warn(`[Termote] Cannot send ${label}: WebSocket readyState is ${ws.readyState}`)
+    return false
+  }
+
+  ws.send(JSON.stringify(message))
+  return true
+}
+
 interface PaneState {
   panes: Pane[]
   activePanes: string[]
@@ -265,9 +280,8 @@ function loadPersistedState() {
       selectedGroupId: selectedGroupJson || null,
       sidebarCollapsed: sidebarJson === "true",
       gitSidebarCollapsed: gitSidebarJson === "true",
-      // For tabs mode, default to collapsed unless explicitly saved
-      tabsSidebarCollapsed: tabsSidebarJson ? tabsSidebarJson === "true" : tabsViewMode === "tabs",
-      tabsGitSidebarCollapsed: tabsGitSidebarJson ? tabsGitSidebarJson === "true" : tabsViewMode === "tabs",
+      tabsSidebarCollapsed: tabsSidebarJson === "true",
+      tabsGitSidebarCollapsed: tabsGitSidebarJson === "true",
     }
   } catch {
     return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false }
@@ -600,8 +614,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   spawnPane: (shell) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
-      ws.send(JSON.stringify({ action: "spawn", shell }))
+    console.log("[Termote Debug] spawnPane called for shell:", shell, "ws:", !!ws, "auth:", isAuthenticated, "readyState:", ws?.readyState)
+    if (sendIfSocketOpen(ws, { action: "spawn", shell }, "spawn")) {
+      console.log("[Termote Debug] Sent spawn action to WS")
     }
   },
 
@@ -611,7 +626,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const newPane: Pane = {
       id,
       pid: 0,
-      shell: "note" as any,
+      shell: "note",
       name: "Untitled Note",
       cols: 80,
       rows: 24,
@@ -846,17 +861,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   fetchPortProcesses: () => {
-    const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
-      ws.send(JSON.stringify({ action: "get_port_processes" }))
-    }
+    const { ws } = get()
+    sendIfSocketOpen(ws, { action: "get_port_processes" }, "get_port_processes")
   },
 
   killProcess: (pid) => {
-    const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
-      ws.send(JSON.stringify({ action: "kill_process", pid }))
-    }
+    const { ws } = get()
+    sendIfSocketOpen(ws, { action: "kill_process", pid }, "kill_process")
   },
 
   renamePane: (paneId, name) => {
@@ -1064,19 +1075,17 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   // File explorer actions
   openExplorer: () => {
-    const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    const { ws } = get()
+    if (sendIfSocketOpen(ws, { action: "list_directory", path: "" }, "list_directory")) {
       // Reset state and request root/drill contents
       set({ explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
-      ws.send(JSON.stringify({ action: "list_directory", path: "" }))
     }
   },
 
   openImagePicker: () => {
-    const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    const { ws } = get()
+    if (sendIfSocketOpen(ws, { action: "list_directory", path: "" }, "list_directory")) {
       set({ imagePickerOpen: true, explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
-      ws.send(JSON.stringify({ action: "list_directory", path: "" }))
     }
   },
 
@@ -1117,7 +1126,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const newPane: Pane = {
       id,
       pid: 0,
-      shell: "browser" as any,
+      shell: "browser",
       name: new URL(url).hostname,
       cols: 80,
       rows: 24,
@@ -1144,10 +1153,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   fetchDirectory: (path) => {
-    const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    const { ws } = get()
+    if (sendIfSocketOpen(ws, { action: "list_directory", path }, "list_directory")) {
       set({ explorerCurrentPath: path })
-      ws.send(JSON.stringify({ action: "list_directory", path }))
     }
   },
 
@@ -1163,11 +1171,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   spawnAtDirectory: (dir) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    console.log("[Termote Debug] spawnAtDirectory called for dir:", dir, "ws:", !!ws, "auth:", isAuthenticated, "readyState:", ws?.readyState)
+    if (sendIfSocketOpen(ws, { action: "spawn_at_dir", shell: "powershell", dir }, "spawn_at_dir")) {
       // Close explorer first
       set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
-      // Send spawn_at_dir action
-      ws.send(JSON.stringify({ action: "spawn_at_dir", shell: "powershell", dir }))
       // Select the group so new panes show
       get().selectGroup(null)
     }

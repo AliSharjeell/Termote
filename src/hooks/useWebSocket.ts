@@ -97,6 +97,8 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
             panesCount: message.panes?.length,
             groupsCount: message.groups?.length,
           })
+          setConnected(true)
+          setAuthenticated(true)
           setLayout(message.panes, message.active_panes, message.floating_panes, message.groups ?? [])
           break
         case "full_state_sync":
@@ -105,6 +107,8 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
             groupsCount: message.groups?.length,
             scrollbackCount: Object.keys(message.scrollback_buffers ?? {}).length,
           })
+          setConnected(true)
+          setAuthenticated(true)
           setLayout(message.panes, message.active_panes, message.floating_panes, message.groups ?? [])
           // Replay scrollback buffers to populate terminal history
           if (message.scrollback_buffers) {
@@ -154,6 +158,8 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           handleDirectoryContents(message.path, message.items)
           break
         case "device_list":
+          setConnected(true)
+          setAuthenticated(true)
           handleDeviceList(message.devices)
           break
         case "device_kicked":
@@ -191,6 +197,8 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           handleGitReposFound(message.repos)
           break
         case "port_processes":
+          setConnected(true)
+          setAuthenticated(true)
           handlePortProcesses(message.processes)
           break
         case "process_killed":
@@ -207,7 +215,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
       }
     },
-    [setLayout, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleSourceControlState, handleGitReposFound, handlePortProcesses, handleProcessKilled]
+    [setLayout, setConnected, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleSourceControlState, handleGitReposFound, handlePortProcesses, handleProcessKilled]
   )
 
   const connect = useCallback(async () => {
