@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 import { isTauriBuild } from '@/lib/tauriDetect'
 import dynamic from 'next/dynamic'
 
@@ -16,7 +17,7 @@ import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User, Search, Play, Square, RotateCw, Zap, Globe2, Copy, Check, Loader2 } from "lucide-react"
+import { User, Search, Play, Square, RotateCw, Zap, Globe2, Copy, Check, Loader2, AlertTriangle, ExternalLink } from "lucide-react"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
@@ -155,22 +156,41 @@ function DashboardContent() {
   const [authToken, setAuthToken] = useState<string | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [bootStatus, setBootStatus] = useState<'init' | 'checking' | 'starting' | 'connecting' | 'done'>('init')
+  const [devtunnelLoginStatus, setDevtunnelLoginStatus] = useState<{
+    status: string
+    message: string
+    url: string | null
+  } | null>(null)
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
 
-  const applyRuntimeSnapshot = (snapshot: RuntimeSnapshot) => {
+  const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
     setRuntime(snapshot)
     setServerRunning(snapshot.backendRunning)
-    setTunnelUrl(snapshot.backendRunning ? LOCAL_WS_URL : null)
+    // Use the wsUrl from the snapshot - it already handles local vs tunnel correctly
+    setTunnelUrl(snapshot.backendRunning ? snapshot.wsUrl : null)
     setShareUrl(snapshot.tunnelUrl || snapshot.backendUrl)
     setAuthToken(snapshot.authToken)
-  }
+  }, [])
 
   // Auto-start backend and check status in Tauri mode
   useEffect(() => {
     if (!isTauriBuild()) return
+
+    // Listen for devtunnel login status events from Rust backend
+    let unlistenLogin: (() => void) | null = null
+    listen<{ status: string; message: string; url: string | null }>('devtunnel-login-status', (event) => {
+      console.log('[DevTunnel] Login status:', event.payload)
+      setDevtunnelLoginStatus(event.payload)
+      // Auto-dismiss success messages after 4 seconds
+      if (event.payload.status === 'login_success') {
+        setTimeout(() => setDevtunnelLoginStatus(null), 4000)
+      }
+    }).then(unlisten => {
+      unlistenLogin = unlisten
+    })
 
     // Periodic check
     checkIntervalRef.current = setInterval(async () => {
@@ -185,8 +205,9 @@ function DashboardContent() {
 
     return () => {
       if (checkIntervalRef.current) clearInterval(checkIntervalRef.current)
+      if (unlistenLogin) unlistenLogin()
     }
-  }, [])
+  }, [applyRuntimeSnapshot])
 
   const handleServerStart = async () => {
     setCheckingServer(true)
@@ -401,6 +422,37 @@ function DashboardContent() {
                 onStop={handleRemoteStop}
                 onCopy={handleCopyMobileUrl}
               />
+              {/* DevTunnel login status banner */}
+              {devtunnelLoginStatus && devtunnelLoginStatus.status !== 'login_success' && devtunnelLoginStatus.status !== 'checking' && (
+                <div className="flex items-center gap-2 rounded-full bg-[#44380A] px-3 py-1 text-xs text-[#DCDCAA]">
+                  {devtunnelLoginStatus.status === 'login_url' ? (
+                    <>
+                      <AlertTriangle className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{devtunnelLoginStatus.message}</span>
+                      {devtunnelLoginStatus.url && (
+                        <a
+                          href={devtunnelLoginStatus.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[#58A6FF] hover:underline shrink-0"
+                        >
+                          Open <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </>
+                  ) : devtunnelLoginStatus.status === 'login_failed' ? (
+                    <>
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-[#E74856]" />
+                      <span className="truncate text-[#E74856]">{devtunnelLoginStatus.message}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                      <span className="truncate">{devtunnelLoginStatus.message}</span>
+                    </>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <>

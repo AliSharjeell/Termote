@@ -6,7 +6,7 @@ use std::{
     sync::Mutex,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_shell::{
     process::{CommandChild, CommandEvent},
     ShellExt,
@@ -48,6 +48,14 @@ struct RuntimeSnapshot {
     auth_token: String,
     tunnel_url: Option<String>,
     mobile_url: String,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DevtunnelLoginEvent {
+    status: String,      // "checking", "login_required", "login_url", "login_success", "login_failed"
+    message: String,
+    url: Option<String>, // login URL when status is "login_url"
 }
 
 fn generate_token() -> String {
@@ -278,6 +286,28 @@ fn parse_tunnel_url(line: &str) -> Option<String> {
         .map(|part| part.trim_end_matches(|c: char| c == '.' || c == ',' || c == ';').to_string())
 }
 
+/// Extract a login/auth URL from devtunnel output.
+/// The `devtunnel user login -g` command prints something like:
+///   "To sign in, use a web browser to open the page https://... and enter the code ..."
+fn parse_login_url(text: &str) -> Option<String> {
+    // Look for any https:// URL in the output (device code login page)
+    for word in text.split_whitespace() {
+        let trimmed = word.trim_end_matches(|c: char| c == '.' || c == ',' || c == ';');
+        if trimmed.starts_with("https://") && (trimmed.contains("microsoft") || trimmed.contains("login") || trimmed.contains("devicelogin") || trimmed.contains("aka.ms")) {
+            return Some(trimmed.to_string());
+        }
+    }
+    None
+}
+
+fn emit_login_event(app: &AppHandle, status: &str, message: &str, url: Option<String>) {
+    let _ = app.emit("devtunnel-login-status", DevtunnelLoginEvent {
+        status: status.to_string(),
+        message: message.to_string(),
+        url,
+    });
+}
+
 async fn collect_command_output(
     app: &AppHandle,
     program: &PathBuf,
@@ -314,6 +344,9 @@ async fn collect_command_output(
 }
 
 async fn ensure_devtunnel_signed_in(app: &AppHandle, devtunnel: &PathBuf) -> Result<(), String> {
+    // Step 1: Check if already logged in
+    emit_login_event(app, "checking", "Checking Dev Tunnel authentication...", None);
+
     let show_output = collect_command_output(
         app,
         devtunnel,
@@ -322,18 +355,68 @@ async fn ensure_devtunnel_signed_in(app: &AppHandle, devtunnel: &PathBuf) -> Res
     )
     .await?;
 
-    if !show_output.to_ascii_lowercase().contains("not logged in") {
+    let lower = show_output.to_ascii_lowercase();
+    let needs_login = lower.contains("not logged in") || lower.contains("expired");
+
+    if !needs_login {
+        emit_login_event(app, "login_success", "Already signed in to Dev Tunnels.", None);
         return Ok(());
     }
 
-    let login_output = collect_command_output(
-        app,
-        devtunnel,
-        vec!["user".to_string(), "login".to_string(), "-g".to_string()],
-        Duration::from_secs(180),
-    )
-    .await?;
+    // Step 2: Need to login - run devtunnel user login -g and watch for the URL
+    emit_login_event(app, "login_required", "Dev Tunnels login required. Starting device code flow...", None);
 
+    let (mut rx, child) = app
+        .shell()
+        .command(devtunnel.to_string_lossy().to_string())
+        .args(["user", "login", "-g"])
+        .spawn()
+        .map_err(|e| format!("Failed to start devtunnel login: {e}"))?;
+
+    let started_at = Instant::now();
+    let login_timeout = Duration::from_secs(180);
+    let mut login_output = String::new();
+    let mut url_opened = false;
+
+    while started_at.elapsed() < login_timeout {
+        match tokio::time::timeout(Duration::from_millis(500), rx.recv()).await {
+            Ok(Some(CommandEvent::Stdout(line))) | Ok(Some(CommandEvent::Stderr(line))) => {
+                let text = String::from_utf8_lossy(&line);
+                log::info!("[devtunnel-login] {}", text);
+                login_output.push_str(&text);
+
+                // Try to extract and open the login URL
+                if !url_opened {
+                    if let Some(login_url) = parse_login_url(&login_output) {
+                        log::info!("[devtunnel-login] Found login URL: {}", login_url);
+                        emit_login_event(app, "login_url", "Please complete sign-in in your browser.", Some(login_url.clone()));
+
+                        // Open the URL in the system browser
+                        #[allow(deprecated)]
+                        if let Err(e) = tauri_plugin_shell::ShellExt::shell(app).open(&login_url, None::<tauri_plugin_shell::open::Program>) {
+                            log::warn!("[devtunnel-login] Failed to open browser: {}", e);
+                        }
+                        url_opened = true;
+                    }
+                }
+            }
+            Ok(Some(CommandEvent::Error(error))) => {
+                log::error!("[devtunnel-login] {}", error);
+                login_output.push_str(&error);
+            }
+            Ok(Some(CommandEvent::Terminated(_))) | Ok(None) => {
+                break;
+            }
+            Ok(Some(_)) | Err(_) => {}
+        }
+    }
+
+    // If we timed out, kill the process
+    if started_at.elapsed() >= login_timeout {
+        let _ = child.kill();
+    }
+
+    // Step 3: Verify login succeeded
     let verify_output = collect_command_output(
         app,
         devtunnel,
@@ -342,13 +425,16 @@ async fn ensure_devtunnel_signed_in(app: &AppHandle, devtunnel: &PathBuf) -> Res
     )
     .await?;
 
-    if verify_output.to_ascii_lowercase().contains("not logged in") {
+    let verify_lower = verify_output.to_ascii_lowercase();
+    if verify_lower.contains("not logged in") || verify_lower.contains("expired") {
+        emit_login_event(app, "login_failed", "Dev Tunnels sign-in did not complete.", None);
         return Err(format!(
-            "Dev Tunnels sign-in did not complete. Run `devtunnel user login -g` and try again. Output: {}",
+            "Dev Tunnels sign-in did not complete. Please try again. Output: {}",
             login_output.trim()
         ));
     }
 
+    emit_login_event(app, "login_success", "Successfully signed in to Dev Tunnels!", None);
     Ok(())
 }
 
