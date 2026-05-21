@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::{
     env,
-    net::TcpStream,
+    net::{Shutdown, TcpStream},
     path::PathBuf,
     sync::Mutex,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
@@ -140,7 +140,13 @@ fn config_dir(app: &AppHandle) -> PathBuf {
 }
 
 fn is_backend_ready() -> bool {
-    TcpStream::connect(("127.0.0.1", BACKEND_PORT)).is_ok()
+    match TcpStream::connect(("127.0.0.1", BACKEND_PORT)) {
+        Ok(stream) => {
+            let _ = stream.shutdown(Shutdown::Both);
+            true
+        }
+        Err(_) => false,
+    }
 }
 
 fn wait_for_backend() -> Result<(), String> {
@@ -246,6 +252,80 @@ fn parse_tunnel_url(line: &str) -> Option<String> {
         .map(|part| part.trim_end_matches(|c: char| c == '.' || c == ',' || c == ';').to_string())
 }
 
+async fn collect_command_output(
+    app: &AppHandle,
+    program: &PathBuf,
+    args: Vec<String>,
+    timeout_duration: Duration,
+) -> Result<String, String> {
+    let (mut rx, child) = app
+        .shell()
+        .command(program.to_string_lossy().to_string())
+        .args(args)
+        .spawn()
+        .map_err(|e| format!("Failed to start Dev Tunnels CLI: {e}"))?;
+
+    let started_at = Instant::now();
+    let mut output = String::new();
+
+    while started_at.elapsed() < timeout_duration {
+        match tokio::time::timeout(Duration::from_millis(500), rx.recv()).await {
+            Ok(Some(CommandEvent::Stdout(line))) | Ok(Some(CommandEvent::Stderr(line))) => {
+                output.push_str(&String::from_utf8_lossy(&line));
+            }
+            Ok(Some(CommandEvent::Error(error))) => {
+                output.push_str(&error);
+            }
+            Ok(Some(CommandEvent::Terminated(_))) | Ok(None) => {
+                return Ok(output);
+            }
+            Ok(Some(_)) | Err(_) => {}
+        }
+    }
+
+    let _ = child.kill();
+    Err(format!("Dev Tunnels CLI timed out. Output: {}", output.trim()))
+}
+
+async fn ensure_devtunnel_signed_in(app: &AppHandle, devtunnel: &PathBuf) -> Result<(), String> {
+    let show_output = collect_command_output(
+        app,
+        devtunnel,
+        vec!["user".to_string(), "show".to_string()],
+        Duration::from_secs(15),
+    )
+    .await?;
+
+    if !show_output.to_ascii_lowercase().contains("not logged in") {
+        return Ok(());
+    }
+
+    let login_output = collect_command_output(
+        app,
+        devtunnel,
+        vec!["user".to_string(), "login".to_string(), "-g".to_string()],
+        Duration::from_secs(180),
+    )
+    .await?;
+
+    let verify_output = collect_command_output(
+        app,
+        devtunnel,
+        vec!["user".to_string(), "show".to_string()],
+        Duration::from_secs(15),
+    )
+    .await?;
+
+    if verify_output.to_ascii_lowercase().contains("not logged in") {
+        return Err(format!(
+            "Dev Tunnels sign-in did not complete. Run `devtunnel user login -g` and try again. Output: {}",
+            login_output.trim()
+        ));
+    }
+
+    Ok(())
+}
+
 #[tauri::command]
 fn get_runtime_state(runtime: State<'_, Mutex<RuntimeState>>) -> Result<RuntimeSnapshot, String> {
     let state = runtime.lock().map_err(|e| e.to_string())?;
@@ -305,6 +385,8 @@ async fn start_remote_access(app: AppHandle, runtime: State<'_, Mutex<RuntimeSta
         "Microsoft Dev Tunnels CLI was not found. Install it and ensure `devtunnel` is on PATH, or set DEVTUNNEL_PATH.".to_string()
     })?;
 
+    ensure_devtunnel_signed_in(&app, &devtunnel).await?;
+
     let command = app
         .shell()
         .command(devtunnel.to_string_lossy().to_string())
@@ -327,23 +409,32 @@ async fn start_remote_access(app: AppHandle, runtime: State<'_, Mutex<RuntimeSta
     }
 
     let started_at = Instant::now();
+    let mut tunnel_output = String::new();
     while started_at.elapsed() < TUNNEL_POLL_TIMEOUT {
         match tokio::time::timeout(Duration::from_millis(500), rx.recv()).await {
             Ok(Some(CommandEvent::Stdout(line))) | Ok(Some(CommandEvent::Stderr(line))) => {
                 let text = String::from_utf8_lossy(&line);
                 log::info!("[devtunnel] {}", text);
+                tunnel_output.push_str(&text);
                 if let Some(url) = parse_tunnel_url(&text) {
                     let mut state = runtime.lock().map_err(|e| e.to_string())?;
                     state.tunnel_url = Some(url);
                     return Ok(snapshot(&state));
                 }
             }
-            Ok(Some(CommandEvent::Error(error))) => log::error!("[devtunnel] {}", error),
+            Ok(Some(CommandEvent::Error(error))) => {
+                log::error!("[devtunnel] {}", error);
+                tunnel_output.push_str(&error);
+            }
             Ok(Some(CommandEvent::Terminated(payload))) => {
                 let mut state = runtime.lock().map_err(|e| e.to_string())?;
                 state.tunnel = None;
                 state.tunnel_running = false;
-                return Err(format!("Dev Tunnel exited before publishing a URL: {:?}", payload));
+                let output = tunnel_output.trim();
+                if output.is_empty() {
+                    return Err(format!("Dev Tunnel exited before publishing a URL: {:?}", payload));
+                }
+                return Err(format!("Dev Tunnel exited before publishing a URL: {}", output));
             }
             Ok(Some(_)) | Err(_) => {}
             Ok(None) => return Err("Dev Tunnel process ended before URL was available".to_string()),
