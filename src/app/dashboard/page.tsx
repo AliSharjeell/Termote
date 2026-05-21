@@ -14,7 +14,7 @@ const BrowserPickerModal = dynamic(() => import('@/components/BrowserPickerModal
 
 import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
-import { useIsMobile, useIsLandscape } from "@/hooks/useMediaQuery"
+import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { User, Search, Play, Square, RotateCw, Zap, Globe2, Copy, Check, Loader2 } from "lucide-react"
 
@@ -140,7 +140,6 @@ function RemoteAccessControls({ runtime, loading, error, copied, onStart, onStop
 }
 
 function DashboardContent() {
-  const isMobile = useIsMobile()
   const isLandscape = useIsLandscape()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -159,7 +158,7 @@ function DashboardContent() {
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { isConnected, isAuthenticated, viewMode, setViewMode, panes, activePanes, sendRefocus } = usePaneStore()
+  const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
 
   const applyRuntimeSnapshot = (snapshot: RuntimeSnapshot) => {
     setRuntime(snapshot)
@@ -429,10 +428,7 @@ function DashboardContent() {
         {/* View mode toggle - centered */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded-full bg-[#27272A] p-1">
           <button
-            onClick={() => {
-              setViewMode("tabs")
-              window.location.reload()
-            }}
+            onClick={() => setViewMode("tabs")}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
               viewMode === "tabs"
                 ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
@@ -442,10 +438,7 @@ function DashboardContent() {
             Tabs
           </button>
           <button
-            onClick={() => {
-              setViewMode("panes")
-              window.location.reload()
-            }}
+            onClick={() => setViewMode("panes")}
             className={`rounded-full px-3 py-1.5 text-xs transition-all ${
               viewMode === "panes"
                 ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
