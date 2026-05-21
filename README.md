@@ -2,6 +2,8 @@
 
 A web-native terminal multiplexer frontend built with Next.js, React, and xterm.js. Provides a beautiful, responsive interface for accessing and managing terminal panes from any device.
 
+Termote is now desktop-first. The Tauri desktop app is the main install target and bundles the Rust Termote backend as a sidecar, so users install one GUI app instead of running a CLI-only setup plus a hosted web deployment.
+
 ## Features
 
 - **Split pane view**: Arrange terminals in a responsive grid
@@ -16,6 +18,64 @@ A web-native terminal multiplexer frontend built with Next.js, React, and xterm.
 - **AI quick-launch**: One-click launch of AI CLI tools (Claude Code, Gemini CLI, etc.)
 - **Pane groups**: Color-code and organize terminals into groups
 - **Security & device management**: View and manage connected devices, ban IPs
+
+## Install Termote
+
+### Recommended: Desktop Installer
+
+Download the latest Termote desktop installer from the TermoteUI releases page, then run the app. The installer includes:
+
+- the Termote desktop GUI
+- the bundled Termote Rust backend
+- local WebSocket access on `127.0.0.1:9090`
+- mobile access through Microsoft Dev Tunnels from the GUI
+
+After launch, Termote starts the local backend automatically. Click **Mobile Access** in the dashboard toolbar to open a Dev Tunnel for your phone or another device. The copied/QR mobile link points directly at your forwarded local Termote GUI; it does not use a hosted deployment.
+
+### Build The Installer From Source
+
+Clone both repos side by side:
+
+```powershell
+mkdir C:\AppsNew\TermoteFull
+cd C:\AppsNew\TermoteFull
+git clone https://github.com/AliSharjeell/Termote.git
+git clone https://github.com/AliSharjeell/TermoteUI.git
+```
+
+Install dependencies and build the desktop bundle:
+
+```powershell
+cd C:\AppsNew\TermoteFull\TermoteUI
+npm install
+npm run tauri:build
+```
+
+The Tauri build runs `npm run build:tauri`, which exports the Next.js GUI and prepares the backend sidecar from `..\Termote`. Installer artifacts are written under:
+
+```text
+src-tauri\target\release\bundle
+```
+
+If your backend repo is somewhere else, set `TERMOTE_BACKEND_DIR` before building:
+
+```powershell
+$env:TERMOTE_BACKEND_DIR="D:\code\Termote"
+npm run tauri:build
+```
+
+### Development
+
+Run the desktop app in development mode:
+
+```powershell
+npm install
+npm run tauri:dev
+```
+
+`tauri:dev` prepares a debug backend sidecar and starts the Next dev server for the Tauri webview.
+
+For mobile access in development or production, install Microsoft Dev Tunnels CLI and make `devtunnel` available on `PATH`, or set `DEVTUNNEL_PATH` to the executable. On Windows the app also checks `%USERPROFILE%\termote\bin\devtunnel.exe`.
 
 ## Architecture
 
@@ -83,7 +143,7 @@ interface PaneState {
 }
 ```
 
-## Setup
+## Web-Only Development
 
 ### Prerequisites
 
@@ -96,7 +156,7 @@ interface PaneState {
 npm install
 ```
 
-### Development
+### Next.js Only
 
 ```bash
 npm run dev
@@ -110,13 +170,20 @@ Open [http://localhost:3000](http://localhost:3000) to access the application.
 npm run build
 ```
 
-### Production
+### Next.js Production
 
 ```bash
 npm run start
 ```
 
 ## Connection Flow
+
+### Desktop App Flow
+
+1. The Tauri app starts the bundled Termote backend sidecar.
+2. The desktop webview connects to `ws://127.0.0.1:9090/ws` using the generated local auth token.
+3. Clicking **Mobile Access** runs `devtunnel host -p 9090 --allow-anonymous`.
+4. The QR/copy link opens the same local GUI through the Dev Tunnel and passes the WebSocket URL plus token to `/dashboard/`.
 
 ### Manual Connection
 
@@ -138,7 +205,7 @@ npm run start
 | `tunnel` | WebSocket tunnel URL |
 | `token` | Authentication token |
 
-Example: `https://termote.example.com/?tunnel=wss://backend.example.com&token=abc123`
+Example: `https://abc-9090.devtunnels.ms/dashboard/?tunnel=wss%3A%2F%2Fabc-9090.devtunnels.ms%2Fws&token=abc123`
 
 ## View Modes
 
