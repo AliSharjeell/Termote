@@ -1,16 +1,15 @@
 "use client"
 
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { useState, useEffect, useRef } from "react"
-import { Terminal } from "@xterm/xterm"
-import { FitAddon } from "@xterm/addon-fit"
-import { PanelRight, FolderGit2, RefreshCw, ArrowLeft } from "lucide-react"
+import { useState, useEffect } from "react"
+import { PanelRight, FolderGit2, RefreshCw } from "lucide-react"
 
 interface GitPaneItem {
   paneId: string
   name: string
   cwd: string
   isRepo: boolean
+  repoPath: string | null
   branch: string | null
 }
 
@@ -27,25 +26,15 @@ export function SourceControlPane() {
     toggleTabsGitSidebar,
     tabsGitSidebarCollapsed,
     findGitRepos,
-    setLazygitTerminal,
-    removeLazygitTerminal,
-    spawnLazygit,
-    lazySidebarPaneId,
-    setLazygitSidebarPaneId,
+    getSourceControlState,
+    setSelectedSourceControlRepo,
+    selectedSourceControlRepo,
   } = usePaneStore()
 
   // Use the correct toggle based on which sidebar is active (tabs vs panes)
   const effectiveToggleGitSidebar = tabsGitSidebarCollapsed !== undefined ? toggleTabsGitSidebar : toggleGitSidebar
 
   const [isScanning, setIsScanning] = useState(false)
-  // Sidebar mode: "list" or "lazygit"
-  const [sidebarMode, setSidebarMode] = useState<"list" | "lazygit">("list")
-  // Which pane/label is selected to show in lazygit view
-  const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
-  // Ref for the embedded xterm container in the sidebar
-  const xtermRef = useRef<HTMLDivElement>(null)
-  // The sentinel key used for the sidebar embedded lazygit terminal
-  const sidebarTerminalPaneRef = useRef<string | null>(null)
 
   // Kick off git repo discovery on mount — also re-scan if panes exist but repos are empty
   useEffect(() => {
@@ -91,6 +80,7 @@ export function SourceControlPane() {
         name: p.name,
         cwd: p.cwd || "",
         isRepo: !!repoInfo,
+        repoPath: repoInfo?.path || null,
         branch: repoInfo?.branch || null,
       }
     })
@@ -99,138 +89,11 @@ export function SourceControlPane() {
 
   const handleSelectItem = (item: GitPaneItem) => {
     if (!item.isRepo) return
-    setSelectedLabel(item.cwd)
-    setSidebarMode("lazygit")
-
-    // Clear previous xterm content
-    if (xtermRef.current) {
-      xtermRef.current.innerHTML = ""
-    }
-
-    // Spawn lazygit — backend creates a new pane with a fresh UUID
-    // We use item.paneId as a sentinel; the backend ignores it
-    console.log("[SourceControlPane] Spawning lazygit for:", item.cwd)
-    spawnLazygit(item.paneId, item.cwd)
-
-    // Create an embedded xterm terminal for the lazygit output
-    // The backend will send output from a pane whose ID we don't know yet,
-    // so we'll match by listening for ALL pane output and routing to our terminal
-    const terminal = new Terminal({
-      cursorBlink: true,
-      fontSize: 11,
-      fontFamily: "monospace",
-      theme: {
-        background: "#0d0d0d",
-        foreground: "#cccccc",
-        cursor: "#cccccc",
-      },
-      scrollback: 1000,
-    })
-    const fitAddon = new FitAddon()
-    terminal.loadAddon(fitAddon)
-
-    // Store with a sentinel key — when LazygitSpawned arrives, the
-    // websocket handler moves it to the real pane ID
-    setLazygitTerminal("sentinel", terminal)
-    setLazygitSidebarPaneId(null)
-    sidebarTerminalPaneRef.current = null
-
-    // Open terminal in the ref element after paint
-    requestAnimationFrame(() => {
-      if (xtermRef.current) {
-        terminal.open(xtermRef.current)
-        fitAddon.fit()
-      }
-    })
+    const repoPath = item.repoPath || item.cwd
+    setSelectedSourceControlRepo(repoPath)
+    getSourceControlState(repoPath)
   }
 
-  const handleBack = () => {
-    const paneId = usePaneStore.getState().lazySidebarPaneId
-    if (paneId) {
-      removeLazygitTerminal(paneId)
-    }
-    removeLazygitTerminal("sentinel")
-    setLazygitSidebarPaneId(null)
-    if (xtermRef.current) {
-      xtermRef.current.innerHTML = ""
-    }
-    sidebarTerminalPaneRef.current = null
-    setSidebarMode("list")
-    setSelectedLabel(null)
-  }
-
-  // Listen for PTY output from the spawned lazygit pane only.
-  // lazySidebarPaneId is set when LazygitSpawned arrives from the backend.
-  useEffect(() => {
-    if (sidebarMode !== "lazygit") return
-
-    const handleOutput = (e: Event) => {
-      const customEvent = e as CustomEvent<{ paneId: string; data: string }>
-      const targetPaneId = usePaneStore.getState().lazySidebarPaneId
-      if (!targetPaneId) {
-        console.log("[SourceControlPane] No pane ID yet, dropping output")
-        return // Not spawned yet
-      }
-      if (customEvent.detail.paneId === targetPaneId) {
-        const instance = usePaneStore.getState().lazygitTerminals[targetPaneId]
-        if (instance) {
-          instance.terminal.write(customEvent.detail.data)
-        } else {
-          console.log("[SourceControlPane] No terminal for pane:", targetPaneId)
-        }
-      }
-    }
-
-    window.addEventListener("terminal-output", handleOutput)
-    return () => window.removeEventListener("terminal-output", handleOutput)
-  }, [sidebarMode])
-
-  // === LazyGit mode ===
-  if (sidebarMode === "lazygit") {
-    return (
-      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] overflow-hidden" style={{ width: 280, height: "100%" }}>
-        {/* Back button row */}
-        <div className="flex items-center justify-between px-2 py-1 border-b border-[#1a1a1a]">
-          <button
-            onClick={handleBack}
-            title="Back to repo list"
-            className="flex items-center gap-1 text-[#CCCCCC] hover:text-white text-[10px]"
-          >
-            <ArrowLeft size={12} />
-            <span>Back</span>
-          </button>
-          <button
-            onClick={effectiveToggleGitSidebar}
-            title="Collapse git sidebar"
-            className="text-[#CCCCCC] hover:text-white"
-          >
-            <PanelRight size={14} />
-          </button>
-        </div>
-
-        {/* Lazygit view — embedded xterm terminal */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {selectedLabel && (
-            <div className="px-3 py-2 border-b border-[#252525]">
-              <div className="text-[10px] text-[#CCCCCC] truncate" title={selectedLabel}>
-                {selectedLabel.split(/[/\\]/).pop()}
-              </div>
-              <div className="text-[9px] text-[#666]">Lazygit</div>
-            </div>
-          )}
-          {/* Embedded xterm for lazygit output */}
-          <div ref={xtermRef} className="flex-1 overflow-hidden p-1" />
-        </div>
-
-        {/* Footer */}
-        <div className="px-3 py-2 border-t border-[#252525]">
-          <p className="text-[9px] text-[#666]">Click Back to return to repo list</p>
-        </div>
-      </div>
-    )
-  }
-
-  // === List mode ===
   return (
     <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] overflow-hidden" style={{ width: 280, height: "100%" }}>
       {/* Collapse button row */}
@@ -277,8 +140,12 @@ export function SourceControlPane() {
             <button
               key={item.paneId}
               onClick={() => handleSelectItem(item)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-[#1f1f1f] text-left mb-0.5 transition-colors"
-              title={`Open git view: ${item.cwd}`}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded text-left mb-0.5 transition-colors ${
+                selectedSourceControlRepo === (item.repoPath || item.cwd)
+                  ? "bg-[#1f1f1f]"
+                  : "hover:bg-[#1f1f1f]"
+              }`}
+              title={`Refresh git status: ${item.repoPath || item.cwd}`}
             >
               <FolderGit2 size={13} className="text-[#16C60C] shrink-0" />
               <div className="flex-1 min-w-0">
@@ -296,7 +163,7 @@ export function SourceControlPane() {
       {/* Hint footer */}
       <div className="px-3 py-2 border-t border-[#252525]">
         <p className="text-[9px] text-[#666]">
-          Click a terminal to view git status
+          Select a repo to refresh git status
         </p>
       </div>
     </div>

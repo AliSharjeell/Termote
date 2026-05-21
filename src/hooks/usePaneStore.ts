@@ -1,6 +1,5 @@
 import { create } from "zustand"
 import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem } from "@/lib/types"
-import type { Terminal } from "@xterm/xterm"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -109,10 +108,6 @@ interface PaneState {
   }>
   // Selected source control repo path
   selectedSourceControlRepo: string | null
-  // Lazygit terminal instances keyed by pane ID (for embedded sidebar rendering)
-  lazygitTerminals: Record<string, { terminal: Terminal }>
-  // The actual pane ID of the spawned lazygit (set when LazygitSpawned event arrives)
-  lazySidebarPaneId: string | null
   // Port manager
   portProcesses: Array<{
     port: number
@@ -196,14 +191,10 @@ interface PaneState {
   gitPush: (paneId: string) => void
   gitPull: (paneId: string) => void
   gitLog: (paneId: string, dir: string) => void
-  spawnLazygit: (paneId: string, cwd: string) => void
   getSourceControlState: (path: string) => void
   findGitRepos: (path: string) => void
   setSelectedSourceControlRepo: (path: string | null) => void
   handleGitReposFound: (repos: Array<{path: string; name: string; branch: string | null}>) => void
-  setLazygitTerminal: (paneId: string, terminal: Terminal) => void
-  removeLazygitTerminal: (paneId: string) => void
-  setLazygitSidebarPaneId: (paneId: string | null) => void
   handlePortProcesses: (processes: Array<{port: number; pid: number; process_name: string; cwd?: string}>) => void
   handleProcessKilled: (pid: number, success: boolean) => void
   handleGitStatus: (status: {
@@ -526,8 +517,6 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   sourceControlStates: {},
   sourceControlRepos: loadSourceControlRepos(),
   selectedSourceControlRepo: loadSourceControlSelected(),
-  lazygitTerminals: {},
-  lazySidebarPaneId: null,
   portProcesses: [],
   aiCommand: loadAiCommand(),
 
@@ -1262,13 +1251,6 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
-  spawnLazygit: (paneId, cwd) => {
-    const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
-      ws.send(JSON.stringify({ action: "spawn_lazygit", pane_id: paneId, cwd }))
-    }
-  },
-
   getSourceControlState: (path) => {
     const { ws, isAuthenticated } = get()
     if (ws && isAuthenticated) {
@@ -1307,26 +1289,6 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         selectedSourceControlRepo: selected,
       }
     })
-  },
-
-  setLazygitTerminal: (paneId, terminal) => {
-    set((state) => ({
-      lazygitTerminals: {
-        ...state.lazygitTerminals,
-        [paneId]: { terminal },
-      },
-    }))
-  },
-
-  removeLazygitTerminal: (paneId) => {
-    set((state) => {
-      const { [paneId]: _, ...rest } = state.lazygitTerminals
-      return { lazygitTerminals: rest }
-    })
-  },
-
-  setLazygitSidebarPaneId: (paneId) => {
-    set({ lazySidebarPaneId: paneId })
   },
 
   handlePortProcesses: (processes) => {
