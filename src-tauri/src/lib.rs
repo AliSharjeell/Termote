@@ -126,6 +126,30 @@ fn snapshot(state: &RuntimeState) -> RuntimeSnapshot {
     }
 }
 
+fn stop_runtime_children(app: &AppHandle) {
+    let runtime = app.state::<Mutex<RuntimeState>>();
+    let (backend, tunnel) = match runtime.lock() {
+        Ok(mut state) => {
+            state.backend_running = false;
+            state.backend_started_at = None;
+            state.tunnel_running = false;
+            state.tunnel_url = None;
+            (state.backend.take(), state.tunnel.take())
+        }
+        Err(error) => {
+            log::warn!("Failed to lock runtime state during shutdown: {}", error);
+            return;
+        }
+    };
+
+    if let Some(child) = backend {
+        let _ = child.kill();
+    }
+    if let Some(child) = tunnel {
+        let _ = child.kill();
+    }
+}
+
 fn frontend_dir(app: &AppHandle) -> PathBuf {
     if let Some(path) = env::var_os("TERMOTE_FRONTEND_DIR") {
         return PathBuf::from(path);
@@ -713,7 +737,7 @@ async fn check_for_updates() -> Result<String, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .manage(Mutex::new(RuntimeState::default()))
         .plugin(
             tauri_plugin_log::Builder::default()
@@ -731,6 +755,13 @@ pub fn run() {
             stop_remote_access,
             check_for_updates
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| match event {
+        tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => {
+            stop_runtime_children(app_handle);
+        }
+        _ => {}
+    });
 }

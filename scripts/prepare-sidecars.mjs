@@ -14,6 +14,39 @@ const profileArg = process.argv.find((arg) => arg.startsWith("--profile="))
 const profile = profileArg?.slice("--profile=".length) || process.env.TERMOTE_BACKEND_PROFILE || "release"
 const skipBuild = args.has("--skip-build") || process.env.TERMOTE_SKIP_BACKEND_BUILD === "1"
 
+function psString(value) {
+  return `'${value.replaceAll("'", "''")}'`
+}
+
+function killStaleDevProcesses() {
+  if (process.platform !== "win32") return
+
+  const targetDebug = join(uiRoot, "src-tauri", "target", "debug")
+  const script = `
+$ErrorActionPreference = 'SilentlyContinue'
+$target = ${psString(targetDebug)}
+$names = @('termote', 'termote-backend', 'devtunnel')
+Get-Process -Name $names -ErrorAction SilentlyContinue |
+  Where-Object { $_.Path -and $_.Path.StartsWith($target, [System.StringComparison]::OrdinalIgnoreCase) } |
+  ForEach-Object {
+    Write-Host "Stopping stale dev process: $($_.ProcessName) ($($_.Id))"
+    try {
+      Stop-Process -Id $_.Id -Force -ErrorAction Stop
+    } catch {}
+  }
+exit 0
+`
+
+  try {
+    execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], {
+      stdio: "inherit",
+      shell: false,
+    })
+  } catch (error) {
+    console.warn(`Warning: failed to stop stale Tauri dev processes: ${error.message}`)
+  }
+}
+
 if (!["debug", "release"].includes(profile)) {
   throw new Error(`Unsupported backend profile "${profile}". Use debug or release.`)
 }
@@ -21,6 +54,8 @@ if (!["debug", "release"].includes(profile)) {
 if (!existsSync(join(backendRoot, "Cargo.toml"))) {
   throw new Error(`Termote backend repo not found at ${backendRoot}. Set TERMOTE_BACKEND_DIR to override.`)
 }
+
+killStaleDevProcesses()
 
 if (!skipBuild) {
   const buildArgs = profile === "release" ? ["build", "--release"] : ["build"]
