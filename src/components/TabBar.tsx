@@ -88,23 +88,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
     ? panes.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : panes
 
-  if (panes.length === 0) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[#0C0C0C]">
-        <div className="text-center text-[#CCCCCC]">
-          <p className="text-lg">No active panes</p>
-          <button
-            onClick={() => {
-              usePaneStore.getState().spawnPane("powershell")
-            }}
-            className="mt-4 rounded-lg bg-white px-6 py-2.5 text-sm text-black hover:bg-gray-200 font-medium"
-          >
-            + New Terminal
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex h-full w-full flex-row bg-[#0C0C0C]">
@@ -286,7 +269,21 @@ export function TabBar({ searchQuery }: TabBarProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Active pane content */}
         <div className="flex-1 overflow-hidden relative">
-          {searchFiltered.map((pane) => (
+          {panes.length === 0 ? (
+            <div className="flex h-full w-full items-center justify-center bg-[#080808]">
+              <div className="text-center text-[#CCCCCC]">
+                <p className="text-sm">No active panes</p>
+                <button
+                  onClick={() => {
+                    usePaneStore.getState().spawnPane("powershell")
+                  }}
+                  className="mt-4 rounded-lg bg-white px-6 py-2.5 text-sm text-black hover:bg-gray-200 font-medium"
+                >
+                  + New Terminal
+                </button>
+              </div>
+            </div>
+          ) : searchFiltered.map((pane) => (
             <div
               key={pane.id}
               className="absolute inset-0"
