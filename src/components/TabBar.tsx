@@ -10,7 +10,6 @@ import { BrowserPane } from "./BrowserPane"
 import { NotePane } from "./NotePane"
 import { ImagePane } from "./ImagePane"
 import { WhiteboardPane } from "./WhiteboardPane"
-import { ProfilePane } from "./ProfilePane"
 import { useIsTauri } from "@/hooks/useIsTauri"
 
 interface TabBarProps {
@@ -313,20 +312,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
         </div>
       </div>
 
-      {/* Profile sidebar */}
-      {tabsProfileSidebarCollapsed ? (
-        <div className={`shrink-0 flex flex-col items-center border-l border-[#252525] w-10 py-2 gap-2 ${isMica ? "bg-transparent border-l-transparent" : "bg-[#0d0d0d]"}`}>
-          <button
-            onClick={toggleTabsProfileSidebar}
-            title="Expand profile sidebar (Alt+2)"
-            className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
-          >
-            <PanelRight size={14} />
-          </button>
-        </div>
-      ) : (
-        <ProfilePane tunnelUrl={""} authToken={""} />
-      )}
+      {/* Spacer where profile sidebar used to be - removed for dashboard placement */}
     </div>
   )
 }

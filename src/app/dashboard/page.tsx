@@ -8,6 +8,8 @@ import dynamic from 'next/dynamic'
 
 const SplitPane = dynamic(() => import('@/components/SplitPane').then(m => ({ default: m.SplitPane })), { ssr: false })
 const TabBar = dynamic(() => import('@/components/TabBar').then(m => ({ default: m.TabBar })), { ssr: false })
+const TauriTitlebar = dynamic(() => import('@/components/TauriTitlebar').then(m => ({ default: m.TauriTitlebar })), { ssr: false })
+const ProfilePane = dynamic(() => import('@/components/ProfilePane').then(m => ({ default: m.ProfilePane })), { ssr: false })
 const SecurityModal = dynamic(() => import('@/components/SecurityModal').then(m => ({ default: m.SecurityModal })), { ssr: false })
 const DirectoryPickerModal = dynamic(() => import('@/components/DirectoryPickerModal').then(m => ({ default: m.DirectoryPickerModal })), { ssr: false })
 const BrowserPickerModal = dynamic(() => import('@/components/BrowserPickerModal').then(m => ({ default: m.BrowserPickerModal })), { ssr: false })
@@ -56,7 +58,7 @@ function DashboardContent() {
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
+  const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed } = usePaneStore()
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
 
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
@@ -314,138 +316,154 @@ function DashboardContent() {
 
   return (
     <div className={`flex h-screen w-full flex-col overflow-hidden ${shellClass}`}>
-      {/* Connection status bar */}
-      <div className={`relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2 ${tauriChecked && isTauriApp ? "bg-transparent border-transparent" : ""}`}>
-        {/* Status + Server Controls - left side */}
-        <div className="flex items-center gap-4">
-          {isTauri ? (
-            <div className="flex items-center gap-2">
-              <div
-                className={`h-2 w-2 rounded-full shrink-0 ${
-                  serverRunning ? "bg-[#16C60C]" : "bg-[#E74856]"
-                }`}
-                style={{
-                  boxShadow: serverRunning ? "0 0 6px #16C60C" : "0 0 6px #E74856"
-                }}
-              />
-              <span className="text-sm text-[#CCCCCC]">Termote</span>
-              {serverError && (
-                <div className="flex min-w-0 max-w-80 items-center gap-2 rounded-full bg-[#3b1117] px-3 py-1 text-xs text-[#FCA5A5]" title={serverError}>
-                  <AlertTriangle className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{serverError}</span>
-                </div>
-              )}
-              {/* DevTunnel login status banner */}
-              {devtunnelLoginStatus && devtunnelLoginStatus.status !== 'login_success' && devtunnelLoginStatus.status !== 'checking' && (
-                <div className="flex items-center gap-2 rounded-full bg-[#44380A] px-3 py-1 text-xs text-[#DCDCAA]">
-                  {devtunnelLoginStatus.status === 'login_url' ? (
-                    <>
+      {/* Tauri custom titlebar */}
+      <TauriTitlebar />
+
+      {/* Main content with sidebar + content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main content area with topbar + panes */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Connection status bar */}
+          <div className={`relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2 ${tauriChecked && isTauriApp ? "bg-transparent border-transparent" : ""}`}>
+            {/* Status + Server Controls - left side */}
+            <div className="flex items-center gap-4">
+              {isTauri ? (
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-2 w-2 rounded-full shrink-0 ${
+                      serverRunning ? "bg-[#16C60C]" : "bg-[#E74856]"
+                    }`}
+                    style={{
+                      boxShadow: serverRunning ? "0 0 6px #16C60C" : "0 0 6px #E74856"
+                    }}
+                  />
+                  <span className="text-sm text-[#CCCCCC]">Termote</span>
+                  {serverError && (
+                    <div className="flex min-w-0 max-w-80 items-center gap-2 rounded-full bg-[#3b1117] px-3 py-1 text-xs text-[#FCA5A5]" title={serverError}>
                       <AlertTriangle className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{devtunnelLoginStatus.message}</span>
-                      {devtunnelLoginStatus.url && (
-                        <a
-                          href={devtunnelLoginStatus.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-[#58A6FF] hover:underline shrink-0"
-                        >
-                          Open <ExternalLink className="h-3 w-3" />
-                        </a>
+                      <span className="truncate">{serverError}</span>
+                    </div>
+                  )}
+                  {/* DevTunnel login status banner */}
+                  {devtunnelLoginStatus && devtunnelLoginStatus.status !== 'login_success' && devtunnelLoginStatus.status !== 'checking' && (
+                    <div className="flex items-center gap-2 rounded-full bg-[#44380A] px-3 py-1 text-xs text-[#DCDCAA]">
+                      {devtunnelLoginStatus.status === 'login_url' ? (
+                        <>
+                          <AlertTriangle className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{devtunnelLoginStatus.message}</span>
+                          {devtunnelLoginStatus.url && (
+                            <a
+                              href={devtunnelLoginStatus.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-[#58A6FF] hover:underline shrink-0"
+                            >
+                              Open <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </>
+                      ) : devtunnelLoginStatus.status === 'login_failed' ? (
+                        <>
+                          <AlertTriangle className="h-3 w-3 shrink-0 text-[#E74856]" />
+                          <span className="truncate text-[#E74856]">{devtunnelLoginStatus.message}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                          <span className="truncate">{devtunnelLoginStatus.message}</span>
+                        </>
                       )}
-                    </>
-                  ) : devtunnelLoginStatus.status === 'login_failed' ? (
-                    <>
-                      <AlertTriangle className="h-3 w-3 shrink-0 text-[#E74856]" />
-                      <span className="truncate text-[#E74856]">{devtunnelLoginStatus.message}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-                      <span className="truncate">{devtunnelLoginStatus.message}</span>
-                    </>
+                    </div>
                   )}
                 </div>
+              ) : (
+                <>
+                  <div
+                    className={`h-2 w-2 rounded-full shrink-0 ${
+                      isConnected
+                        ? isAuthenticated
+                          ? "bg-[#16C60C]"
+                          : "bg-[#DCDCAA]"
+                        : tunnelStatus === "connecting"
+                          ? "bg-[#DCDCAA] animate-pulse"
+                          : "bg-[#E74856]"
+                    }`}
+                    style={{
+                      boxShadow: isConnected
+                        ? isAuthenticated ? "0 0 6px #16C60C" : "0 0 6px #DCDCAA"
+                        : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
+                    }}
+                  />
+                  <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
+                </>
               )}
             </div>
-          ) : (
-            <>
-              <div
-                className={`h-2 w-2 rounded-full shrink-0 ${
-                  isConnected
-                    ? isAuthenticated
-                      ? "bg-[#16C60C]"
-                      : "bg-[#DCDCAA]"
-                    : tunnelStatus === "connecting"
-                      ? "bg-[#DCDCAA] animate-pulse"
-                      : "bg-[#E74856]"
+
+            {/* View mode toggle - centered */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded-full bg-[#27272A] p-1">
+              <button
+                onClick={() => setViewMode("tabs")}
+                className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+                  viewMode === "tabs"
+                    ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
+                    : "text-[#CCCCCC] hover:text-white"
                 }`}
-                style={{
-                  boxShadow: isConnected
-                    ? isAuthenticated ? "0 0 6px #16C60C" : "0 0 6px #DCDCAA"
-                    : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
-                }}
-              />
-              <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
-            </>
-          )}
-        </div>
-
-        {/* View mode toggle - centered */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded-full bg-[#27272A] p-1">
-          <button
-            onClick={() => setViewMode("tabs")}
-            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
-              viewMode === "tabs"
-                ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
-                : "text-[#CCCCCC] hover:text-white"
-            }`}
-          >
-            Tabs
-          </button>
-          <button
-            onClick={() => setViewMode("panes")}
-            className={`rounded-full px-3 py-1.5 text-xs transition-all ${
-              viewMode === "panes"
-                ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
-                : "text-[#CCCCCC] hover:text-white"
-            }`}
-          >
-            Panes
-          </button>
-        </div>
-
-        {/* Search + Profile - right side */}
-        <div className="ml-auto flex items-center gap-2">
-          {searchOpen ? (
-            <div className="relative flex items-center">
-              <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#808080]" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-                className="h-8 w-48 rounded-full bg-[#27272A] pl-8 pr-3 text-xs text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
-                onBlur={() => {
-                  if (!searchQuery) setSearchOpen(false)
-                }}
-              />
+              >
+                Tabs
+              </button>
+              <button
+                onClick={() => setViewMode("panes")}
+                className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+                  viewMode === "panes"
+                    ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
+                    : "text-[#CCCCCC] hover:text-white"
+                }`}
+              >
+                Panes
+              </button>
             </div>
-          ) : (
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#A1A1AA] hover:bg-[#252525] hover:text-white transition-colors"
-              title="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      </div>
 
-      {/* Main content area */}
-      <div className="flex-1 overflow-hidden">
-        {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
+            {/* Search + Profile - right side */}
+            <div className="ml-auto flex items-center gap-2">
+              {searchOpen ? (
+                <div className="relative flex items-center">
+                  <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#808080]" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                    className="h-8 w-48 rounded-full bg-[#27272A] pl-8 pr-3 text-xs text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
+                    onBlur={() => {
+                      if (!searchQuery) setSearchOpen(false)
+                    }}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#A1A1AA] hover:bg-[#252525] hover:text-white transition-colors"
+                  title="Search"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Main panes area */}
+          <div className="flex-1 overflow-hidden">
+            {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
+          </div>
+        </div>
+
+        {/* Right sidebar - ProfilePane (only for Tauri) */}
+        {tauriChecked && isTauriApp && (
+          <div className={`shrink-0 ${profileSidebarCollapsed ? "w-10" : "w-64"}`}>
+            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
+          </div>
+        )}
       </div>
 
       {/* Modals */}

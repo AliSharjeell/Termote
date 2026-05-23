@@ -78,10 +78,12 @@ body {
   background: transparent;
 }
 
+.tauri-mica-shell .tauri-titlebar,
 .tauri-mica-shell aside,
 .tauri-mica-shell header,
 .tauri-mica-shell .sidebar,
 .tauri-mica-shell .topbar,
+.tauri-mica-shell .main-column,
 .tauri-mica-shell [data-sidebar],
 .tauri-mica-shell [data-topbar] {
   background: transparent !important;
@@ -92,11 +94,25 @@ body {
 /* Remove borders between sidebar and topbar in Mica mode */
 .tauri-mica-shell .border-r,
 .tauri-mica-shell .border-b,
-.tauri-mica-shell .border-l {
+.tauri-mica-shell .border-l,
+.tauri-mica-shell .border-t {
   border-color: transparent !important;
+}
+
+/* Tauri titlebar hover states */
+.tauri-titlebar button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tauri-titlebar button:last-child:hover {
+  background-color: #dc2626;
 }
 
 /* Web shell - normal solid background */
 .web-shell {
   background: var(--background);
+}
+
+.web-shell .tauri-titlebar {
+  display: none;
 }
