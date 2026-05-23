@@ -212,11 +212,11 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
               <RefreshCw className="h-4 w-4" />
               Server Controls {isTauri ? "(Tauri)" : "(Browser)"}
             </label>
-            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#0C0C0C] p-3">
+            <div className="grid grid-cols-1 gap-2 rounded-lg bg-[#0C0C0C] p-3">
               <button
                 onClick={handleRestartServer}
                 disabled={!!serverAction || !serverRunning}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
                 Restart
@@ -224,7 +224,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
               <button
                 onClick={handleStopServer}
                 disabled={!!serverAction || !serverRunning}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
               >
                 <Square className="h-3.5 w-3.5" />
                 Stop
@@ -234,14 +234,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                   setShowQRModal(true)
                   setQrBlurred(true)
                 }}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full"
               >
                 <QrCode className="h-3.5 w-3.5" />
                 Mobile Access
               </button>
               <button
                 onClick={handleCopyLink}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full"
               >
                 {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
                 Copy Link
