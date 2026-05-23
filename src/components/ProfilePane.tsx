@@ -52,7 +52,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
   const [qrBlurred, setQrBlurred] = useState(true)
   const [customCommand, setCustomCommand] = useState("")
   const [customSelected, setCustomSelected] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const toggleProfileSidebar = usePaneStore((state) => state.toggleProfileSidebar)
 
   const isMica = false // Disabled - profile sidebar should have solid backgrounds
   const mobileUrl = buildMobileUrl(tunnelUrl, authToken)
@@ -143,9 +143,9 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
         {/* Collapse button */}
         <div className={`flex justify-start px-2 py-1 ${isMica ? "border-transparent" : "border-b border-[#1a1a1a]"}`}>
           <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onClick={toggleProfileSidebar}
             title="Collapse sidebar"
-            className="text-[#CCCCCC] hover:text-white"
+            className="text-[#CCCCCC] hover:text-white cursor-pointer"
           >
             <PanelRight size={14} />
           </button>

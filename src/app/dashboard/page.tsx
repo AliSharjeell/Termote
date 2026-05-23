@@ -19,7 +19,7 @@ import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { useIsTauri } from "@/hooks/useIsTauri"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2 } from "lucide-react"
+import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2, PanelRight } from "lucide-react"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
@@ -58,7 +58,7 @@ function DashboardContent() {
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed } = usePaneStore()
+  const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed, toggleProfileSidebar } = usePaneStore()
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
 
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
@@ -407,14 +407,14 @@ function DashboardContent() {
             <div data-tauri-no-drag className="flex items-center mr-2">
               {searchOpen ? (
                 <div className="relative flex items-center">
-                  <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#808080]" />
+                  <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
                   <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
-                    className="h-7 w-48 rounded-full bg-[#27272A]/80 pl-8 pr-3 text-xs text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
+                    className="h-7 w-48 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
                     onBlur={() => {
                       if (!searchQuery) setSearchOpen(false)
                     }}
@@ -423,7 +423,7 @@ function DashboardContent() {
               ) : (
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[#27272A]/50 text-[#A1A1AA] hover:bg-[#252525] hover:text-white transition-colors cursor-pointer"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                   title="Search"
                 >
                   <Search className="h-3.5 w-3.5" />
@@ -493,14 +493,14 @@ function DashboardContent() {
               <div className="ml-auto flex items-center gap-2">
                 {searchOpen ? (
                   <div className="relative flex items-center">
-                    <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#808080]" />
+                    <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
                     <input
                       type="text"
                       placeholder="Search..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
-                      className="h-8 w-48 rounded-full bg-[#27272A] pl-8 pr-3 text-xs text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
+                      className="h-8 w-48 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
                       onBlur={() => {
                         if (!searchQuery) setSearchOpen(false)
                       }}
@@ -509,7 +509,7 @@ function DashboardContent() {
                 ) : (
                   <button
                     onClick={() => setSearchOpen(true)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#A1A1AA] hover:bg-[#252525] hover:text-white transition-colors"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                     title="Search"
                   >
                     <Search className="h-4 w-4" />
@@ -527,9 +527,21 @@ function DashboardContent() {
 
         {/* Profile sidebar - Tauri only, on RIGHT */}
         {tauriChecked && isTauriApp && (
-          <div className="profile-sidebar shrink-0 mt-10 h-[calc(100%-2.5rem)]" data-mica-surface>
-            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
-          </div>
+          profileSidebarCollapsed ? (
+            <div data-mica-surface className="profile-sidebar shrink-0 flex flex-col items-center gap-1 border-l border-[#252525] p-1 w-10 h-full">
+              <button
+                onClick={toggleProfileSidebar}
+                title="Expand profile sidebar"
+                className="w-8 h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
+              >
+                <PanelRight size={14} className="rotate-180" />
+              </button>
+            </div>
+          ) : (
+            <div className="profile-sidebar shrink-0 h-full" data-mica-surface>
+              <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
+            </div>
+          )
         )}
       </div>
 
