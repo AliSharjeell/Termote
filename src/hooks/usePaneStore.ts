@@ -791,7 +791,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   requestDirectoryPicker: (shell) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "request_directory_picker", shell }))
     }
   },
@@ -824,14 +824,14 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       savePanes(updatedPanes)
       saveActivePanes(updatedActivePanes)
     }
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "kill", pane_id: paneId }))
     }
   },
 
   sendInput: (paneId, data) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       // Windows ConPTY has limited input buffer (~16KB).
       // Large pastes get truncated if sent as a single chunk.
       // Chunk into 512-byte pieces with small delays to avoid buffer overflow.
@@ -868,28 +868,28 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   sendResize: (paneId, cols, rows) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "resize", pane_id: paneId, cols, rows }))
     }
   },
 
   sendRefocus: (paneId, cols, rows) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "refocus", pane_id: paneId, cols, rows }))
     }
   },
 
   updatePaneContent: (paneId, noteContent, whiteboardData, imageData) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "update_pane_content", pane_id: paneId, note_content: noteContent ?? null, whiteboard_data: whiteboardData ?? null, image_data: imageData ?? null }))
     }
   },
 
   refocusAll: (dimensions) => {
     const { ws, isAuthenticated, activePanes } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       for (const paneId of activePanes) {
         const dims = dimensions[paneId]
         if (dims) {
@@ -901,14 +901,14 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   moveToFloating: (paneId) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "move_to_floating", pane_id: paneId }))
     }
   },
 
   moveToActive: (paneId) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "move_to_active", pane_id: paneId }))
     }
   },
@@ -1023,7 +1023,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     )
     savePanes(updatedPanes)
     set({ panes: updatedPanes })
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "rename", pane_id: paneId, name }))
     }
   },
@@ -1039,7 +1039,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     savePinnedPanes(pinnedPaneIds)
     savePanes(updatedPanes)
     set({ panes: updatedPanes })
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "toggle_pin", pane_id: paneId, pinned: nextPinned }))
     }
   },
@@ -1049,7 +1049,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const id = `group-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     const color = GROUP_COLORS[groups.length % GROUP_COLORS.length]
     // Send to backend
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "create_group", id, name, color }))
     }
     // Optimistically update local state
@@ -1064,7 +1064,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     console.log("[Termote Store] deleteGroup called with:", groupId)
     const { groups, panes, ws, isAuthenticated } = get()
     // Send to backend
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "delete_group", group_id: groupId }))
     }
     // Optimistically update local state
@@ -1084,7 +1084,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   renameGroup: (groupId, name) => {
     const { groups, ws, isAuthenticated } = get()
     // Send to backend
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "rename_group", group_id: groupId, name }))
     }
     // Optimistically update local state
@@ -1098,7 +1098,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   setPaneGroup: (paneId, groupId) => {
     const { panes, ws, isAuthenticated } = get()
     // Send to backend
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "set_pane_group", pane_id: paneId, group_id: groupId }))
     }
     // Optimistically update local state
@@ -1187,21 +1187,21 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   // Device management actions
   requestDeviceList: () => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "get_device_list" }))
     }
   },
 
   kickDevice: (deviceId) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "kick_device", device_id: deviceId }))
     }
   },
 
   banDevice: (ip) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "ban_device", ip }))
     }
   },
@@ -1251,7 +1251,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   openBrowser: (url) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "spawn_browser", url }))
     }
   },
@@ -1333,7 +1333,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   // File transfer
   uploadFile: (paneId, fileName, data) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "upload_file", pane_id: paneId, file_name: fileName, data }))
     }
   },
@@ -1359,7 +1359,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   readImageFile: (absolute_path) => {
     const { ws, isAuthenticated, imagePickerPaneId } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "read_file", pane_id: imagePickerPaneId, absolute_path }))
     }
   },
@@ -1379,56 +1379,56 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   getGitStatus: (paneId) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "get_git_status", pane_id: paneId }))
     }
   },
 
   gitCommit: (paneId, message) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "git_commit", pane_id: paneId, message }))
     }
   },
 
   gitStage: (paneId, files, unstage) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "git_stage", pane_id: paneId, files, unstage }))
     }
   },
 
   gitPush: (paneId) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "git_push", pane_id: paneId }))
     }
   },
 
   gitPull: (paneId) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "git_pull", pane_id: paneId }))
     }
   },
 
   gitLog: (paneId, dir) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "git_log", pane_id: paneId, dir }))
     }
   },
 
   getSourceControlState: (path) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "get_source_control_state", path }))
     }
   },
 
   findGitRepos: (path) => {
     const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated) {
+    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "find_git_repos", path }))
     }
   },
