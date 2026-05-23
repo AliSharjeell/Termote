@@ -41,6 +41,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
   // Determine Mica-transparent styling for Tauri
   const isMica = tauriChecked && isTauriApp
 
+  console.log('[TabBar] Mica detection:', { tauriChecked, isTauriApp, isMica })
+
   // Sidebar resize handlers
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -97,10 +99,10 @@ export function TabBar({ searchQuery }: TabBarProps) {
 
 
   return (
-    <div className="flex h-full w-full flex-row bg-[#0C0C0C]">
+    <div className={`flex h-full w-full flex-row ${isMica ? "bg-transparent" : "bg-[#0C0C0C]"}`}>
       {/* Left sidebar */}
       {tabsSidebarCollapsed ? (
-        <div className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
+        <div data-mica-surface className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
           <button
             onClick={toggleTabsSidebar}
             title="Expand sidebar (Alt+1)"
@@ -110,7 +112,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
           </button>
         </div>
       ) : (
-        <div className={`flex shrink-0 flex-col gap-1 border-r border-[#252525] p-2 relative ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
+        <div data-mica-surface className={`flex shrink-0 flex-col gap-1 border-r border-[#252525] p-2 relative ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
           {/* Resize handle */}
           <div
             className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors"

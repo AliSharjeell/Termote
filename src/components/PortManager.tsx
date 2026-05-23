@@ -1,10 +1,13 @@
 "use client"
 
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { useIsTauri } from "@/hooks/useIsTauri"
 import { useEffect } from "react"
 
 export function PortManager() {
   const { portProcesses, fetchPortProcesses, killProcess } = usePaneStore()
+  const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
+  const isMica = tauriChecked && isTauriApp
 
   useEffect(() => {
     fetchPortProcesses()
@@ -13,7 +16,7 @@ export function PortManager() {
   }, [fetchPortProcesses])
 
   return (
-    <div className="border-t border-[#252525] bg-[#0d0d0d] px-2 py-1.5">
+    <div className={`border-t ${isMica ? "border-transparent border-t-transparent" : "border-[#252525]"} ${isMica ? "bg-transparent" : "bg-[#0d0d0d]"} px-2 py-1.5`}>
       <div className="flex items-center justify-between mb-1">
         <span className="text-[10px] text-[#CCCCCC] uppercase tracking-wider">Ports</span>
         <button
