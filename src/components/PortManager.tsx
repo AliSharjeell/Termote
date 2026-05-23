@@ -32,7 +32,7 @@ export function PortManager() {
       ) : (
         <div className="flex flex-col gap-0.5 max-h-32 overflow-y-auto scrollbar-minimal">
           {portProcesses.map((proc) => (
-            <div key={`${proc.port}-${proc.pid}`} className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-[#1a1a1a] cursor-default group" title={`PID: ${proc.pid} — click × to kill`}>
+            <div key={`${proc.port}-${proc.pid}`} className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-white/[0.05] cursor-default group" title={`PID: ${proc.pid} — click × to kill`}>
               <span className="text-[10px] text-[#CCCCCC] font-mono w-12 shrink-0">{proc.port}</span>
               <span className="text-[10px] text-[#CCCCCC] truncate flex-1">{proc.process_name}</span>
               <button
