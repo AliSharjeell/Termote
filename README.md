@@ -135,7 +135,7 @@ MIT License
 
 **Known limitations:**
 - **macOS & Linux builds** — Not fully tested. Contributions welcome!
-- **Browser panes** — Functional but not polished.
+- **Browser panes** — Experimental, not fully functional.
 - **Whiteboard panes** — Experimental, needs refinement.
 
 If you'd like to contribute to testing or development, please open an issue or reach out at `alisharjeelofficial@gmail.com`.
