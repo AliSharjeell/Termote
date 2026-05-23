@@ -132,14 +132,14 @@ export function TabBar({ searchQuery }: TabBarProps) {
             </div>
             <button
               onClick={() => usePaneStore.getState().spawnPane("powershell")}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-normal shrink-0"
             >
               <span>+</span>
               <span>New Terminal</span>
             </button>
             <button
               onClick={() => usePaneStore.getState().openExplorer()}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-normal shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -148,7 +148,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
             </button>
             <button
               onClick={() => usePaneStore.getState().openBrowserModal()}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-normal shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/>
@@ -159,7 +159,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
             </button>
             <button
               onClick={() => usePaneStore.getState().spawnNotePane()}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-normal shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -171,7 +171,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
             </button>
             <button
               onClick={() => usePaneStore.getState().spawnImagePane()}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-normal shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -182,7 +182,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
             </button>
             <button
               onClick={() => usePaneStore.getState().spawnWhiteboardPane()}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-normal shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
