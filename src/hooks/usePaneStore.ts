@@ -127,9 +127,11 @@ interface PaneState {
   // Sidebar collapse states (panes mode)
   sidebarCollapsed: boolean
   gitSidebarCollapsed: boolean
+  profileSidebarCollapsed: boolean
   // Sidebar collapse states (tabs mode)
   tabsSidebarCollapsed: boolean
   tabsGitSidebarCollapsed: boolean
+  tabsProfileSidebarCollapsed: boolean
   // Pane groups
   groups: PaneGroup[]
   selectedGroupId: string | null
@@ -227,8 +229,10 @@ interface PaneState {
   setViewMode: (mode: "auto" | "tabs" | "panes") => void
   toggleSidebar: () => void
   toggleGitSidebar: () => void
+  toggleProfileSidebar: () => void
   toggleTabsSidebar: () => void
   toggleTabsGitSidebar: () => void
+  toggleTabsProfileSidebar: () => void
   fetchPortProcesses: () => void
   killProcess: (pid: number) => void
   renamePane: (paneId: string, name: string) => void
@@ -332,7 +336,7 @@ interface PaneState {
 // Load persisted state from localStorage
 function loadPersistedState() {
   if (typeof window === 'undefined') {
-    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, profileSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false, tabsProfileSidebarCollapsed: false }
   }
   try {
     const pinnedJson = localStorage.getItem(STORAGE_KEY)
@@ -355,7 +359,7 @@ function loadPersistedState() {
       tabsGitSidebarCollapsed: tabsGitSidebarJson === "true",
     }
   } catch {
-    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false }
+    return { pinnedPaneIds: [], viewMode: "panes" as const, paneGroupMap: {}, selectedGroupId: null, sidebarCollapsed: false, gitSidebarCollapsed: false, profileSidebarCollapsed: false, tabsSidebarCollapsed: false, tabsGitSidebarCollapsed: false, tabsProfileSidebarCollapsed: false }
   }
 }
 
@@ -586,8 +590,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   viewMode: "auto",
   sidebarCollapsed: false,
   gitSidebarCollapsed: false,
+  profileSidebarCollapsed: false,
   tabsSidebarCollapsed: false,
   tabsGitSidebarCollapsed: false,
+  tabsProfileSidebarCollapsed: false,
   groups: loadGroups(),
   selectedGroupId: null,
   devices: [],
@@ -945,6 +951,26 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         localStorage.setItem(TABS_GIT_SIDEBAR_KEY, String(next))
       } catch {}
       return { tabsGitSidebarCollapsed: next }
+    })
+  },
+
+  toggleProfileSidebar: () => {
+    set(state => {
+      const next = !state.profileSidebarCollapsed
+      try {
+        localStorage.setItem("termote_profile_sidebar", String(next))
+      } catch {}
+      return { profileSidebarCollapsed: next }
+    })
+  },
+
+  toggleTabsProfileSidebar: () => {
+    set(state => {
+      const next = !state.tabsProfileSidebarCollapsed
+      try {
+        localStorage.setItem("termote_tabs_profile_sidebar", String(next))
+      } catch {}
+      return { tabsProfileSidebarCollapsed: next }
     })
   },
 

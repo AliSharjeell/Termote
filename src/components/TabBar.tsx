@@ -5,12 +5,12 @@ import { PanelLeft, PanelRight } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { refitTerminal } from "@/lib/terminalRegistry"
 import { XtermPane } from "./XtermPane"
-import { SourceControlPane } from "./SourceControlPane"
 import { PortManager } from "./PortManager"
 import { BrowserPane } from "./BrowserPane"
 import { NotePane } from "./NotePane"
 import { ImagePane } from "./ImagePane"
 import { WhiteboardPane } from "./WhiteboardPane"
+import { ProfilePane } from "./ProfilePane"
 
 interface TabBarProps {
   searchQuery?: string
@@ -27,15 +27,15 @@ export function TabBar({ searchQuery }: TabBarProps) {
     selectedGroupId,
     tabsSidebarCollapsed,
     tabsGitSidebarCollapsed,
+    tabsProfileSidebarCollapsed,
     toggleTabsSidebar,
     toggleTabsGitSidebar,
+    toggleTabsProfileSidebar,
   } = usePaneStore()
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
-  const [gitSidebarWidth, setGitSidebarWidth] = useState(280)
   const [isResizing, setIsResizing] = useState(false)
-  const [isGitResizing, setIsGitResizing] = useState(false)
 
   // Sidebar resize handlers
   useEffect(() => {
@@ -43,16 +43,12 @@ export function TabBar({ searchQuery }: TabBarProps) {
       if (isResizing) {
         const newWidth = Math.min(Math.max(e.clientX, 140), 400)
         setSidebarWidth(newWidth)
-      } else if (isGitResizing) {
-        const newWidth = Math.min(Math.max(e.clientX, 180), 500)
-        setGitSidebarWidth(newWidth)
       }
     }
     const handleMouseUp = () => {
       setIsResizing(false)
-      setIsGitResizing(false)
     }
-    if (isResizing || isGitResizing) {
+    if (isResizing) {
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
     }
@@ -60,7 +56,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [isResizing, isGitResizing])
+  }, [isResizing])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -71,7 +67,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
       }
       if (e.altKey && e.key === "2") {
         e.preventDefault()
-        toggleTabsGitSidebar()
+        toggleTabsProfileSidebar()
       }
       if (e.ctrlKey && e.key === "w") {
         e.preventDefault()
@@ -82,7 +78,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [toggleTabsSidebar, toggleTabsGitSidebar, selectedTab])
+  }, [toggleTabsSidebar, toggleTabsProfileSidebar, selectedTab])
 
   // Search filter
   const searchFiltered = searchQuery
@@ -312,26 +308,19 @@ export function TabBar({ searchQuery }: TabBarProps) {
         </div>
       </div>
 
-      {/* Git sidebar */}
-      {tabsGitSidebarCollapsed ? (
+      {/* Profile sidebar */}
+      {tabsProfileSidebarCollapsed ? (
         <div className="shrink-0 flex flex-col items-center border-l border-[#252525] bg-[#0d0d0d] w-10 py-2 gap-2">
           <button
-            onClick={toggleTabsGitSidebar}
-            title="Expand git sidebar (Alt+2)"
+            onClick={toggleTabsProfileSidebar}
+            title="Expand profile sidebar (Alt+2)"
             className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
           >
             <PanelRight size={14} />
           </button>
         </div>
       ) : (
-        <div className="relative shrink-0" style={{ width: gitSidebarWidth }}>
-          {/* Resize handle */}
-          <div
-            className="absolute -left-1 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors z-10"
-            onMouseDown={() => setIsGitResizing(true)}
-          />
-          <SourceControlPane />
-        </div>
+        <ProfilePane tunnelUrl={""} authToken={""} />
       )}
     </div>
   )
