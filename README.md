@@ -6,17 +6,9 @@
 
 ![Termote](https://img.shields.io/github/stars/AliSharjeell/Termote?style=social)
 
-**Termote is a lightweight ADE (Agent Development Environment) that boosts your productivity with a persistent multi-pane workspace, built-in tools, and one-click remote access so you can keep working from your phone, anywhere.**
+**Termote is a Rust-based lightweight Agentic Development Environment (ADE) that boosts your productivity with a persistent multi-pane workspace, built-in tools, and one-click remote access so you can keep working from your phone, anywhere.**
 
 </div>
-
----
-
-## What is Termote?
-
-Termote lets you use your terminal from your phone, tablet, or another computer — without VPNs or complicated setup. Your terminals run on your local machine, so you get full access to everything: your files, tools, and AI agents.
-
-**Works from any browser** — same experience on desktop, tablet, or phone.
 
 ---
 
@@ -27,6 +19,13 @@ Termote lets you use your terminal from your phone, tablet, or another computer 
 The installer includes everything — one download, one install, done.
 
 After install, open Termote from your Start Menu or type `termote` in any terminal.
+
+| Platform | Installer |
+|----------|-----------|
+| Windows x64 | `.exe` NSIS installer |
+| macOS Apple Silicon | `.dmg` |
+| macOS Intel | `.dmg` |
+| Linux x64 | `.AppImage`, `.deb`, `.rpm` |
 
 ---
 
@@ -99,12 +98,20 @@ git clone https://github.com/AliSharjeell/Termote.git
 git clone https://github.com/AliSharjeell/TermoteBackend.git
 
 # Build
-cd TermoteUI
+cd Termote
 npm install
 npm run tauri:build
 ```
 
 Installer is in `src-tauri/target/release/bundle`.
+
+---
+
+## Release Automation
+
+This repo includes `.github/workflows/release.yml` for public releases. It builds native installers on GitHub-hosted Windows, macOS, and Ubuntu runners, checks out the backend repo, bundles the backend and Dev Tunnels sidecars, then uploads the installers to a GitHub Release.
+
+Run it from the **Actions** tab or push a tag such as `termote-v0.1.0`. If `TermoteBackend` is still private, add a `TERMOTE_BACKEND_TOKEN` repository secret with read access before running the workflow.
 
 ---
 
