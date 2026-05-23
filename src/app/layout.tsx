@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Geist } from "next/font/google"
+import { GeistSans } from "geist/font/sans"
 import "./globals.css"
 
 const jsonLd = {
@@ -33,11 +33,6 @@ const jsonLd = {
     ratingCount: "42",
   },
 }
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-})
 
 export const metadata: Metadata = {
   title: {
@@ -139,14 +134,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className={`${GeistSans.variable} h-full`}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${geistSans.variable} h-full antialiased font-[family-name:var(--font-geist-sans)]`}>
+      <body className="h-full antialiased">
         {children}
       </body>
     </html>

@@ -5,6 +5,7 @@
 <div align="center">
 
 ![Termote](https://img.shields.io/github/stars/AliSharjeell/Termote?style=social)
+[![Build Installers and Release](https://github.com/AliSharjeell/Termote/actions/workflows/release.yml/badge.svg)](https://github.com/AliSharjeell/Termote/actions/workflows/release.yml)
 
 **Termote is a Rust-based lightweight Agentic Development Environment (ADE) that boosts your productivity with a persistent multi-pane workspace, built-in tools, and one-click remote access so you can keep working from your phone, anywhere.**
 
@@ -111,7 +112,9 @@ Installer is in `src-tauri/target/release/bundle`.
 
 This repo includes `.github/workflows/release.yml` for public releases. It builds native installers on GitHub-hosted Windows, macOS, and Ubuntu runners, checks out the backend repo, bundles the backend and Dev Tunnels sidecars, then uploads the installers to a GitHub Release.
 
-Run it from the **Actions** tab or push a tag such as `termote-v0.1.0`. If `TermoteBackend` is still private, add a `TERMOTE_BACKEND_TOKEN` repository secret with read access before running the workflow.
+GitHub Actions workflow: [Build Installers and Release](https://github.com/AliSharjeell/Termote/actions/workflows/release.yml)
+
+Run it from the **Actions** tab with the default `termote-v0.1.0` tag, or push `termote-v0.1.0`. If `TermoteBackend` is still private, add a `TERMOTE_BACKEND_TOKEN` repository secret with read access before running the workflow.
 
 ---
 

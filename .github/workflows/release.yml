@@ -1,0 +1,130 @@
+name: Build Installers and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to create."
+        required: false
+        default: "termote-v0.1.0"
+      backend_ref:
+        description: "Branch, tag, or SHA to checkout from the TermoteBackend repo."
+        required: false
+        default: "master"
+      draft:
+        description: "Create the GitHub release as a draft."
+        required: false
+        default: true
+        type: boolean
+      prerelease:
+        description: "Mark the GitHub release as a prerelease."
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+      - "termote-v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: termote-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TERMOTE_BACKEND_REPOSITORY: ${{ vars.TERMOTE_BACKEND_REPOSITORY || 'AliSharjeell/TermoteBackend' }}
+  TERMOTE_BACKEND_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.backend_ref || 'master' }}
+
+jobs:
+  build-installers:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64 NSIS installer
+            platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: --target x86_64-pc-windows-msvc --bundles nsis
+          - name: macOS Apple Silicon DMG
+            platform: macos-15
+            target: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin --bundles dmg
+          - name: macOS Intel DMG
+            platform: macos-15-intel
+            target: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin --bundles dmg
+          - name: Linux x64 installers
+            platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            args: --target x86_64-unknown-linux-gnu --bundles appimage,deb,rpm
+
+    steps:
+      - name: Checkout Termote UI
+        uses: actions/checkout@v4
+
+      - name: Checkout Termote backend
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TERMOTE_BACKEND_REPOSITORY }}
+          ref: ${{ env.TERMOTE_BACKEND_REF }}
+          path: TermoteBackend
+          token: ${{ secrets.TERMOTE_BACKEND_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            rpm
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Load release notes
+        id: release_notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<TERMOTE_RELEASE_NOTES'
+            cat RELEASE_NOTES.md
+            echo 'TERMOTE_RELEASE_NOTES'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build installer and upload release asset
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TERMOTE_BACKEND_DIR: ${{ github.workspace }}/TermoteBackend
+        with:
+          tagName: ${{ github.event_name == 'push' && github.ref_name || inputs.tag_name || 'termote-v0.1.0' }}
+          releaseName: Termote Desktop v0.1.0
+          releaseBody: ${{ steps.release_notes.outputs.body }}
+          releaseDraft: ${{ github.event_name == 'workflow_dispatch' && inputs.draft || false }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
+          args: ${{ matrix.args }}
