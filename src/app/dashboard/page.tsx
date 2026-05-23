@@ -464,10 +464,10 @@ function DashboardContent() {
             <div data-tauri-drag-region className="flex items-center gap-2">
               <div
                 className={`h-2 w-2 rounded-full shrink-0 ${
-                  serverRunning ? "bg-white" : "bg-[#E74856]"
+                  serverRunning ? "bg-[#16C60C]" : "bg-[#E74856]"
                 }`}
                 style={{
-                  boxShadow: serverRunning ? "0 0 6px #FFFFFF" : "0 0 6px #E74856"
+                  boxShadow: serverRunning ? "0 0 6px #16C60C" : "0 0 6px #E74856"
                 }}
               />
               <span className="text-sm text-[#CCCCCC]">Termote</span>
@@ -588,7 +588,7 @@ function DashboardContent() {
                   className={`h-2 w-2 rounded-full shrink-0 ${
                     isConnected
                       ? isAuthenticated
-                        ? "bg-white"
+                        ? "bg-[#16C60C]"
                         : "bg-[#DCDCAA]"
                       : tunnelStatus === "connecting"
                         ? "bg-[#DCDCAA] animate-pulse"
@@ -596,7 +596,7 @@ function DashboardContent() {
                   }`}
                   style={{
                     boxShadow: isConnected
-                      ? isAuthenticated ? "0 0 6px #FFFFFF" : "0 0 6px #DCDCAA"
+                      ? isAuthenticated ? "0 0 6px #16C60C" : "0 0 6px #DCDCAA"
                       : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
                   }}
                 />
