@@ -212,6 +212,7 @@ function DashboardContent() {
     } else {
       // Web browser: tabs mode + both sidebars collapsed
       setViewMode("tabs")
+      setProfileSidebarCollapsed(true)
       setTabsSidebarCollapsed(true)
       setTabsProfileSidebarCollapsed(true)
     }
