@@ -8,7 +8,6 @@ import dynamic from 'next/dynamic'
 
 const SplitPane = dynamic(() => import('@/components/SplitPane').then(m => ({ default: m.SplitPane })), { ssr: false })
 const TabBar = dynamic(() => import('@/components/TabBar').then(m => ({ default: m.TabBar })), { ssr: false })
-const ProfileSidebar = dynamic(() => import('@/components/ProfileSidebar').then(m => ({ default: m.ProfileSidebar })), { ssr: false })
 const SecurityModal = dynamic(() => import('@/components/SecurityModal').then(m => ({ default: m.SecurityModal })), { ssr: false })
 const DirectoryPickerModal = dynamic(() => import('@/components/DirectoryPickerModal').then(m => ({ default: m.DirectoryPickerModal })), { ssr: false })
 const BrowserPickerModal = dynamic(() => import('@/components/BrowserPickerModal').then(m => ({ default: m.BrowserPickerModal })), { ssr: false })
@@ -17,7 +16,7 @@ import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User, Search, Play, Zap, AlertTriangle, ExternalLink, Loader2 } from "lucide-react"
+import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2 } from "lucide-react"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
@@ -34,7 +33,6 @@ type RuntimeSnapshot = {
 
 function DashboardContent() {
   const isLandscape = useIsLandscape()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [serverRunning, setServerRunning] = useState(false)
@@ -438,13 +436,6 @@ function DashboardContent() {
               <Search className="h-4 w-4" />
             </button>
           )}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-white hover:bg-[#252525] transition-colors"
-            title="Profile"
-          >
-            <User className="h-4 w-4" />
-          </button>
         </div>
       </div>
 
@@ -452,17 +443,6 @@ function DashboardContent() {
       <div className="flex-1 overflow-hidden">
         {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
       </div>
-
-      {/* Profile Sidebar */}
-      {shareUrl && authToken && (
-        <ProfileSidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          tunnelUrl={shareUrl}
-          authToken={authToken}
-          mobileUrl={runtime?.mobileUrl}
-        />
-      )}
 
       {/* Modals */}
       <SecurityModal />

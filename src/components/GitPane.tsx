@@ -2,6 +2,7 @@
 
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { useState, useEffect } from "react"
+import { Bot } from "lucide-react"
 
 type TabId = "changes" | "commit" | "tree"
 
@@ -35,10 +36,27 @@ function FileItem({ file, type, paneId, onStage, onUnstage }: FileItemProps) {
 }
 
 export function GitPane() {
-  const { panes, activePanes, selectedGroupId, selectTab, gitStatuses, gitLogs, getGitStatus, gitCommit, gitStage, gitLog } = usePaneStore()
+  const { panes, activePanes, selectedGroupId, selectTab, gitStatuses, gitLogs, getGitStatus, gitCommit, gitStage, gitLog, aiCommand, setAiCommand } = usePaneStore()
   const [activeTab, setActiveTab] = useState<Record<string, TabId>>({})
   const [commitMessage, setCommitMessage] = useState("")
   const [expandedRepos, setExpandedRepos] = useState<Set<string>>(new Set())
+  const [showAiSettings, setShowAiSettings] = useState(false)
+  const [customCommand, setCustomCommand] = useState("")
+  const [customSelected, setCustomSelected] = useState(false)
+
+  const aiOptions = [
+    { value: "claude", label: "Claude" },
+    { value: "claude-codex", label: "Claude CodeX" },
+  ]
+
+  const isCustomCommand = customSelected || (!!aiCommand && !aiOptions.some(o => o.value === aiCommand) && aiCommand !== "")
+
+  useEffect(() => {
+    const isCustom = !aiOptions.some(o => o.value === aiCommand)
+    if (isCustom && aiCommand) {
+      setCustomCommand(aiCommand)
+    }
+  }, [aiCommand])
 
   // Get panes for current view
   const viewPanes = selectedGroupId
@@ -135,7 +153,100 @@ export function GitPane() {
 
   return (
     <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] w-64 overflow-hidden">
-      <span className="text-[10px] text-[#808080] px-3 pt-2 uppercase tracking-wider">Git</span>
+      {/* Header with AI Settings */}
+      <div className="px-3 pt-2">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] text-[#808080] uppercase tracking-wider">Git</span>
+          <button
+            onClick={() => setShowAiSettings(!showAiSettings)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-[#808080] hover:text-white hover:bg-[#27272A] transition-colors"
+            title="AI Settings"
+          >
+            <Bot className="h-3 w-3" />
+            AI
+          </button>
+        </div>
+
+        {/* AI Settings Panel */}
+        {showAiSettings && (
+          <div className="mb-2 p-2 rounded-lg bg-[#0C0C0C] border border-[#333333]">
+            <div className="text-[10px] text-[#808080] mb-1.5 flex items-center gap-1">
+              <Bot className="h-3 w-3" />
+              Default AI CLI
+            </div>
+            <div className="space-y-1">
+              {aiOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors text-xs ${
+                    aiCommand === option.value
+                      ? "bg-[#27272A] text-white"
+                      : "hover:bg-[#27272A]/50 text-[#808080]"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="git-ai-cli"
+                    value={option.value}
+                    checked={aiCommand === option.value}
+                    onChange={() => {
+                      setAiCommand(option.value)
+                      setCustomCommand("")
+                      setCustomSelected(false)
+                    }}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
+                      aiCommand === option.value
+                        ? "border-white bg-white"
+                        : "border-[#808080]"
+                    }`}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+              {/* Custom option */}
+              <label
+                className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors text-xs ${
+                  isCustomCommand
+                    ? "bg-[#27272A] text-white"
+                    : "hover:bg-[#27272A]/50 text-[#808080]"
+                }`}
+              >
+                <div
+                  className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
+                    isCustomCommand
+                      ? "border-white bg-white"
+                      : "border-[#808080]"
+                  }`}
+                  onClick={() => setCustomSelected(true)}
+                />
+                <span>Custom</span>
+              </label>
+              {/* Custom input */}
+              <div className={`mt-1 pl-4 ${isCustomCommand ? "block" : "hidden"}`}>
+                <input
+                  type="text"
+                  value={customCommand}
+                  onChange={(e) => {
+                    setCustomCommand(e.target.value)
+                    if (e.target.value.trim()) {
+                      setAiCommand(e.target.value.trim())
+                      setCustomSelected(true)
+                    }
+                  }}
+                  placeholder="cmd..."
+                  className="w-full bg-[#1a1a1a] px-2 py-1 text-[10px] text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-[#58A6FF]"
+                />
+              </div>
+            </div>
+            <div className="text-[9px] text-[#666] mt-1.5">
+              Sends: {aiCommand || "claude"}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         {repos.map(({ dir, paneWithDir, status, log }) => {
