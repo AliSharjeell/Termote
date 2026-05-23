@@ -538,7 +538,7 @@ function DashboardContent() {
           </div>
         ) : (
           <div className="profile-sidebar shrink-0 h-full">
-            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
+            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} shareUrl={shareUrl || undefined} />
           </div>
         )}
       </div>

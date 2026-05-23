@@ -37,9 +37,10 @@ function buildMobileUrl(tunnelUrl: string, authToken: string): string {
 interface ProfilePaneProps {
   tunnelUrl: string
   authToken: string
+  shareUrl?: string
 }
 
-export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
+export function ProfilePane({ tunnelUrl, authToken, shareUrl }: ProfilePaneProps) {
   const { isTauri, checked } = useIsTauri()
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
   const aiCommand = usePaneStore((state) => state.aiCommand)
@@ -55,7 +56,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
   const toggleProfileSidebar = usePaneStore((state) => state.toggleProfileSidebar)
 
   const isMica = false // Disabled - profile sidebar should have solid backgrounds
-  const mobileUrl = buildMobileUrl(tunnelUrl, authToken)
+  const mobileUrl = buildMobileUrl(shareUrl || tunnelUrl, authToken)
 
   const aiOptions = [
     { value: "claude", label: "Claude" },
@@ -157,23 +158,23 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
           {/* Settings header */}
           <div className={`px-3 py-3 flex items-center gap-1.5 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
             <Settings className="h-3.5 w-3.5 text-[#808080] shrink-0" />
-            <span className="text-xs font-normal text-white uppercase tracking-wider">
+            <span className="text-xs font-normal text-white">
               Settings
             </span>
           </div>
 
           {/* Server Controls - Tauri only */}
           {checked && isTauri && (
-            <div className={`px-3 py-3 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <RefreshCw className="h-3 w-3 text-[#808080]" />
-                <span className="text-[10px] text-[#808080] uppercase tracking-wider">Server Controls</span>
+            <div className={`px-1.5 py-3 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
+              <div className="flex items-center gap-1.5 mb-2 px-1.5">
+                <RefreshCw className="h-3 w-3 text-[#CCCCCC]" />
+                <span className="text-[10px] text-[#CCCCCC]">Server Controls</span>
               </div>
               <div className="space-y-1">
                 <button
                   onClick={handleRestartServer}
                   disabled={!!serverAction || !serverRunning}
-                  className="flex items-center gap-2 w-full rounded bg-transparent px-3 py-2.5 text-xs text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
+                  className="flex items-center gap-1.5 w-full rounded bg-transparent px-1.5 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
                 >
                   <RefreshCw className={`h-3 w-3 shrink-0 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
                   Restart
@@ -181,21 +182,21 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
                 <button
                   onClick={handleStopServer}
                   disabled={!!serverAction || !serverRunning}
-                  className="flex items-center gap-2 w-full rounded bg-transparent px-3 py-2.5 text-xs text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
+                  className="flex items-center gap-1.5 w-full rounded bg-transparent px-1.5 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
                 >
                   <Square className="h-3 w-3 shrink-0" />
                   Stop
                 </button>
                 <button
                   onClick={() => { setShowQRModal(true); setQrBlurred(true) }}
-                  className="flex items-center gap-2 w-full rounded bg-transparent px-3 py-2.5 text-xs text-white hover:bg-white/[0.06] transition-colors text-left"
+                  className="flex items-center gap-1.5 w-full rounded bg-transparent px-1.5 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] transition-colors text-left"
                 >
                   <QrCode className="h-3 w-3 shrink-0" />
                   Mobile Access
                 </button>
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-2 w-full rounded bg-transparent px-3 py-2.5 text-xs text-white hover:bg-white/[0.06] transition-colors text-left"
+                  className="flex items-center gap-1.5 w-full rounded bg-transparent px-1.5 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] transition-colors text-left"
                 >
                   {copiedLink ? <Check className="h-3 w-3 shrink-0 text-[#16C60C]" /> : <Link2 className="h-3 w-3 shrink-0" />}
                   Copy Link
@@ -205,17 +206,17 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
           )}
 
           {/* Default AI CLI - Both versions */}
-          <div className="px-3 py-3">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Bot className="h-3 w-3 text-[#808080]" />
-              <span className="text-[10px] text-[#808080] uppercase tracking-wider">Default AI CLI</span>
+          <div className="px-1.5 py-3">
+            <div className="flex items-center gap-1.5 mb-2 px-1.5">
+              <Bot className="h-3 w-3 text-[#CCCCCC]" />
+              <span className="text-[10px] text-[#CCCCCC]">Default AI CLI</span>
             </div>
              <div className="space-y-0.5">
               {aiOptions.map((option) => (
                 <label
                   key={option.value}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                    aiCommand === option.value ? "bg-[#27272A] text-white" : "hover:bg-[#1a1a1a] text-[#808080]"
+                  className={`flex items-center gap-1.5 px-1.5 py-2 rounded cursor-pointer transition-colors text-sm ${
+                    aiCommand === option.value ? "text-[#CCCCCC] bg-white/[0.08]" : "text-[#CCCCCC] hover:text-white hover:bg-white/[0.06]"
                   }`}
                 >
                   <input
@@ -227,9 +228,9 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
                     className="sr-only"
                   />
                   <div className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
-                    aiCommand === option.value ? "border-white bg-white" : "border-[#666]"
+                    aiCommand === option.value ? "border-[#CCCCCC] bg-[#CCCCCC]" : "border-[#555]"
                   }`} />
-                  <span className="text-xs">{option.label}</span>
+                  <span>{option.label}</span>
                 </label>
               ))}
               {/* Custom option */}
@@ -242,8 +243,8 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
                     setAiCommand("")
                   }
                 }}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                  isCustomCommand ? "bg-[#27272A] text-white" : "hover:bg-[#1a1a1a] text-[#808080]"
+                className={`flex items-center gap-1.5 px-1.5 py-2 rounded cursor-pointer transition-colors text-sm ${
+                  isCustomCommand ? "text-[#CCCCCC] bg-white/[0.08]" : "text-[#CCCCCC] hover:text-white hover:bg-white/[0.06]"
                 }`}
               >
                 <input
@@ -254,15 +255,15 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
                   className="sr-only"
                 />
                 <div className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
-                  isCustomCommand ? "border-white bg-white" : "border-[#666]"
+                  isCustomCommand ? "border-[#CCCCCC] bg-[#CCCCCC]" : "border-[#555]"
                 }`} />
-                <span className="text-xs">Custom</span>
+                <span>Custom</span>
               </label>
               {/* Custom input dropdown */}
               <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
                 isCustomCommand ? "max-h-16 opacity-100 mt-1.5 mb-1" : "max-h-0 opacity-0 pointer-events-none"
               }`}>
-                <div className="pl-4 pr-1">
+                <div className="pl-[22px] pr-1">
                   <input
                     type="text"
                     value={customCommand}
@@ -276,28 +277,28 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
                 </div>
               </div>
             </div>
-            <p className="text-[10px] text-[#666] mt-1.5">
+            <p className="text-[10px] text-[#666] mt-1.5 px-1.5 mb-3">
               Sends: {aiCommand || "claude"}
             </p>
           </div>
-
-          {/* Security & Devices - Tauri only */}
-          {checked && isTauri && (
-            <div className={`px-3 py-3 ${isMica ? "border-transparent" : "border-t border-[#252525]"}`}>
-              <button
-                onClick={() => setShowSecurityModal(true)}
-                className="flex w-full items-center justify-center gap-2 rounded bg-[#1a1a1a] px-4 py-2.5 text-xs text-white hover:bg-[#27272A] transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                  <line x1="8" y1="21" x2="16" y2="21"></line>
-                  <line x1="12" y1="17" x2="12" y2="21"></line>
-                </svg>
-                Security & Devices
-              </button>
-            </div>
-          )}
         </div>
+
+        {/* Security & Devices - Tauri only */}
+        {checked && isTauri && (
+          <div className={`px-1.5 py-3 shrink-0 ${isMica ? "border-transparent" : "border-t border-[#252525]"}`}>
+            <button
+              onClick={() => setShowSecurityModal(true)}
+              className="flex w-full items-center justify-start gap-1.5 rounded bg-transparent px-1.5 py-2 text-sm text-white hover:text-white hover:bg-white/[0.06] transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              Security & Devices
+            </button>
+          </div>
+        )}
       </div>
     </>
   )
