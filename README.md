@@ -2,11 +2,11 @@
 
 <div align="center">
 
+![Termote Cover](public/maincover.png)
+
 ![Termote](https://img.shields.io/github/stars/AliSharjeell/TermoteUI?style=social)
 
 **Termote is a lightweight ADE (Agent Development Environment) that boosts your productivity with a persistent multi-pane workspace, built-in tools, and one-click remote access so you can keep working from your phone, anywhere.**
-
-![Termote Cover](public/maincover.png)
 
 </div>
 
