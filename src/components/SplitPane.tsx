@@ -119,7 +119,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     <div ref={containerRef} className="flex h-full w-full flex-row">
       {/* Vertical sidebar with group tabs */}
       {sidebarCollapsed ? (
-        <div className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
+        <div data-mica-surface className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
@@ -129,7 +129,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           </button>
         </div>
       ) : (
-      <div className={`flex shrink-0 flex-col gap-1 border-r border-[#252525] p-2 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
+      <div data-mica-surface className={`flex shrink-0 flex-col gap-1 border-r border-[#252525] p-2 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
         {/* Resize handle */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors"
@@ -222,7 +222,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
               ? "text-[#CCCCCC] bg-[#252525]"
-              : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+              : "text-[#CCCCCC] hover:bg-white/[0.06]"
           }`}
         >
           <button
@@ -258,7 +258,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               <div
                 key={pane.id}
                 className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                  selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
+                  selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-white/[0.08] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
                 }`}
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
@@ -285,7 +285,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
               ? "text-[#CCCCCC] bg-[#252525]"
-              : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+              : "text-[#CCCCCC] hover:bg-white/[0.06]"
           }`}
         >
           <button
@@ -321,7 +321,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               <div
                 key={pane.id}
                 className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                  selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
+                  selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-white/[0.08] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
                 }`}
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
@@ -353,7 +353,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
                     ? "text-[#CCCCCC] bg-[#252525]"
-                    : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+                    : "text-[#CCCCCC] hover:bg-white/[0.06]"
                 }`}
               >
                 <button
@@ -398,7 +398,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                     <div
                       key={pane.id}
                       className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                        selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-[#1f1f1f] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
+                        selectedTab === pane.id ? "text-[#CCCCCC] font-medium bg-white/[0.08] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
                       }`}
                       onClick={() => usePaneStore.getState().selectTab(pane.id)}
                     >

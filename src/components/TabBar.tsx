@@ -216,8 +216,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
                     key={pane.id}
                     className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ml-2 ${
                       selectedTab === pane.id
-                        ? "text-[#CCCCCC] bg-[#252525]"
-                        : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+                        ? "text-[#CCCCCC] bg-white/[0.08]"
+                        : "text-[#CCCCCC] hover:bg-white/[0.06]"
                     }`}
                     onClick={() => selectTab(pane.id)}
                   >
@@ -246,8 +246,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
               key={pane.id}
               className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ${
                 selectedTab === pane.id
-                  ? "text-[#CCCCCC] bg-[#252525]"
-                  : "text-[#CCCCCC] hover:bg-[#1f1f1f]"
+                  ? "text-[#CCCCCC] bg-white/[0.08]"
+                  : "text-[#CCCCCC] hover:bg-white/[0.06]"
               }`}
               onClick={() => selectTab(pane.id)}
             >
