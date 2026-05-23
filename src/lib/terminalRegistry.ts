@@ -27,6 +27,10 @@ export interface TerminalInstance {
   dataDisposable: import("@xterm/xterm").IDisposable | null
   /** Resize observer instance */
   resizeObserver: ResizeObserver | null
+  /** Last fitted dimensions to avoid redundant resize calls */
+  lastDims: { cols: number; rows: number }
+  /** Fit request animation frame ID */
+  fitRafId: number | null
 }
 
 const terminalRegistry = new Map<string, TerminalInstance>()
@@ -60,6 +64,71 @@ const DEFAULT_TERMINAL_OPTIONS: Partial<ITerminalOptions> = {
   cursorStyle: "block" as const,
   cursorBlink: true,
   scrollback: 100000,
+}
+
+function isContainerVisible(container: HTMLElement): boolean {
+  const rect = container.getBoundingClientRect()
+  if (rect.width < 20 || rect.height < 20) return false
+
+  const style = getComputedStyle(container)
+  if (style.display === "none") return false
+  if (style.visibility === "hidden") return false
+  if (parseFloat(style.opacity) === 0) return false
+
+  return true
+}
+
+function fitTerminalInternal(instance: TerminalInstance, reason: string): boolean {
+  const container = instance.containerElement ?? instance.terminal.element?.parentElement
+  if (!container) return false
+
+  if (!isContainerVisible(container)) {
+    return false
+  }
+
+  const rect = container.getBoundingClientRect()
+  if (rect.width < 20 || rect.height < 20) {
+    return false
+  }
+
+  try {
+    instance.fitAddon.fit()
+    const cols = instance.terminal.cols
+    const rows = instance.terminal.rows
+
+    if (!cols || !rows || cols < 2 || rows < 2) {
+      return false
+    }
+
+    const last = instance.lastDims
+    const changed = last.cols !== cols || last.rows !== rows
+
+    if (changed) {
+      instance.lastDims = { cols, rows }
+      console.log(`[TERMINAL FIT] ${instance.paneId} cols=${cols} rows=${rows} reason=${reason}`)
+      return true
+    }
+
+    return true
+  } catch (error) {
+    console.error(`[TERMINAL FIT] ${instance.paneId} failed:`, error)
+    return false
+  }
+}
+
+/**
+ * Schedule a fit on the next animation frame.
+ * Debounces multiple rapid fit requests.
+ */
+function scheduleFitOnInstance(instance: TerminalInstance, reason: string) {
+  if (instance.fitRafId !== null) {
+    cancelAnimationFrame(instance.fitRafId)
+  }
+
+  instance.fitRafId = requestAnimationFrame(() => {
+    instance.fitRafId = null
+    fitTerminalInternal(instance, reason)
+  })
 }
 
 /**
@@ -99,26 +168,12 @@ export function getOrCreateTerminal(
     keyHandler: null,
     dataDisposable: null,
     resizeObserver: null,
+    lastDims: { cols: 0, rows: 0 },
+    fitRafId: null,
   }
 
   terminalRegistry.set(paneId, instance)
   return instance
-}
-
-function fitAndRefreshIfVisible(instance: TerminalInstance): boolean {
-  const container = instance.containerElement ?? instance.terminal.element?.parentElement
-  if (!container) return false
-
-  const rect = container.getBoundingClientRect()
-  if (rect.width < 20 || rect.height < 20) return false
-
-  try {
-    instance.fitAddon.fit()
-    instance.terminal.refresh(0, Math.max(instance.terminal.rows - 1, 0))
-    return true
-  } catch {
-    return false
-  }
 }
 
 /**
@@ -146,6 +201,12 @@ export function writeOrBufferTerminalOutput(paneId: string, data: string): void 
     return
   }
 
+  // Buffer output until terminal is properly sized
+  if (!instance.containerElement || instance.lastDims.cols === 0) {
+    appendPendingOutput(paneId, data)
+    return
+  }
+
   instance.terminal.write(data)
 }
 
@@ -165,7 +226,7 @@ export function setTerminalScrollback(paneId: string, data: string): void {
   if (data) {
     instance.terminal.write(data)
   }
-  scheduleFitAndRefresh(instance)
+  scheduleFitOnInstance(instance, "scrollback-restore")
 }
 
 export function drainBufferedTerminalOutput(paneId: string): void {
@@ -192,7 +253,11 @@ export function removeTerminal(paneId: string): void {
   const instance = terminalRegistry.get(paneId)
   if (!instance) return
 
-  // Disconnect resize observer if attached
+  if (instance.fitRafId !== null) {
+    cancelAnimationFrame(instance.fitRafId)
+    instance.fitRafId = null
+  }
+
   if (instance.resizeObserver) {
     instance.resizeObserver.disconnect()
     instance.resizeObserver = null
@@ -202,10 +267,10 @@ export function removeTerminal(paneId: string): void {
     instance.dataDisposable = null
   }
 
-  // Dispose the terminal
   instance.terminal.dispose()
 
   terminalRegistry.delete(paneId)
+  pendingOutput.delete(paneId)
 }
 
 /**
@@ -225,7 +290,6 @@ export function openTerminal(
 
   // Register data handler if provided
   if (options?.onData) {
-    // Remove old handler if exists
     if (instance.dataDisposable) {
       instance.dataDisposable.dispose()
     }
@@ -234,13 +298,10 @@ export function openTerminal(
 
   const terminalElement = instance.terminal.element
   if (terminalElement) {
-    // xterm Terminal.open() is a one-time operation. When React remounts a
-    // pane, move the existing xterm DOM into the new container instead.
     if (!element.contains(terminalElement)) {
       element.replaceChildren(terminalElement)
     }
   } else {
-    // First attachment for this terminal instance.
     element.replaceChildren()
     instance.terminal.open(element)
   }
@@ -248,10 +309,17 @@ export function openTerminal(
   instance.isAttached = true
   instance.containerElement = element
 
-  // Skip WebGL addon - it causes context loss issues when switching views
-  // The DOM renderer is stable and works reliably
+  // Setup mobile textarea attributes for better keyboard handling
+  const textarea = element.querySelector("textarea")
+  if (textarea) {
+    textarea.setAttribute("autocomplete", "off")
+    textarea.setAttribute("autocorrect", "off")
+    textarea.setAttribute("autocapitalize", "off")
+    textarea.setAttribute("spellcheck", "false")
+    textarea.setAttribute("inputmode", "text")
+  }
 
-  fitAndRefreshIfVisible(instance)
+  scheduleFitOnInstance(instance, "terminal-open")
 
   return instance
 }
@@ -261,11 +329,9 @@ export function openTerminal(
  * the DOM element has actual dimensions (not 0x0).
  */
 export function scheduleFitAndRefresh(instance: TerminalInstance, attempts = 8): void {
-  // Use requestAnimationFrame to wait for DOM paint
   requestAnimationFrame(() => {
-    // Also add a small delay for cases where rAF isn't enough
     setTimeout(() => {
-      if (fitAndRefreshIfVisible(instance)) {
+      if (fitTerminalInternal(instance, `retry-${attempts}`)) {
         return
       }
       if (attempts > 0) {
@@ -282,7 +348,68 @@ export function scheduleFitAndRefresh(instance: TerminalInstance, attempts = 8):
 export function refitTerminal(paneId: string): void {
   const instance = terminalRegistry.get(paneId)
   if (!instance) return
-  scheduleFitAndRefresh(instance)
+  scheduleFitOnInstance(instance, "refit-terminal")
+}
+
+/**
+ * Fit a specific terminal by pane ID.
+ */
+export function fitTerminalByPaneId(paneId: string, reason: string): void {
+  const instance = terminalRegistry.get(paneId)
+  if (!instance) return
+  scheduleFitOnInstance(instance, reason)
+}
+
+/**
+ * Fit ALL registered terminals. Call this after layout changes.
+ */
+export function fitAllTerminals(reason: string): void {
+  for (const instance of terminalRegistry.values()) {
+    scheduleFitOnInstance(instance, reason)
+  }
+}
+
+/**
+ * Get the resize observer callback factory for a pane.
+ * Returns a function suitable for ResizeObserver.observe().
+ */
+export function createResizeObserverCallback(
+  paneId: string,
+  onResize: (cols: number, rows: number) => void
+): (element: Element) => void {
+  return (element: Element) => {
+    const instance = terminalRegistry.get(paneId)
+    if (!instance) return
+
+    if (instance.resizeObserver) {
+      instance.resizeObserver.disconnect()
+    }
+
+    instance.resizeObserver = new ResizeObserver(() => {
+      if (!isContainerVisible(element as HTMLElement)) return
+
+      const fitted = fitTerminalInternal(instance, `resize-observer-${paneId}`)
+      if (fitted) {
+        onResize(instance.lastDims.cols, instance.lastDims.rows)
+      }
+    })
+
+    instance.resizeObserver.observe(element)
+  }
+}
+
+/**
+ * Disconnect the resize observer for a pane without disposing the terminal.
+ */
+export function disconnectResizeObserver(paneId: string): void {
+  const instance = terminalRegistry.get(paneId)
+  if (!instance) return
+
+  if (instance.resizeObserver) {
+    instance.resizeObserver.disconnect()
+  }
+  instance.isAttached = false
+  instance.containerElement = null
 }
 
 /**
@@ -292,7 +419,6 @@ export function setTerminalDataHandler(paneId: string, handler: (data: string) =
   const instance = terminalRegistry.get(paneId)
   if (!instance) return
 
-  // Remove old handler if exists
   if (instance.dataDisposable) {
     instance.dataDisposable.dispose()
   }
@@ -315,71 +441,6 @@ export function setTerminalKeyHandler(
 }
 
 /**
- * Get the resize observer callback factory for a pane.
- * Returns a function suitable for ResizeObserver.observe().
- */
-export function createResizeObserverCallback(
-  paneId: string,
-  onResize: (cols: number, rows: number) => void
-): (element: Element) => void {
-  return (element: Element) => {
-    const instance = terminalRegistry.get(paneId)
-    if (!instance) return
-
-    // Create or reuse ResizeObserver
-    if (!instance.resizeObserver) {
-      const lastDims = { cols: 0, rows: 0 }
-
-      instance.resizeObserver = new ResizeObserver(() => {
-        try {
-          const container = instance.containerElement ?? instance.terminal.element?.parentElement
-          if (!container) return
-          const rect = container.getBoundingClientRect()
-          if (rect.width < 20 || rect.height < 20) return
-
-          const dims = instance.fitAddon.proposeDimensions()
-          if (!dims) return
-
-          // Only resize if dimensions actually changed
-          if (lastDims.cols === dims.cols && lastDims.rows === dims.rows) {
-            return
-          }
-
-          lastDims.cols = dims.cols
-          lastDims.rows = dims.rows
-
-          // Debounced fit
-          setTimeout(() => {
-            if (fitAndRefreshIfVisible(instance)) {
-              onResize(dims.cols, dims.rows)
-            }
-          }, 50)
-        } catch {
-          // Ignore resize observation errors
-        }
-      })
-    }
-
-    instance.resizeObserver.observe(element)
-  }
-}
-
-/**
- * Disconnect the resize observer for a pane without disposing the terminal.
- * Call this on component unmount to stop resize observation while keeping the terminal alive.
- */
-export function disconnectResizeObserver(paneId: string): void {
-  const instance = terminalRegistry.get(paneId)
-  if (!instance) return
-
-  if (instance.resizeObserver) {
-    instance.resizeObserver.disconnect()
-  }
-  instance.isAttached = false
-  instance.containerElement = null
-}
-
-/**
  * Write data to a terminal's PTY process input.
  */
 export function writeToTerminal(paneId: string, data: string): void {
@@ -393,4 +454,92 @@ export function writeToTerminal(paneId: string, data: string): void {
  */
 export function getRegisteredPaneIds(): string[] {
   return Array.from(terminalRegistry.keys())
+}
+
+/**
+ * Register a global fit function for a pane ID.
+ * Returns cleanup function.
+ */
+type GlobalFitFn = (reason: string) => void
+const globalFitRegistry = new Map<string, GlobalFitFn>()
+
+export function registerGlobalFit(paneId: string, fit: GlobalFitFn): () => void {
+  globalFitRegistry.set(paneId, fit)
+  return () => globalFitRegistry.delete(paneId)
+}
+
+export function fitTerminalById(paneId: string, reason: string): void {
+  globalFitRegistry.get(paneId)?.(reason)
+}
+
+export function fitAllByGlobal(reason: string): void {
+  for (const fit of globalFitRegistry.values()) {
+    fit(reason)
+  }
+}
+
+/**
+ * Wait for fonts to load, then fit all terminals.
+ */
+export function fitAfterFontLoad(): void {
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => {
+      setTimeout(() => fitAllTerminals("fonts-ready"), 50)
+    })
+  }
+}
+
+/**
+ * Setup visual viewport handler for mobile keyboard issues.
+ * Returns cleanup function.
+ */
+export function setupVisualViewport(): () => void {
+  if (typeof window === "undefined") return () => {}
+  if (!window.visualViewport) return () => {}
+
+  const vv = window.visualViewport
+
+  function update() {
+    document.documentElement.style.setProperty(
+      "--visual-viewport-height",
+      `${vv.height}px`
+    )
+    document.documentElement.style.setProperty(
+      "--visual-viewport-offset",
+      `${vv.offsetTop}px`
+    )
+    fitAllTerminals("visual-viewport")
+  }
+
+  vv.addEventListener("resize", update)
+  vv.addEventListener("scroll", update)
+  update()
+
+  return () => {
+    vv.removeEventListener("resize", update)
+    vv.removeEventListener("scroll", update)
+  }
+}
+
+/**
+ * Setup window resize handler.
+ * Returns cleanup function.
+ */
+export function setupWindowResizeHandler(): () => void {
+  let rafId: number | null = null
+
+  function handleResize() {
+    if (rafId !== null) cancelAnimationFrame(rafId)
+    rafId = requestAnimationFrame(() => {
+      rafId = null
+      fitAllTerminals("window-resize")
+    })
+  }
+
+  window.addEventListener("resize", handleResize)
+
+  return () => {
+    if (rafId !== null) cancelAnimationFrame(rafId)
+    window.removeEventListener("resize", handleResize)
+  }
 }

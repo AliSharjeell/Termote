@@ -1,38 +1,55 @@
-# TermoteUI
+# TermoteUI - Termote Desktop & Web Interface
 
-A web-native terminal multiplexer frontend built with Next.js, React, and xterm.js. Provides a beautiful, responsive interface for accessing and managing terminal panes from any device.
+<div align="center">
 
-Termote is now desktop-first. The Tauri desktop app is the main install target and bundles the Rust Termote backend as a sidecar, so users install one GUI app instead of running a CLI-only setup plus a hosted web deployment.
+```
+███████╗███████╗██████╗ ███╗   ███╗██████╗ ████████╗███████╗
+╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██╔═══██╗╚══██╔══╝██╔════╝
+   ██║   █████╗  ██████╔╝██╔████╔██║██║   ██║   ██║   █████╗
+   ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║   ██║   ██║   ██╔══╝
+   ██║   ███████╗██║  ██║██║ ╚═╝ ██║╚██████╔╝   ██║   ███████╗
+   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝    ╚═╝   ╚══════╝
+```
 
-## Features
+**A lightweight ADE (Agent Development Environment) for power users.**
 
-- **Split pane view**: Arrange terminals in a responsive grid
-- **Tabs view**: Switch between terminals in a tabed interface
-- **Mobile responsive**: Optimized for phone and tablet browsers
-- **QR code connection**: Scan to connect from mobile devices
-- **Real-time sync**: Instant terminal updates via WebSocket
-- **Auto-reconnect**: Handles network interruptions gracefully
-- **Focus button**: Reset terminal size when switching devices
-- **Dark theme**: Modern, eye-friendly dark interface
-- **Drag-and-drop file transfer**: Drag files into terminal panes to upload them
-- **AI quick-launch**: One-click launch of AI CLI tools (Claude Code, Gemini CLI, etc.)
-- **Pane groups**: Color-code and organize terminals into groups
-- **Security & device management**: View and manage connected devices, ban IPs
+Turn any browser into a full-powered, multi-pane terminal workspace — with built-in tools, AI agent integration, and one-click remote access from anywhere.
 
-## Install Termote
+</div>
 
-### Recommended: Desktop Installer
+---
 
-Download the latest Termote desktop installer from the TermoteUI releases page, then run the app. The installer includes:
+## What is Termote?
 
-- the Termote desktop GUI
-- the bundled Termote Rust backend
-- local WebSocket access on `127.0.0.1:9090`
-- mobile access through Microsoft Dev Tunnels from the GUI
+**Termote** is a persistent multi-pane terminal workspace that supercharges your CLI workflow. Built with Rust for blazing performance, it wraps your terminal sessions in encrypted WebSockets over HTTPS, punching through NATs and firewalls so you can access your machine from any device, anywhere.
 
-After launch, Termote starts the local backend automatically. Click **Mobile Access** in the dashboard toolbar to open a Dev Tunnel for your phone or another device. The copied/QR mobile link points directly at your forwarded local Termote GUI; it does not use a hosted deployment.
+### Key Features
 
-### Build The Installer From Source
+| Feature | Description |
+|---------|-------------|
+| **AI Agent Ready** | One-click launch for Claude Code, Gemini CLI, AutoGPT, and any CLI-based AI agent. Your agents run on your beefy home rig, accessible from anywhere. |
+| **Multi-Pane Workspace** | Split, stack, and organize terminal panes like tmux — but with a beautiful visual UI. Color-code groups, drag-and-drop files, and manage everything from your phone. |
+| **Anywhere Access** | Ditch the VPNs. Termote securely punches through NATs and firewalls via encrypted WebSockets over HTTPS (port 443). Work from your phone at the coffee shop, tablet on the couch, or laptop at the airport. |
+| **Zero-Cloud Latency** | Runs locally on your machine. No cloud servers, no lag. Whatever your host PC can do, you can do remotely with near-zero latency. |
+| **Smart Single-Instance** | Already running? New terminals intelligently connect to your active session and open in the right directory. No redundant servers. |
+| **Security Built-In** | View connected devices, kick sessions, and ban IPs. End-to-end encrypted, token-gated access. |
+
+---
+
+## Quick Install
+
+### One-Click Desktop Install (Recommended)
+
+Download the Termote installer from the **[Releases Page](https://github.com/AliSharjeell/TermoteUI/releases)** and run it. The installer includes everything:
+
+- **Termote desktop GUI** (Tauri + Next.js)
+- **Bundled Rust backend** (PTY manager, WebSocket server, Dev Tunnel integration)
+- **All prerequisites** (WebView2, Dev Tunnels CLI, etc.)
+- **Start Menu shortcut** and optional context menu integration
+
+Just download, run, and you're ready. One-click install, anywhere access.
+
+### Build From Source
 
 Clone both repos side by side:
 
@@ -41,366 +58,125 @@ mkdir C:\AppsNew\TermoteFull
 cd C:\AppsNew\TermoteFull
 git clone https://github.com/AliSharjeell/Termote.git
 git clone https://github.com/AliSharjeell/TermoteUI.git
-```
-
-Install dependencies and build the desktop bundle:
-
-```powershell
-cd C:\AppsNew\TermoteFull\TermoteUI
+cd TermoteUI
 npm install
 npm run tauri:build
 ```
 
-The Tauri build runs `npm run build:tauri`, which exports the Next.js GUI and prepares the backend sidecar from `..\Termote`. Installer artifacts are written under:
+Installer artifacts are in `src-tauri\target\release\bundle`.
 
-```text
-src-tauri\target\release\bundle
-```
-
-If your backend repo is somewhere else, set `TERMOTE_BACKEND_DIR` before building:
-
-```powershell
-$env:TERMOTE_BACKEND_DIR="D:\code\Termote"
-npm run tauri:build
-```
-
-### Development
-
-Run the desktop app in development mode:
-
-```powershell
-npm install
-npm run tauri:dev
-```
-
-`tauri:dev` prepares a debug backend sidecar and starts the Next dev server for the Tauri webview.
-
-For mobile access in development or production, install Microsoft Dev Tunnels CLI and make `devtunnel` available on `PATH`, or set `DEVTUNNEL_PATH` to the executable. On Windows the app also checks `%USERPROFILE%\termote\bin\devtunnel.exe`.
+---
 
 ## Architecture
 
+**Termote** is a two-repo project:
+
+| Repo | Role | Tech |
+|------|------|------|
+| **[Termote](https://github.com/AliSharjeell/Termote)** | Backend (Rust) | Rust, axum, portable-pty, tokio |
+| **[TermoteUI](https://github.com/AliSharjeell/TermoteUI)** | Frontend & Desktop App (this repo) | Next.js 16, React 19, xterm.js, Tauri 2 |
+
+The TermoteUI desktop app bundles the Termote Rust backend as a sidecar. Users install one GUI app; the backend runs locally alongside it.
+
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    TermoteUI (Next.js)                   │
+┌──────────────────────────────────────────────────────────┐
+│                    Termote Desktop App                    │
+│                    (TermoteUI + Tauri)                   │
 │                                                          │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │                    Dashboard                        │ │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ │ │
-│  │  │  TabBar/    │  │   PaneBar   │  │  Profile │ │ │
-│  │  │  SplitPane  │  │   Layout    │  │ Sidebar  │ │ │
-│  │  └─────────────┘  └─────────────┘  └──────────┘ │ │
-│  │         │                                    │     │ │
-│  │         ▼                                    │     │ │
-│  │  ┌─────────────────────────────────────────────┐ │ │
-│  │  │              XtermPane (xterm.js)            │ │ │
-│  │  └─────────────────────────────────────────────┘ │ │
-│  └─────────────────────────────────────────────────────┘ │
-│                            │                              │
-│                            ▼                              │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │                  useWebSocket Hook                  │ │
-│  │              (auto-reconnect, auth)                  │ │
-│  └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-                            │
-                            │ WebSocket (wss://)
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                     Termote Backend                      │
-│                    (Rust + axum)                         │
-└─────────────────────────────────────────────────────────┘
+│  ┌────────────────────┐        ┌─────────────────────┐ │
+│  │  WebView2 (Next.js)│◄──────►│  Termote Backend     │ │
+│  │  xterm.js + React  │ WS     │  (Rust sidecar)      │ │
+│  └────────────────────┘        └─────────────────────┘ │
+└──────────────────────────────────────────────────────────┘
+                           │
+                           │ Dev Tunnel (HTTPS/443)
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                    Mobile Browser                        │
+│              Same UI, anywhere in the world               │
+└──────────────────────────────────────────────────────────┘
 ```
 
-### Components
+---
 
-- **Dashboard**: Main application shell with toolbar and content area
-- **SplitPane**: Grid layout for terminal panes
-- **TabBar**: Tab-based terminal organization
-- **XtermPane**: Individual terminal with xterm.js (includes drag-and-drop file upload)
-- **PaneTitleBar**: Terminal header with close/rename/pin/AI launch buttons
-- **ProfileSidebar**: Connection info, mobile QR code, AI CLI settings, security button
-- **SecurityModal**: View connected devices, kick sessions, manage banned IPs
-- **LoginForm**: Tunnel URL and token entry
-- **ConnectionStatus**: Visual connection indicator
+## Features
 
-### State Management
+- **Split pane view**: Auto-balancing grid layout for terminal panes
+- **Tabs view**: Tab-based terminal organization
+- **Mobile responsive**: Optimized for phone and tablet browsers
+- **QR code connection**: Scan to connect from mobile devices
+- **Real-time sync**: Instant terminal updates via WebSocket
+- **Auto-reconnect**: Handles network interruptions gracefully
+- **Drag-and-drop file transfer**: Drop files into terminal panes
+- **AI quick-launch**: One-click launch of AI CLI tools (Claude Code, Gemini CLI, etc.)
+- **Pane groups**: Color-code and organize terminals into groups
+- **Security & device management**: View and manage connected devices, ban IPs
+- **Dark theme**: Modern, eye-friendly dark interface
 
-Uses Zustand for global state:
+---
 
-```typescript
-interface PaneState {
-  panes: Pane[]
-  activePanes: string[]
-  floatingPanes: string[]
-  viewMode: "tabs" | "panes"
-  isConnected: boolean
-  isAuthenticated: boolean
-  groups: PaneGroup[]
-  selectedGroupId: string | null
-  devices: DeviceInfo[]
-  showSecurityModal: boolean
-  aiCommand: string  // Quick-launch AI CLI command
-}
-```
+## Use Cases
 
-## Web-Only Development
+### The Mobile AI Agent Commander
+You're out grabbing coffee, but you want your beefy home rig to start training a model or running an AI agent. Pull out your phone, open Termote, and spin up Claude Code or a local LLM. Monitor its thought process, give real-time corrections, all from your mobile browser.
 
-### Prerequisites
+### The "Dinner Emergency" Fix
+Get an alert that your dev server crashed? Instead of rushing home, open Termote on your phone, run `docker restart` or `pm2 reload`, and go right back to dinner.
 
-- Node.js 20+
-- npm or pnpm
+### Monitoring Long Jobs from the Couch
+Kicked off a massive compilation, a 4-hour scraping script, or ML training? Grab your tablet, head to the couch, and watch the progress in a live Termote pane next to your Netflix stream.
 
-### Installation
+### Bypassing Restrictive Networks
+On a corporate Wi-Fi that blocks SSH? Termote wraps your terminal in standard HTTPS WebSockets (port 443) and slices right through.
 
-```bash
-npm install
-```
-
-### Next.js Only
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to access the application.
-
-### Build
-
-```bash
-npm run build
-```
-
-### Next.js Production
-
-```bash
-npm run start
-```
-
-## Connection Flow
-
-### Desktop App Flow
-
-1. The Tauri app starts the bundled Termote backend sidecar.
-2. The desktop webview connects to `ws://127.0.0.1:9090/ws` using the generated local auth token.
-3. Clicking **Mobile Access** runs `devtunnel host -p 9090 --allow-anonymous`.
-4. The QR/copy link opens the same local GUI through the Dev Tunnel and passes the WebSocket URL plus token to `/dashboard/`.
-
-### Manual Connection
-
-1. Start the backend server
-2. Enter the tunnel WebSocket URL (e.g., `wss://your-server.com`)
-3. Enter the authentication token
-4. Click "Connect"
-
-### Auto-Login (Mobile)
-
-1. Open the backend's `/launch` endpoint in a browser
-2. Redirects to frontend with credentials in URL params
-3. QR code available in Profile sidebar for future connections
-
-### URL Parameters
-
-| Parameter | Description |
-|-----------|-------------|
-| `tunnel` | WebSocket tunnel URL |
-| `token` | Authentication token |
-
-Example: `https://abc-9090.devtunnels.ms/dashboard/?tunnel=wss%3A%2F%2Fabc-9090.devtunnels.ms%2Fws&token=abc123`
-
-## View Modes
-
-### Panes View
-
-- Grid layout with auto-balancing
-- Gap between panes for visual separation
-- "+ New Terminal" button in toolbar
-- Click x to close a pane
-
-### Tabs View
-
-- Single terminal visible at a time
-- Tab bar shows all open panes
-- Click tab to switch
-- Extract pane to floating (hidden from grid)
-
-## Components
-
-### XtermPane
-
-Individual terminal instance using xterm.js:
-
-- **FitAddon**: Auto-fits terminal to container
-- **Resize circuit breaker**: 200ms debounce, tracks last sent dimensions
-- **Scrollback**: Preserved on reconnection
-- **Input forwarding**: Keystrokes sent to backend
-- **Drag-and-drop upload**: Visual feedback when dragging files over pane, uploads to pane's working directory
-- **AI quick-launch button**: Launches configured AI CLI (Claude Code, Gemini, etc.) with one click
-
-### ProfileSidebar
-
-Connection management panel:
-
-- Displays tunnel URL (masked)
-- Displays auth token (masked)
-- "Connect to Mobile" button with QR code
-- **Default AI CLI** selector (Claude Code, Gemini CLI, aichat, Codex, llm)
-- **Security & Devices** button to view/manage connected devices and banned IPs
-- Sign out button
-
-### Connection Status
-
-Toolbar indicator showing:
-
-- **Green glow**: Connected and authenticated
-- **Yellow glow**: Connected, authenticating
-- **Red glow**: Disconnected
-- **Refresh icon**: Focus button to reset terminal size
-
-## State Synchronization
-
-Multi-client sync via broadcast channel:
-
-1. Any client action broadcasts `StateUpdate` to all clients
-2. New clients receive scrollback buffer replay on auth
-3. Output events broadcast to all clients simultaneously
-
-## WebSocket Protocol
-
-### Client Messages
-
-```typescript
-// Authentication
-{ action: "auth", token: string }
-
-// Spawn terminal
-{ action: "spawn", shell: "powershell" | "cmd" | "wsl" }
-
-// Input
-{ action: "input", pane_id: string, data: string }
-
-// Resize (debounced)
-{ action: "resize", pane_id: string, cols: number, rows: number }
-
-// Force resize (no circuit breaker)
-{ action: "refocus", pane_id: string, cols: number, rows: number }
-
-// Kill
-{ action: "kill", pane_id: string }
-
-// Move between views
-{ action: "move_to_floating", pane_id: string }
-{ action: "move_to_active", pane_id: string }
-
-// Rename
-{ action: "rename", pane_id: string, name: string }
-
-// Pane groups
-{ action: "create_group", id?: string, name: string, color: string }
-{ action: "delete_group", group_id: string }
-{ action: "rename_group", group_id: string, name: string }
-{ action: "set_pane_group", pane_id: string, group_id: string | null }
-
-// Directory picker
-{ action: "request_directory_picker", shell: string }
-
-// File transfer
-{ action: "upload_file", pane_id: string, file_name: string, data: string }
-
-// Device management
-{ action: "get_device_list" }
-{ action: "kick_device", device_id: string }
-{ action: "ban_device", ip: string }
-```
-
-### Server Messages
-
-```typescript
-// Auth result
-{ event: "auth_result", success: boolean, message?: string }
-
-// State sync
-{ event: "state_update", panes: Pane[], active_panes: string[], floating_panes: string[], groups: PaneGroup[] }
-
-// Terminal output
-{ event: "output", pane_id: string, data: string }
-
-// Group events
-{ event: "group_created", group: PaneGroup }
-{ event: "group_deleted", group_id: string }
-{ event: "group_renamed", group_id: string, name: string }
-{ event: "pane_group_set", pane_id: string, group_id: string | null }
-
-// Directory picker
-{ event: "directory_picker_cancelled" }
-
-// File transfer
-{ event: "file_uploaded", pane_id: string, file_name: string }
-
-// Device management
-{ event: "device_list", devices: DeviceInfo[] }
-{ event: "device_kicked", device_id: string }
-{ event: "device_banned", ip: string }
-{ event: "error", message: string }
-```
-
-## Auto-Reconnect
-
-WebSocket connection with:
-
-- **3 second retry delay**
-- **30 second ping interval**
-- **Clean sessionStorage on sign out**
-
-## Mobile Optimization
-
-- **Safe area insets**: Respects notch and home indicator
-- **Viewport fit**: `viewportFit: "cover"` for full screen
-- **Touch-friendly**: Large tap targets
-- **QR code**: Easy mobile connection flow
+---
 
 ## Tech Stack
 
-- **Next.js 16**: React framework with App Router
-- **React 19**: UI library
-- **xterm.js**: Terminal emulator
-- **Zustand**: State management
-- **Tailwind CSS 4**: Styling
-- **Lucide React**: Icons
-- **qrcode.react**: QR code generation
-- **Allotment**: Split pane library
+| Layer | Tech | Purpose |
+|-------|------|---------|
+| **Desktop Shell** | Tauri 2 | Native window, WebView2, system integration |
+| **Frontend** | Next.js 16 | App Router, React 19, Server Components |
+| **Terminal** | xterm.js + FitAddon | Terminal emulator, auto-sizing |
+| **State** | Zustand | Lightweight global state management |
+| **Styling** | Tailwind CSS 4 | Utility-first CSS |
+| **Icons** | Lucide React | Consistent icon set |
+| **QR Codes** | qrcode.react | Mobile connection QR codes |
+| **Backend** | Termote (Rust) | WebSocket server, PTY management, Dev Tunnels |
 
-## Project Structure
+---
 
-```
-src/
-├── app/
-│   ├── page.tsx          # Landing page
-│   ├── layout.tsx        # Root layout
-│   ├── globals.css       # Global styles
-│   └── dashboard/
-│       └── page.tsx      # Main dashboard
-├── components/
-│   ├── LoginForm.tsx
-│   ├── XtermPane.tsx
-│   ├── PaneTitleBar.tsx
-│   ├── SplitPane.tsx
-│   ├── TabBar.tsx
-│   ├── ProfileSidebar.tsx
-│   └── ConnectionStatus.tsx
-├── hooks/
-│   ├── useWebSocket.ts
-│   ├── usePaneStore.ts
-│   └── useMediaQuery.ts
-└── lib/
-    └── types.ts          # TypeScript types
-```
+## Why Termote?
 
-## Environment Variables
+| SSH | Termote |
+|-----|---------|
+| Requires port forwarding | Works through NATs/firewalls |
+| Needs VPN setup | Zero-config, just HTTPS |
+| Terminal-only | Beautiful multi-pane UI |
+| Not mobile-friendly | Optimized for phone/tablet |
+| Manual session management | Persistent workspace, auto-reconnect |
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_BACKEND_URL` | - | Default backend WebSocket URL |
+---
+
+## Contributing
+
+Contributions welcome! Please reach out before starting major work:
+
+1. **Open an Issue** or email `alisharjeelofficial@gmail.com`
+2. **Get assigned** before writing code
+3. **Open a PR** with tests
+4. **Send a demo video** to speed up review
+
+---
+
+## Show Your Support
+
+If Termote made your mobile command-line life easier, give it a star!
+
+[![Star](https://img.shields.io/github/stars/AliSharjeell/TermoteUI?style=social)](https://github.com/AliSharjeell/TermoteUI)
+
+---
 
 ## License
 
-MIT
+MIT License
