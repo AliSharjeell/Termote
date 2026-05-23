@@ -3,7 +3,6 @@
   "app": {
     "windows": [
       {
-        "transparent": true,
         "windowEffects": {
           "effects": ["mica"],
           "state": "active"

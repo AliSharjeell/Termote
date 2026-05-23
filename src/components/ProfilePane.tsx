@@ -54,6 +54,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
   const [customSelected, setCustomSelected] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
+  const isMica = checked && isTauri
   const mobileUrl = buildMobileUrl(tunnelUrl, authToken)
 
   const aiOptions = [
@@ -138,9 +139,9 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
       )}
 
       {/* Sidebar content */}
-      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#0d0d0d] overflow-hidden" style={{ width: 260, height: "100%" }}>
+      <div className={`flex shrink-0 flex-col border-l border-[#353535] overflow-hidden ${isMica ? "bg-transparent border-transparent" : "bg-[#0d0d0d]"}`} style={{ width: 260, height: "100%" }}>
         {/* Collapse button */}
-        <div className="flex justify-start px-2 py-1 border-b border-[#1a1a1a]">
+        <div className={`flex justify-start px-2 py-1 ${isMica ? "border-transparent" : "border-b border-[#1a1a1a]"}`}>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             title="Collapse sidebar"
@@ -152,7 +153,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
 
         <div className="flex-1 overflow-y-auto">
           {/* Profile header */}
-          <div className="px-3 py-3 border-b border-[#252525]">
+          <div className={`px-3 py-3 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
             <span className="text-xs font-medium text-white uppercase tracking-wider">
               {checked ? (isTauri ? "Profile (Tauri)" : "Profile") : "Loading..."}
             </span>
@@ -160,7 +161,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
 
           {/* Server Controls - Tauri only */}
           {checked && isTauri && (
-            <div className="px-3 py-3 border-b border-[#252525]">
+            <div className={`px-3 py-3 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
               <div className="flex items-center gap-1.5 mb-2">
                 <RefreshCw className="h-3 w-3 text-[#808080]" />
                 <span className="text-[10px] text-[#808080] uppercase tracking-wider">Server Controls</span>
@@ -263,7 +264,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
 
           {/* Security & Devices - Tauri only */}
           {checked && isTauri && (
-            <div className="px-3 py-3 border-t border-[#252525]">
+            <div className={`px-3 py-3 ${isMica ? "border-transparent" : "border-t border-[#252525]"}`}>
               <button
                 onClick={() => setShowSecurityModal(true)}
                 className="flex w-full items-center justify-center gap-2 rounded bg-[#1a1a1a] px-4 py-2.5 text-xs text-white hover:bg-[#27272A] transition-colors"
