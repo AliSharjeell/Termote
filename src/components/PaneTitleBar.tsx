@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Pencil, Pin, PinOff, FolderInput, X, Plus, Bot } from "lucide-react"
+import { Pencil, Pin, PinOff, FolderInput, X, Plus, Bot, Monitor } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface PaneTitleBarProps {

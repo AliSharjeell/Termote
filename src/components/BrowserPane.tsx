@@ -50,7 +50,6 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
           onClose={() => killPane(pane.id)}
           onRename={handleRename}
           onPin={() => togglePin(pane.id)}
-          onLaunchAI={() => setShowPreview(true)}
         />
         {/* URL input bar when no URL is set */}
         <form onSubmit={handleUrlSubmit} className="flex items-center gap-2 px-3 py-2 border-b border-[#252525] bg-[#161616]">
@@ -81,7 +80,15 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
           onClose={() => killPane(pane.id)}
           onRename={handleRename}
           onPin={() => togglePin(pane.id)}
-          onLaunchAI={() => setShowPreview(true)}
+          actions={
+            <button
+              onClick={() => setShowPreview(true)}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] text-[#808080] hover:text-white transition-colors"
+              title="Device preview"
+            >
+              <Monitor className="h-4 w-4" />
+            </button>
+          }
         />
         {/* URL bar */}
         <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525] bg-[#161616]">
