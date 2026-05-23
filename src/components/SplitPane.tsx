@@ -221,7 +221,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <div
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
-              ? "text-[#CCCCCC] bg-[#252525]"
+              ? "text-[#CCCCCC] bg-white/[0.08]"
               : "text-[#CCCCCC] hover:bg-white/[0.06]"
           }`}
         >
@@ -284,7 +284,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
         <div
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
-              ? "text-[#CCCCCC] bg-[#252525]"
+              ? "text-[#CCCCCC] bg-white/[0.08]"
               : "text-[#CCCCCC] hover:bg-white/[0.06]"
           }`}
         >
@@ -352,7 +352,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               <div
                 className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
-                    ? "text-[#CCCCCC] bg-[#252525]"
+                    ? "text-[#CCCCCC] bg-white/[0.08]"
                     : "text-[#CCCCCC] hover:bg-white/[0.06]"
                 }`}
               >
