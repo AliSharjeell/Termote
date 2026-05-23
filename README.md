@@ -1,8 +1,8 @@
+![Termote Cover](public/maincover.png)
+
 # Termote - Desktop & Web Interface
 
 <div align="center">
-
-![Termote Cover](public/maincover.png)
 
 ![Termote](https://img.shields.io/github/stars/AliSharjeell/TermoteUI?style=social)
 
