@@ -9,12 +9,23 @@ import { BlockNoteView, type Theme } from "@blocknote/mantine"
 import { useEffect, useRef, useState } from "react"
 import "@blocknote/core/fonts/inter.css"
 import "@blocknote/mantine/style.css"
+import { getSyncClientId } from "@/lib/syncClient"
+import { parseSyncEnvelope, type SyncEnvelope } from "@/lib/syncEnvelope"
 
 interface NotePaneProps {
   pane: Pane
 }
 
 const NOTE_KEY = (id: string) => `note-${id}-bn`
+const SYNC_DEBOUNCE_MS = 500
+const EDITING_PAUSE_MS = 1000
+
+interface PendingRemote {
+  content: PartialBlock[]
+  clientId: string
+  revision: number
+  updatedAt: number
+}
 
 function parseNoteContent(raw: string | null | undefined): PartialBlock[] | undefined {
   if (!raw) return undefined
@@ -25,6 +36,10 @@ function parseNoteContent(raw: string | null | undefined): PartialBlock[] | unde
   } catch {
     return undefined
   }
+}
+
+function parseNoteEnvelope(raw: string | null | undefined): SyncEnvelope<PartialBlock[]> | null {
+  return parseSyncEnvelope<PartialBlock[]>(raw)
 }
 
 function loadInitialContent(pane: Pane): PartialBlock[] | undefined {
@@ -73,39 +88,144 @@ const noteTheme: Theme = {
 export function NotePane({ pane }: NotePaneProps) {
   const { killPane, renamePane, togglePin } = usePaneStore()
   const applyingRemoteRef = useRef(false)
-  const lastAppliedContentRef = useRef<string | null>(pane.noteContent ?? null)
+  const lastRemoteRevisionRef = useRef(0)
+  const lastLocalUpdatedAtRef = useRef(0)
+  const localRevisionRef = useRef(0)
+  const isUserEditingRef = useRef(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const editingPauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingRemoteRef = useRef<PendingRemote | null>(null)
+  const lastAppliedRawRef = useRef<string | null>(null)
+  const clientIdRef = useRef(getSyncClientId())
   const [initialContent] = useState(() => loadInitialContent(pane))
 
   const editor = useCreateBlockNote({
     initialContent,
   })
 
-  useEffect(() => {
-    const incoming = pane.noteContent ?? null
-    if (!incoming || incoming === lastAppliedContentRef.current) return
+  // Schedule local change sync with debounce
+  const scheduleNoteSync = (doc: PartialBlock[]) => {
+    if (applyingRemoteRef.current) return
 
-    const parsed = parseNoteContent(incoming)
-    if (!Array.isArray(parsed)) return
+    isUserEditingRef.current = true
 
-    try {
-      const currentSerialized = JSON.stringify({ content: editor.document })
-      if (incoming === currentSerialized) {
-        lastAppliedContentRef.current = incoming
-        return
+    // Clear any pending editing pause timer
+    if (editingPauseTimeoutRef.current) {
+      clearTimeout(editingPauseTimeoutRef.current)
+    }
+
+    // Set editing pause timer
+    editingPauseTimeoutRef.current = setTimeout(() => {
+      isUserEditingRef.current = false
+      editingPauseTimeoutRef.current = null
+
+      // Apply queued remote if any
+      if (pendingRemoteRef.current) {
+        const pending = pendingRemoteRef.current
+        pendingRemoteRef.current = null
+
+        // Only apply if still newer than local
+        if (pending.updatedAt > lastLocalUpdatedAtRef.current) {
+          applyingRemoteRef.current = true
+          try {
+            console.log("[NOTE SYNC] Applying queued remote after editing pause", {
+              paneId: pane.id,
+              pendingRevision: pending.revision,
+              pendingUpdatedAt: pending.updatedAt,
+              lastLocalUpdatedAt: lastLocalUpdatedAtRef.current,
+            })
+            editor.replaceBlocks(editor.document, pending.content)
+            lastRemoteRevisionRef.current = pending.revision
+          } catch (e) {
+            console.error("[NOTE SYNC] Failed to apply queued remote:", e)
+          } finally {
+            queueMicrotask(() => {
+              applyingRemoteRef.current = false
+            })
+          }
+        }
+      }
+    }, EDITING_PAUSE_MS)
+
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Debounce the actual save
+    saveTimeoutRef.current = setTimeout(() => {
+      const revision = localRevisionRef.current + 1
+      localRevisionRef.current = revision
+
+      const envelope = {
+        content: doc,
+        clientId: clientIdRef.current,
+        revision,
+        updatedAt: Date.now(),
       }
 
-      applyingRemoteRef.current = true
-      editor.replaceBlocks(editor.document, parsed)
-      localStorage.setItem(NOTE_KEY(pane.id), incoming)
-      lastAppliedContentRef.current = incoming
-      setTimeout(() => {
-        applyingRemoteRef.current = false
-      }, 0)
-    } catch (e) {
-      applyingRemoteRef.current = false
-      console.error("[NotePane] remote sync error:", e)
+      const data = JSON.stringify(envelope)
+      lastLocalUpdatedAtRef.current = envelope.updatedAt
+
+      console.log("[NOTE SYNC LOCAL]", {
+        paneId: pane.id,
+        revision,
+        updatedAt: envelope.updatedAt,
+        clientId: clientIdRef.current,
+      })
+
+      localStorage.setItem(NOTE_KEY(pane.id), data)
+      usePaneStore.getState().updatePaneContent(pane.id, data, undefined, undefined)
+    }, SYNC_DEBOUNCE_MS)
+  }
+
+  // Handle remote changes
+  useEffect(() => {
+    const incomingRaw = pane.noteContent
+    if (!incomingRaw) return
+    if (incomingRaw === lastAppliedRawRef.current) return
+
+    const envelope = parseNoteEnvelope(incomingRaw)
+    if (!envelope) return
+
+    console.log("[NOTE SYNC REMOTE]", {
+      paneId: pane.id,
+      incomingRevision: envelope.revision,
+      lastRemoteRevision: lastRemoteRevisionRef.current,
+      incomingUpdatedAt: envelope.updatedAt,
+      lastLocalUpdatedAt: lastLocalUpdatedAtRef.current,
+      sameClient: envelope.clientId === clientIdRef.current,
+      isUserEditing: isUserEditingRef.current,
+    })
+
+    // Ignore our own backend echo
+    if (envelope.clientId === clientIdRef.current) return
+
+    // Ignore stale remote
+    if (envelope.revision <= lastRemoteRevisionRef.current) return
+    if (envelope.updatedAt <= lastLocalUpdatedAtRef.current) return
+
+    // Queue for later if user is actively editing
+    if (isUserEditingRef.current) {
+      pendingRemoteRef.current = envelope
+      return
     }
-  }, [editor, pane.id, pane.noteContent])
+
+    applyingRemoteRef.current = true
+    lastAppliedRawRef.current = incomingRaw
+
+    try {
+      editor.replaceBlocks(editor.document, envelope.content)
+      lastRemoteRevisionRef.current = envelope.revision
+      localStorage.setItem(NOTE_KEY(pane.id), incomingRaw)
+    } catch (e) {
+      console.error("[NOTE SYNC] Remote apply error:", e)
+    } finally {
+      queueMicrotask(() => {
+        applyingRemoteRef.current = false
+      })
+    }
+  }, [pane.noteContent, editor])
 
   const handleRename = (newTitle: string) => renamePane(pane.id, newTitle)
 
@@ -128,14 +248,9 @@ export function NotePane({ pane }: NotePaneProps) {
             try {
               if (applyingRemoteRef.current) return
               const doc = editor.document
-              const data = JSON.stringify({ content: doc })
-              if (data === lastAppliedContentRef.current) return
-              lastAppliedContentRef.current = data
-              localStorage.setItem(NOTE_KEY(pane.id), data)
-              // Push content to backend for persistence and sync
-              usePaneStore.getState().updatePaneContent(pane.id, data, undefined, undefined)
+              scheduleNoteSync(doc)
             } catch (e) {
-              console.error("[NotePane] save error:", e)
+              console.error("[NOTE SYNC] onChange error:", e)
             }
           }}
         />
