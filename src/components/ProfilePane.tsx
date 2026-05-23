@@ -139,7 +139,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
       )}
 
       {/* Sidebar content */}
-      <div className={`flex shrink-0 flex-col border-l border-[#353535] overflow-hidden ${isMica ? "bg-transparent border-transparent" : "bg-[#0d0d0d]"}`} style={{ width: 260, height: "100%" }}>
+      <div className={`flex shrink-0 flex-col border-l border-[#353535] overflow-hidden ${isMica ? "bg-transparent border-transparent" : "bg-[#0d0d0d]"}`} style={{ width: 260 }}>
         {/* Collapse button */}
         <div className={`flex justify-start px-2 py-1 ${isMica ? "border-transparent" : "border-b border-[#1a1a1a]"}`}>
           <button

@@ -479,7 +479,7 @@ function DashboardContent() {
 
         {/* Profile sidebar - Tauri only, on RIGHT */}
         {tauriChecked && isTauriApp && (
-          <div className="profile-sidebar shrink-0" data-mica-surface>
+          <div className="profile-sidebar shrink-0 mt-10" data-mica-surface>
             <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
           </div>
         )}
