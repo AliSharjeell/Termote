@@ -169,58 +169,69 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
     setTunnelReady(false)
     setDevtunnelStatus(null)
 
-    // Helper to wait for specific auth status
-    const waitForAuthStatus = async (targetStatus: string, timeoutMs = 60000): Promise<DevtunnelAuthStatus | null> => {
-      return new Promise((resolve) => {
-        const timeout = setTimeout(() => {
-          console.log('[DevTunnel] Auth wait timeout')
-          resolve(null)
-        }, timeoutMs)
+    // Use a ref to track the unlisten function
+    const unlistenRef: { current: (() => void) | null } = { current: null }
 
-        // Set up listener for auth status changes
+    try {
+      // Step 1: Set up listener FIRST before checking anything
+      const authEventPromise = new Promise<DevtunnelAuthStatus>((resolve) => {
         listen<DevtunnelAuthStatus>('devtunnel-login-status', (event) => {
           console.log('[DevTunnel] Auth status update:', event.payload)
           setDevtunnelStatus(event.payload)
           onDevtunnelAuthStatusChange?.(event.payload)
 
-          if (event.payload.status === targetStatus) {
-            clearTimeout(timeout)
-            resolve(event.payload)
-          } else if (event.payload.status === 'login_failed' || event.payload.status === 'login_url') {
-            clearTimeout(timeout)
+          // Also update isCheckingAuth when we get login_success
+          if (event.payload.status === 'login_success') {
+            setIsCheckingAuth(false)
+          }
+
+          if (event.payload.status === 'login_success' ||
+              event.payload.status === 'login_failed' ||
+              event.payload.status === 'login_url') {
             resolve(event.payload)
           }
-        }).catch(err => {
+        }).then((fn) => {
+          unlistenRef.current = fn
+        }).catch((err) => {
           console.error('[DevTunnel] Listener setup failed:', err)
-          clearTimeout(timeout)
-          resolve(null)
+          resolve({ status: 'login_failed', message: 'Failed to set up listener', url: null })
         })
       })
-    }
 
-    try {
-      // Step 1: Check current auth status
-      const initialAuthStatus = await waitForAuthStatus('login_success', 5000).catch(() => null)
+      // Small delay to ensure listener is active
+      await new Promise(r => setTimeout(r, 100))
 
-      // Step 2: If not authenticated, trigger auth flow
-      if (!initialAuthStatus || initialAuthStatus.status !== 'login_success') {
-        // Start remote access - this will trigger devtunnel auth flow
-        await invoke('start_remote_access')
+      // Step 2: Check current runtime state
+      const runtimeState = await invoke<{ tunnel_url: string | null; tunnel_running: boolean; auth_token: string }>('get_runtime_state')
+      console.log('[DevTunnel] Runtime state:', runtimeState)
 
-        // Wait for successful auth
-        const authResult = await waitForAuthStatus('login_success', 60000)
-        if (!authResult || authResult.status !== 'login_success') {
-          setDevtunnelStatus({
-            status: 'login_failed',
-            message: 'Authentication failed or was cancelled',
-            url: null
-          })
-          return
-        }
+      // Step 3: If tunnel already running with URL, we're good
+      if (runtimeState.tunnel_running && runtimeState.tunnel_url) {
+        const newMobileUrl = buildMobileUrl(runtimeState.tunnel_url, runtimeState.auth_token)
+        setMobileUrl(newMobileUrl)
+        setDevtunnelStatus({ status: 'login_success', message: 'Already connected', url: null })
+        setTunnelReady(true)
+        setIsCheckingAuth(false)
+        return
       }
 
-      // Step 3: Generate tunnel URL
+      // Step 4: Not connected, start remote access
+      setDevtunnelStatus({ status: 'checking', message: 'Starting remote access...', url: null })
+      await invoke('start_remote_access')
+
+      // Step 5: Wait for auth result
+      setDevtunnelStatus({ status: 'checking', message: 'Waiting for authentication...', url: null })
+      const authResult = await authEventPromise
+
+      if (authResult.status !== 'login_success') {
+        setIsCheckingAuth(false)
+        return
+      }
+
+      // Step 6: Auth succeeded, generate tunnel URL
+      setDevtunnelStatus({ status: 'checking', message: 'Generating tunnel URL...', url: null })
       const result = await invoke<{ tunnel_url: string | null; auth_token: string }>('get_runtime_state')
+
       if (result.tunnel_url) {
         const newMobileUrl = buildMobileUrl(result.tunnel_url, result.auth_token)
         setMobileUrl(newMobileUrl)
@@ -241,6 +252,9 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
       })
     } finally {
       setIsCheckingAuth(false)
+      if (unlistenRef.current) {
+        unlistenRef.current()
+      }
     }
   }
 
@@ -260,8 +274,8 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
               </button>
             </div>
 
-            {/* DevTunnel Auth Status */}
-            {isCheckingAuth && (
+            {/* DevTunnel Auth Status - show when actively checking and no other status */}
+            {isCheckingAuth && !devtunnelStatus && (
               <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-3">
                 <Loader2 className="h-4 w-4 animate-spin text-[#DCDCAA]" />
                 <span className="text-sm text-[#CCCCCC]">Checking Dev Tunnel auth...</span>
