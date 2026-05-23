@@ -98,30 +98,6 @@ export function GitPane() {
 
   const hasGitRepos = repos.some(r => r.status?.is_repo)
 
-  if (!hasGitRepos) {
-    return (
-      <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] p-2 w-64 overflow-y-auto">
-        <span className="text-[10px] text-[#808080] px-2 uppercase tracking-wider mb-2">Git</span>
-        {repos.map(({ dir }) => {
-          const repoName = dir.split(/[/\\]/).pop() || dir
-          return (
-            <div key={dir} className="rounded-lg px-3 py-2 border border-[#333333] bg-[#0C0C0C] mb-1">
-              <div className="flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#F0C674] shrink-0">
-                  <circle cx="12" cy="12" r="4"/>
-                  <line x1="1.05" y1="12" x2="7" y2="12"/>
-                  <line x1="17.01" y1="12" x2="22.96" y2="12"/>
-                </svg>
-                <span className="text-sm text-white">{repoName}</span>
-              </div>
-              <span className="text-xs text-[#808080]">Not a git repository</span>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
   const handleStage = (paneId: string, files: string[]) => {
     gitStage(paneId, files, false)
   }
@@ -153,17 +129,19 @@ export function GitPane() {
 
   return (
     <div className="flex shrink-0 flex-col border-l border-[#353535] bg-[#161616] w-64 overflow-hidden">
-      {/* Header with AI Settings */}
+      {/* Header with AI Settings - Always shown */}
       <div className="px-3 pt-2">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] text-[#808080] uppercase tracking-wider">Git</span>
+          <span className="text-[10px] text-[#808080] uppercase tracking-wider">AI CLI</span>
           <button
             onClick={() => setShowAiSettings(!showAiSettings)}
-            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-[#808080] hover:text-white hover:bg-[#27272A] transition-colors"
+            className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] hover:bg-[#27272A] transition-colors ${
+              showAiSettings ? "text-white bg-[#27272A]" : "text-[#808080] hover:text-white"
+            }`}
             title="AI Settings"
           >
             <Bot className="h-3 w-3" />
-            AI
+            {showAiSettings ? "Close" : "Settings"}
           </button>
         </div>
 
@@ -248,7 +226,12 @@ export function GitPane() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      {/* Git Section - Only shown when there are repos */}
+      {gitDirs.length > 0 && hasGitRepos && (
+        <div className="border-t border-[#333333] mt-2">
+          <div className="px-3 py-2">
+            <span className="text-[10px] text-[#808080] uppercase tracking-wider">Git</span>
+          </div>
         {repos.map(({ dir, paneWithDir, status, log }) => {
           if (!status?.is_repo || !paneWithDir) return null
           const repoName = dir.split(/[/\\]/).pop() || dir
@@ -408,7 +391,8 @@ export function GitPane() {
             </div>
           )
         })}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
