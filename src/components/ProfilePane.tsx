@@ -178,56 +178,23 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
         }, timeoutMs)
 
         // Set up listener for auth status changes
-        let unsubscribe: (() => void) | null = null
+        listen<DevtunnelAuthStatus>('devtunnel-login-status', (event) => {
+          console.log('[DevTunnel] Auth status update:', event.payload)
+          setDevtunnelStatus(event.payload)
+          onDevtunnelAuthStatusChange?.(event.payload)
 
-        const setupListener = async () => {
-          try {
-            unsubscribe = await listen<DevtunnelAuthStatus>('devtunnel-login-status', (event) => {
-              console.log('[DevTunnel] Auth status update:', event.payload)
-              setDevtunnelStatus(event.payload)
-              onDevtunnelAuthStatusChange?.(event.payload)
-
-              if (event.payload.status === targetStatus) {
-                clearTimeout(timeout)
-                if (unsubscribe) unsubscribe()
-                resolve(event.payload)
-              } else if (event.payload.status === 'login_failed' || event.payload.status === 'login_url') {
-                clearTimeout(timeout)
-                if (unsubscribe) unsubscribe()
-                resolve(event.payload)
-              }
-            })
-          } catch (err) {
-            console.error('[DevTunnel] Listener setup failed:', err)
-          }
-        }
-
-        // Check current status immediately
-        invoke<DevtunnelAuthStatus>('get_devtunnel_auth_status').then(status => {
-          console.log('[DevTunnel] Current auth status:', status)
-          setDevtunnelStatus(status)
-          onDevtunnelAuthStatusChange?.(status)
-
-          if (status.status === targetStatus) {
+          if (event.payload.status === targetStatus) {
             clearTimeout(timeout)
-            resolve(status)
-          } else if (status.status === 'login_failed' || status.status === 'login_url') {
+            resolve(event.payload)
+          } else if (event.payload.status === 'login_failed' || event.payload.status === 'login_url') {
             clearTimeout(timeout)
-            resolve(status)
-          } else {
-            // Start listening for updates
-            setupListener()
+            resolve(event.payload)
           }
         }).catch(err => {
-          console.error('[DevTunnel] Failed to get auth status:', err)
-          // Try to set up listener anyway
-          setupListener()
-        })
-
-        return () => {
+          console.error('[DevTunnel] Listener setup failed:', err)
           clearTimeout(timeout)
-          if (unsubscribe) unsubscribe()
-        }
+          resolve(null)
+        })
       })
     }
 
