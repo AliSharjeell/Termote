@@ -171,3 +171,24 @@ html.tauri-mica .border-t {
 ::-webkit-scrollbar-thumb:hover {
   background: #555555;
 }
+
+/* ============================================
+   Minimal scrollbar for compact areas
+   ============================================ */
+
+.scrollbar-minimal::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 2px;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
