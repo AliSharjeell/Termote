@@ -333,14 +333,7 @@ function DashboardContent() {
 
       {/* Main content with sidebar + content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Profile sidebar - Tauri only, on LEFT */}
-        {tauriChecked && isTauriApp && (
-          <div className="profile-sidebar shrink-0" data-mica-surface>
-            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
-          </div>
-        )}
-
-        {/* Main content area with topbar + panes */}
+        {/* Main content area with left sidebar + topbar + panes */}
         <div className="main-column flex flex-1 flex-col overflow-hidden">
           {/* Connection status bar / Topbar */}
           <div
@@ -483,6 +476,13 @@ function DashboardContent() {
             {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
           </div>
         </div>
+
+        {/* Profile sidebar - Tauri only, on RIGHT */}
+        {tauriChecked && isTauriApp && (
+          <div className="profile-sidebar shrink-0" data-mica-surface>
+            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
+          </div>
+        )}
       </div>
 
       {/* Modals */}
