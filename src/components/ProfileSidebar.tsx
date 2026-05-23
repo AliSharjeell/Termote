@@ -206,50 +206,48 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Server Controls - Tauri only */}
-          {isTauri && (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
-                <RefreshCw className="h-4 w-4" />
-                Server Controls
-              </label>
-              <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#0C0C0C] p-3">
-                <button
-                  onClick={handleRestartServer}
-                  disabled={!!serverAction || !serverRunning}
-                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
-                  Restart
-                </button>
-                <button
-                  onClick={handleStopServer}
-                  disabled={!!serverAction || !serverRunning}
-                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Square className="h-3.5 w-3.5" />
-                  Stop
-                </button>
-                <button
-                  onClick={() => {
-                    setShowQRModal(true)
-                    setQrBlurred(true)
-                  }}
-                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
-                >
-                  <QrCode className="h-3.5 w-3.5" />
-                  Mobile Access
-                </button>
-                <button
-                  onClick={handleCopyLink}
-                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
-                >
-                  {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
-                  Copy Link
-                </button>
-              </div>
+          {/* Server Controls */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
+              <RefreshCw className="h-4 w-4" />
+              Server Controls {isTauri ? "(Tauri)" : "(Browser)"}
+            </label>
+            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#0C0C0C] p-3">
+              <button
+                onClick={handleRestartServer}
+                disabled={!!serverAction || !serverRunning}
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
+                Restart
+              </button>
+              <button
+                onClick={handleStopServer}
+                disabled={!!serverAction || !serverRunning}
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Square className="h-3.5 w-3.5" />
+                Stop
+              </button>
+              <button
+                onClick={() => {
+                  setShowQRModal(true)
+                  setQrBlurred(true)
+                }}
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
+              >
+                <QrCode className="h-3.5 w-3.5" />
+                Mobile Access
+              </button>
+              <button
+                onClick={handleCopyLink}
+                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
+              >
+                {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
+                Copy Link
+              </button>
             </div>
-          )}
+          </div>
 
           {/* AI CLI Settings */}
           <div className="space-y-2">
