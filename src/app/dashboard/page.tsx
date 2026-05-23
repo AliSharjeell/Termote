@@ -58,7 +58,7 @@ function DashboardContent() {
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed, toggleProfileSidebar } = usePaneStore()
+  const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed, toggleProfileSidebar, tabsSidebarCollapsed, toggleTabsSidebar, tabsProfileSidebarCollapsed, toggleTabsProfileSidebar } = usePaneStore()
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
 
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
@@ -186,14 +186,31 @@ function DashboardContent() {
     }
   }
 
-  // Set default view based on orientation on first load
+  // Set default view and sidebar states on first load based on platform
   const initialLoadRef = useRef(false)
   useEffect(() => {
     if (!initialLoadRef.current && viewMode === "auto") {
       initialLoadRef.current = true
-      setViewMode(isLandscape ? "panes" : "tabs")
+      const isTauri = isTauriBuild()
+
+      if (isTauri) {
+        // Tauri: default to panes mode with right sidebar collapsed
+        setViewMode("panes")
+        toggleProfileSidebar() // Collapse it
+      } else {
+        // Web: default to tabs mode with both sidebars collapsed
+        setViewMode("tabs")
+        // Collapse left sidebar (file explorer) in tabs mode
+        if (!tabsSidebarCollapsed) {
+          toggleTabsSidebar()
+        }
+        // Collapse right sidebar (profile) in tabs mode
+        if (!tabsProfileSidebarCollapsed) {
+          toggleTabsProfileSidebar()
+        }
+      }
     }
-  }, [isLandscape, setViewMode, viewMode])
+  }, [setViewMode, viewMode, toggleProfileSidebar, toggleTabsSidebar, toggleTabsProfileSidebar])
 
   const showTabs = viewMode === "tabs"
 
