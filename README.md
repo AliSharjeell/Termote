@@ -6,6 +6,8 @@
 
 **Termote is a lightweight ADE (Agent Development Environment) that boosts your productivity with a persistent multi-pane workspace, built-in tools, and one-click remote access so you can keep working from your phone, anywhere.**
 
+![Termote Cover](public/maincover.png)
+
 </div>
 
 ---
@@ -45,6 +47,18 @@ After install, open Termote from your Start Menu or type `termote` in any termin
 
 ---
 
+![Desktop Interface](public/mainss1.png)
+
+---
+
+## Mobile Access
+
+Scan the QR code to connect from your phone or tablet — no VPN needed.
+
+![Mobile QR Access](public/mobileqr.png)
+
+---
+
 ## Features
 
 | Feature | What it does |
@@ -55,6 +69,12 @@ After install, open Termote from your Start Menu or type `termote` in any termin
 | File transfer | Drag files into terminal panes |
 | AI agents | Quick-launch Claude Code and other CLI tools |
 | Auto-reconnect | Handles network drops gracefully |
+
+---
+
+![Mobile Interface](public/phone1new.png)
+
+![Mobile Tabs View](public/phone2new.png)
 
 ---
 
