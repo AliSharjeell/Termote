@@ -59,9 +59,13 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
   const [customSelected, setCustomSelected] = useState(false)
   const [serverRunning, setServerRunning] = useState(true)
   const [serverAction, setServerAction] = useState<string | null>(null)
+  const [isTauri, setIsTauri] = useState(false)
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
-  const isTauri = detectTauri()
+  useEffect(() => {
+    setIsTauri(detectTauri())
+  }, [])
+
   const mobileUrl = providedMobileUrl || buildMobileUrl(tunnelUrl, authToken)
   const aiCommand = usePaneStore((state) => state.aiCommand)
   const setAiCommand = usePaneStore((state) => state.setAiCommand)
