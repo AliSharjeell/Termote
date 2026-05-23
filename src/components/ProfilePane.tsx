@@ -54,7 +54,7 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
   const [customSelected, setCustomSelected] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
-  const isMica = checked && isTauri
+  const isMica = false // Disabled - profile sidebar should have solid backgrounds
   const mobileUrl = buildMobileUrl(tunnelUrl, authToken)
 
   const aiOptions = [
