@@ -441,7 +441,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           }}
         >
         {(!hasAnyPanes || isGroupEmpty) ? (
-          <div className="flex h-full w-full items-center justify-center bg-transparent">
+          <div className="flex h-full w-full items-center justify-center bg-transparent border-r border-[#1a1a1a]">
             <div className="text-center text-[#CCCCCC]">
               <p className="text-sm">
                 {!hasAnyPanes ? "No active panes" : "No panes in this group"}
@@ -464,7 +464,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           sortedActivePanes.map((pane) => (
             <div
               key={pane.id}
-              className="relative overflow-hidden bg-transparent"
+              className="relative overflow-hidden bg-transparent border border-[#1a1a1a]"
             >
               <div className="h-full w-full">
                 {pane.url ? (
