@@ -22,7 +22,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
-  /* Safe area insets for mobile web */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -35,7 +34,107 @@ body {
   width: 100%;
 }
 
-/* Xterm.js container styles */
+/* ============================================
+   TAURI MICA TRANSPARENCY - Critical for Mica
+   ============================================ */
+
+/* When running in Tauri, make entire document transparent */
+html.tauri-mica {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html.tauri-mica body {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Next.js root container transparency */
+html.tauri-mica body > div,
+html.tauri-mica #__next,
+html.tauri-mica [data-nextjs-root] {
+  background: transparent !important;
+}
+
+/* The main app shell */
+.tauri-mica-shell {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* ============================================
+   Mica surface elements - titlebar, sidebar, topbar
+   ============================================ */
+
+/* All Mica surfaces must be transparent */
+html.tauri-mica .tauri-titlebar,
+html.tauri-mica [data-mica-surface],
+html.tauri-mica .profile-sidebar,
+html.tauri-mica .app-topbar,
+html.tauri-mica .main-column {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Remove all borders in Mica mode */
+html.tauri-mica .border-r,
+html.tauri-mica .border-b,
+html.tauri-mica .border-l,
+html.tauri-mica .border-t {
+  border-color: transparent !important;
+}
+
+/* ============================================
+   Titlebar styling
+   ============================================ */
+
+.tauri-titlebar {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent !important;
+  border: none !important;
+  user-select: none;
+}
+
+.tauri-titlebar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  transition: background-color 0.15s;
+}
+
+.tauri-titlebar button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tauri-titlebar button:last-child:hover {
+  background-color: #c42b1c !important;
+}
+
+/* ============================================
+   Web shell - solid backgrounds for browser
+   ============================================ */
+
+.web-shell {
+  background: var(--background) !important;
+}
+
+.web-shell .tauri-titlebar {
+  display: none !important;
+}
+
+/* ============================================
+   Xterm.js container styles
+   ============================================ */
+
 .xterm {
   height: 100%;
   padding: 8px;
@@ -71,48 +170,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555555;
-}
-
-/* Tauri Mica styling */
-.tauri-mica-shell {
-  background: transparent;
-}
-
-.tauri-mica-shell .tauri-titlebar,
-.tauri-mica-shell aside,
-.tauri-mica-shell header,
-.tauri-mica-shell .sidebar,
-.tauri-mica-shell .topbar,
-.tauri-mica-shell .main-column,
-.tauri-mica-shell [data-sidebar],
-.tauri-mica-shell [data-topbar] {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Remove borders between sidebar and topbar in Mica mode */
-.tauri-mica-shell .border-r,
-.tauri-mica-shell .border-b,
-.tauri-mica-shell .border-l,
-.tauri-mica-shell .border-t {
-  border-color: transparent !important;
-}
-
-/* Tauri titlebar hover states */
-.tauri-titlebar button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.tauri-titlebar button:last-child:hover {
-  background-color: #dc2626;
-}
-
-/* Web shell - normal solid background */
-.web-shell {
-  background: var(--background);
-}
-
-.web-shell .tauri-titlebar {
-  display: none;
 }

@@ -314,17 +314,42 @@ function DashboardContent() {
 
   const shellClass = tauriChecked && isTauriApp ? "tauri-mica-shell" : "web-shell"
 
+  // Toggle tauri-mica class on html element for CSS targeting
+  useEffect(() => {
+    if (!tauriChecked) return
+    document.documentElement.classList.toggle("tauri-mica", isTauriApp)
+    return () => {
+      document.documentElement.classList.remove("tauri-mica")
+    }
+  }, [tauriChecked, isTauriApp])
+
   return (
     <div className={`flex h-screen w-full flex-col overflow-hidden ${shellClass}`}>
       {/* Tauri custom titlebar */}
-      <TauriTitlebar />
+      <div data-mica-surface>
+        <TauriTitlebar />
+      </div>
 
       {/* Main content with sidebar + content */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Profile sidebar - Tauri only, on LEFT */}
+        {tauriChecked && isTauriApp && (
+          <div className="profile-sidebar shrink-0" data-mica-surface>
+            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
+          </div>
+        )}
+
         {/* Main content area with topbar + panes */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Connection status bar */}
-          <div className={`relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2 ${tauriChecked && isTauriApp ? "bg-transparent border-transparent" : ""}`}>
+        <div className="main-column flex flex-1 flex-col overflow-hidden">
+          {/* Connection status bar / Topbar */}
+          <div
+            data-mica-surface
+            className={`app-topbar relative flex shrink-0 items-center px-4 py-2 ${
+              tauriChecked && isTauriApp
+                ? "border-transparent shadow-none"
+                : "border-b border-[#252525] bg-[#0d0d0d]"
+            }`}
+          >
             {/* Status + Server Controls - left side */}
             <div className="flex items-center gap-4">
               {isTauri ? (
@@ -457,13 +482,6 @@ function DashboardContent() {
             {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
           </div>
         </div>
-
-        {/* Right sidebar - ProfilePane (only for Tauri) */}
-        {tauriChecked && isTauriApp && (
-          <div className={`shrink-0 ${profileSidebarCollapsed ? "w-10" : "w-64"}`}>
-            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
-          </div>
-        )}
       </div>
 
       {/* Modals */}

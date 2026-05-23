@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Termote",
         "width": 1200,
         "height": 800,
@@ -20,7 +21,12 @@
         "resizable": true,
         "fullscreen": false,
         "center": true,
-        "decorations": true
+        "decorations": false,
+        "transparent": true,
+        "windowEffects": {
+          "effects": ["micaDark"],
+          "state": "active"
+        }
       }
     ],
     "security": {
