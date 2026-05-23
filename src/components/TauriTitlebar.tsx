@@ -52,7 +52,7 @@ export function TauriTitlebar({ left, center, right }: TauriTitlebarProps) {
 
       <div className="flex h-full items-center z-10">
         {right}
-        <div className="flex h-full">
+        <div className="titlebar-controls flex h-full">
           <button
             data-tauri-no-drag
             type="button"
@@ -78,7 +78,7 @@ export function TauriTitlebar({ left, center, right }: TauriTitlebarProps) {
             type="button"
             aria-label="Close"
             onClick={close}
-            className="h-10 w-12 flex items-center justify-center hover:bg-red-500 transition-colors"
+            className="titlebar-close h-10 w-12 flex items-center justify-center hover:bg-red-500 transition-colors"
           >
             <X size={16} className="text-[#CCCCCC] hover:text-white" />
           </button>

@@ -380,23 +380,23 @@ function DashboardContent() {
             </div>
           }
           center={
-            <div data-tauri-no-drag className="flex items-center gap-1 rounded-full bg-[#27272A]/80 p-0.5 border border-[#333333]/50">
+            <div data-tauri-no-drag className="flex items-center p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
               <button
                 onClick={() => setViewMode("tabs")}
-                className={`rounded-full px-3 py-1 text-[11px] font-medium transition-all cursor-pointer ${
+                className={`rounded-full px-3.5 py-1 text-[11px] font-medium transition-all duration-150 cursor-pointer ${
                   viewMode === "tabs"
-                    ? "bg-[#CCCCCC] text-black"
-                    : "text-[#CCCCCC] hover:text-white"
+                    ? "bg-white/10 text-white"
+                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
                 }`}
               >
                 Tabs
               </button>
               <button
                 onClick={() => setViewMode("panes")}
-                className={`rounded-full px-3 py-1 text-[11px] font-medium transition-all cursor-pointer ${
+                className={`rounded-full px-3.5 py-1 text-[11px] font-medium transition-all duration-150 cursor-pointer ${
                   viewMode === "panes"
-                    ? "bg-[#CCCCCC] text-black"
-                    : "text-[#CCCCCC] hover:text-white"
+                    ? "bg-white/10 text-white"
+                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
                 }`}
               >
                 Panes
@@ -466,23 +466,23 @@ function DashboardContent() {
               </div>
 
               {/* View mode toggle - centered */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded-full bg-[#27272A] p-1">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
                 <button
                   onClick={() => setViewMode("tabs")}
-                  className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+                  className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer ${
                     viewMode === "tabs"
-                      ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
-                      : "text-[#CCCCCC] hover:text-white"
+                      ? "bg-white/10 text-white"
+                      : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
                   }`}
                 >
                   Tabs
                 </button>
                 <button
                   onClick={() => setViewMode("panes")}
-                  className={`rounded-full px-3 py-1.5 text-xs transition-all ${
+                  className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer ${
                     viewMode === "panes"
-                      ? "bg-[#CCCCCC] text-black border border-[#CCCCCC]"
-                      : "text-[#CCCCCC] hover:text-white"
+                      ? "bg-white/10 text-white"
+                      : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
                   }`}
                 >
                   Panes

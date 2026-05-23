@@ -100,7 +100,7 @@ html.tauri-mica .border-t {
   user-select: none;
 }
 
-.tauri-titlebar button {
+.tauri-titlebar .titlebar-controls button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,11 +111,11 @@ html.tauri-mica .border-t {
   transition: background-color 0.15s;
 }
 
-.tauri-titlebar button:hover {
+.tauri-titlebar .titlebar-controls button:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.tauri-titlebar button:last-child:hover {
+.tauri-titlebar .titlebar-controls button.titlebar-close:hover {
   background-color: #c42b1c !important;
 }
 
