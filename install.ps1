@@ -154,7 +154,7 @@ function Add-ContextMenu {
     $appPath = "$env:LOCALAPPDATA\Termote\Termote.exe"
     $handlerScript = "$env:LOCALAPPDATA\Termote\open-with-termote.ps1"
 
-    # Create handler script
+    # Create handler script that tries existing instance first, then launches new
     $handlerContent = @'
 param([string]$Path)
 $dir = if (Test-Path $Path -PathType Leaf) { Split-Path -Parent $Path } else { $Path }
@@ -185,6 +185,30 @@ $dir = $dir -replace '^"|"$', ''
     return $true
 }
 
+function Add-CommandLineShortcut {
+    Write-Host "  Adding 'termote' command to PATH..." -ForegroundColor Yellow
+
+    $appPath = "$env:LOCALAPPDATA\Termote\Termote.exe"
+    $shortcutPath = "$env:LOCALAPPDATA\Termote\termote.cmd"
+
+    # Create a batch file that launches the app with current directory
+    $batchContent = "@echo off`n"
+    $batchContent += "cd /d %CD%`n"
+    $batchContent += "start \"\" `"$appPath`" --cwd %CD%`n"
+    Set-Content -Path $shortcutPath -Value $batchContent -Encoding ASCII
+
+    # Add to PATH via registry (user-level)
+    $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    $termotePath = "$env:LOCALAPPDATA\Termote"
+    if ($userPath -notlike "*$termotePath*") {
+        [Environment]::SetEnvironmentVariable("PATH", "$userPath;$termotePath", "User")
+        Write-Host "    Added to PATH. Restart terminals to use 'termote' command." -ForegroundColor Yellow
+    }
+
+    Write-Host "    'termote' command shortcut created!" -ForegroundColor Green
+    return $true
+}
+
 # ==================== UNINSTALL ====================
 if ($Uninstall) {
     Write-Banner
@@ -193,6 +217,9 @@ if ($Uninstall) {
     # Remove shortcuts
     "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Termote.lnk" | Remove-Item -Force -ErrorAction SilentlyContinue
     "$env:USERPROFILE\Desktop\Termote.lnk" | Remove-Item -Force -ErrorAction SilentlyContinue
+
+    # Remove command line shortcut
+    "$env:LOCALAPPDATA\Termote\termote.cmd" | Remove-Item -Force -ErrorAction SilentlyContinue
 
     # Remove context menu
     Remove-Item -Path "HKCU:\Software\Classes\Directory\Background\shell\Termote" -Recurse -Force -ErrorAction SilentlyContinue
@@ -245,6 +272,7 @@ Write-Host "Creating shortcuts..." -ForegroundColor White
 Add-StartMenuShortcut
 Add-DesktopShortcut
 Add-ContextMenu
+Add-CommandLineShortcut
 
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan

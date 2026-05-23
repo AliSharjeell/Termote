@@ -13,8 +13,42 @@ use tauri_plugin_shell::{
 };
 
 const BACKEND_PORT: u16 = 9090;
+const IPC_PORT: u16 = 9091;
 const BACKEND_SIDECAR: &str = "termote-backend";
 const TUNNEL_POLL_TIMEOUT: Duration = Duration::from_secs(25);
+
+/// Parse command-line arguments for directory to open
+fn get_initial_dir() -> Option<String> {
+    let args: Vec<String> = env::args().collect();
+
+    // Look for --cwd <path> or --cwd=<path>
+    for (i, arg) in args.iter().enumerate() {
+        if arg == "--cwd" && i + 1 < args.len() {
+            return Some(args[i + 1].clone());
+        }
+        if let Some(path) = arg.strip_prefix("--cwd=") {
+            return Some(path.to_string());
+        }
+    }
+    None
+}
+
+/// Send directory to existing instance via IPC, or return false if no instance running
+fn send_to_existing_instance(dir: &str) -> bool {
+    use std::io::{Read, Write};
+    use std::net::TcpStream;
+
+    let addr = format!("127.0.0.1:{}", IPC_PORT);
+    if let Ok(mut stream) = TcpStream::connect(&addr) {
+        let cmd = format!("open_dir:{}\n", dir);
+        if stream.write_all(cmd.as_bytes()).is_ok() {
+            let mut response = [0u8; 64];
+            let _ = stream.read(&mut response);
+            return true;
+        }
+    }
+    false
+}
 
 struct RuntimeState {
     backend: Option<CommandChild>,
@@ -283,23 +317,34 @@ fn ensure_backend_running(app: &AppHandle, runtime: &State<'_, Mutex<RuntimeStat
     }
 
     // Kill any stale backend process left on our port from a previous session/install.
-    kill_processes_on_ports(&[BACKEND_PORT, 9091]);
+    kill_processes_on_ports(&[BACKEND_PORT, IPC_PORT]);
 
     let frontend = frontend_dir(app);
     let config = config_dir(app);
 
     std::fs::create_dir_all(&config).map_err(|e| format!("Failed to create config dir: {e}"))?;
 
+    // Parse --cwd argument for directory to open
+    let initial_dir = get_initial_dir();
+
+    let mut args = vec![
+        "--port".to_string(),
+        BACKEND_PORT.to_string(),
+        "--frontend-dir".to_string(),
+        frontend.to_string_lossy().to_string(),
+    ];
+
+    // Pass initial directory to backend if specified
+    if let Some(ref dir) = initial_dir {
+        args.push("--initial-dir".to_string());
+        args.push(dir.clone());
+    }
+
     let command = app
         .shell()
         .sidecar(BACKEND_SIDECAR)
         .map_err(|e| format!("Failed to prepare backend sidecar: {e}"))?
-        .args([
-            "--port".to_string(),
-            BACKEND_PORT.to_string(),
-            "--frontend-dir".to_string(),
-            frontend.to_string_lossy().to_string(),
-        ])
+        .args(args)
         .env("AUTH_TOKEN", token)
         .env("TERMOTE_CONFIG_DIR", config.to_string_lossy().to_string());
 
@@ -731,6 +776,15 @@ async fn check_for_updates() -> Result<String, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Handle --cwd argument: send to existing instance or pass to new one
+    if let Some(dir) = get_initial_dir() {
+        if send_to_existing_instance(&dir) {
+            // Successfully sent to existing instance, exit without starting new app
+            std::process::exit(0);
+        }
+        // No existing instance, will launch app with --initial-dir
+    }
+
     let app = tauri::Builder::default()
         .manage(Mutex::new(RuntimeState::default()))
         .plugin(
