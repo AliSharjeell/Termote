@@ -429,7 +429,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
       )}
 
       {/* Main content - left sidebar + grid */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className={`flex flex-1 overflow-hidden ${isMica ? "mica-terminal-container" : ""}`}>
         {/* Auto-balancing grid */}
         <div
           className="flex-1 overflow-hidden"

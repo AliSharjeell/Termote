@@ -78,12 +78,21 @@ html.tauri-mica .main-column {
   box-shadow: none !important;
 }
 
-/* Remove all borders in Mica mode */
 html.tauri-mica .border-r,
 html.tauri-mica .border-b,
 html.tauri-mica .border-l,
 html.tauri-mica .border-t {
   border-color: transparent !important;
+}
+
+/* Custom terminal container styling under Mica mode to create a floating curved card look */
+html.tauri-mica .mica-terminal-container {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  background-color: #080808 !important;
+  border-top-left-radius: 0.75rem !important; /* rounded-tl-xl */
 }
 
 /* ============================================

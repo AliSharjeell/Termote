@@ -520,11 +520,7 @@ function DashboardContent() {
           )}
 
           {/* Main panes area */}
-          <div className={`flex-1 overflow-hidden ${
-            tauriChecked && isTauriApp
-              ? "rounded-tl-xl border-t border-l border-[#252525]/40 bg-[#080808]"
-              : ""
-          }`}>
+          <div className="flex-1 overflow-hidden">
             {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
           </div>
         </div>
