@@ -1,7 +1,0 @@
-User-Agent: *
-Allow: /
-Disallow: /dashboard
-Disallow: /api/
-
-Host: https://termote.vercel.app
-Sitemap: https://termote.vercel.app/sitemap.xml
