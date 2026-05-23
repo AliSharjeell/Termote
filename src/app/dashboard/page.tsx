@@ -627,7 +627,7 @@ function DashboardContent() {
                 </button>
               </div>
 
-              {/* Focus button - right side */}
+              {/* Focus button + Search - right side */}
               <div className="ml-auto mr-2 flex items-center gap-2">
                 <button
                   onClick={focusThisDevice}
@@ -636,10 +636,6 @@ function DashboardContent() {
                 >
                   <Crosshair className="h-4 w-4" />
                 </button>
-              </div>
-
-              {/* Search + Profile - right side */}
-              <div className="ml-auto flex items-center gap-2">
                 {searchOpen ? (
                   <div className="relative flex items-center">
                     <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
@@ -649,7 +645,7 @@ function DashboardContent() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
-                      className="h-8 w-48 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
+                      className="h-7 w-36 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
                       onBlur={() => {
                         if (!searchQuery) setSearchOpen(false)
                       }}
@@ -658,7 +654,7 @@ function DashboardContent() {
                 ) : (
                   <button
                     onClick={() => setSearchOpen(true)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                     title="Search"
                   >
                     <Search className="h-4 w-4" />
