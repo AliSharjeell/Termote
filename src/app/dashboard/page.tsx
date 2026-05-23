@@ -583,7 +583,7 @@ function DashboardContent() {
               className="app-topbar relative flex shrink-0 items-center px-4 py-2 border-b border-[#252525] bg-[#0d0d0d]"
             >
               {/* Status + Server Controls - left side */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <div
                   className={`h-2 w-2 rounded-full shrink-0 ${
                     isConnected
@@ -601,13 +601,6 @@ function DashboardContent() {
                   }}
                 />
                  <span className="text-base font-normal text-[#CCCCCC] tracking-wide">Termote</span>
-                <button
-                  onClick={focusThisDevice}
-                  title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
-                >
-                  <Crosshair className="h-4 w-4" />
-                </button>
               </div>
 
               {/* View mode toggle - centered */}
@@ -631,6 +624,17 @@ function DashboardContent() {
                   }`}
                 >
                   Panes
+                </button>
+              </div>
+
+              {/* Focus button - right side */}
+              <div className="ml-auto mr-2 flex items-center gap-2">
+                <button
+                  onClick={focusThisDevice}
+                  title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                >
+                  <Crosshair className="h-4 w-4" />
                 </button>
               </div>
 
