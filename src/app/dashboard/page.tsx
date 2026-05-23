@@ -17,6 +17,7 @@ import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { User, Search, Play, Zap, AlertTriangle, ExternalLink } from "lucide-react"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
