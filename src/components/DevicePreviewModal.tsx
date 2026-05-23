@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { X, Monitor, Smartphone, Tablet, Laptop } from "lucide-react"
+import { useState, useEffect } from "react"
+import { X, Monitor, Smartphone, Tablet, Laptop, RefreshCw } from "lucide-react"
+import { buildBrowserFrameSrc } from "@/lib/browserFrame"
 
 export interface DevicePreset {
   name: string
@@ -37,8 +38,30 @@ interface DevicePreviewModalProps {
 
 export function DevicePreviewModal({ url, proxyUrl, onClose }: DevicePreviewModalProps) {
   const [selected, setSelected] = useState<DevicePreset>(DEVICE_PRESETS[0])
+  const [iframeKey, setIframeKey] = useState(0)
+  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null)
 
-  const src = proxyUrl ?? url
+  // Resolve the frame src using the same runtime-aware logic
+  // This ensures Tauri uses direct localhost, web uses proxy
+  useEffect(() => {
+    if (!url) {
+      setResolvedSrc(null)
+      return
+    }
+
+    buildBrowserFrameSrc(url).then(src => {
+      setResolvedSrc(src)
+    }).catch(() => {
+      // Fallback to proxyUrl if resolution fails
+      setResolvedSrc(proxyUrl ?? url)
+    })
+  }, [url, proxyUrl])
+
+  const src = resolvedSrc ?? proxyUrl ?? url
+
+  const handleRefresh = () => {
+    setIframeKey(prev => prev + 1)
+  }
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80">
@@ -81,6 +104,7 @@ export function DevicePreviewModal({ url, proxyUrl, onClose }: DevicePreviewModa
           }}
         >
           <iframe
+            key={iframeKey}
             src={src}
             className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
@@ -100,6 +124,15 @@ export function DevicePreviewModal({ url, proxyUrl, onClose }: DevicePreviewModa
         className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] text-[#808080] hover:text-white transition-colors"
       >
         <X className="h-5 w-5" />
+      </button>
+
+      {/* Refresh button */}
+      <button
+        onClick={handleRefresh}
+        className="absolute top-4 right-16 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] text-[#808080] hover:text-white transition-colors"
+        title="Refresh"
+      >
+        <RefreshCw className="h-5 w-5" />
       </button>
     </div>
   )

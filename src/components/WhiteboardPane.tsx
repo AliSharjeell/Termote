@@ -3,7 +3,7 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Excalidraw } from "@excalidraw/excalidraw"
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types"
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
@@ -16,7 +16,7 @@ interface WhiteboardPaneProps {
 }
 
 const WB_KEY = (id: string) => `wb-excalidraw-${id}`
-const SYNC_DEBOUNCE_MS = 300
+const SYNC_DEBOUNCE_MS = 250
 
 function parseWhiteboardElements(raw: string | null | undefined): readonly ExcalidrawElement[] {
   if (!raw) return []
@@ -54,103 +54,150 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
   const { killPane, renamePane, togglePin } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const excalidrawApiRef = useRef<ExcalidrawImperativeAPI | null>(null)
-  const applyingRemoteRef = useRef(false)
+
+  // Drawing state tracking
   const isDrawingRef = useRef(false)
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const applyingRemoteRef = useRef(false)
   const pendingRemoteRef = useRef<SyncEnvelope<readonly ExcalidrawElement[]> | null>(null)
+
+  // Latest state tracking - NEVER stale
+  const latestElementsRef = useRef<readonly ExcalidrawElement[]>([])
+  const pendingLocalElementsRef = useRef<readonly ExcalidrawElement[] | null>(null)
+
+  // Sync scheduling
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingSaveRef = useRef(false)
+
+  // Client sync tracking
   const clientIdRef = useRef(getSyncClientId())
   const clientSeqRef = useRef(0)
   const lastSeenByClientRef = useRef<Record<string, number>>({})
   const initialDataRef = useRef(loadInitialData(pane))
 
-  const applyWhiteboardRemote = (incoming: SyncEnvelope<readonly ExcalidrawElement[]>) => {
+  // Initialize latest elements from initial data
+  latestElementsRef.current = initialDataRef.current.elements
+
+  // Save to backend - only saves what's in latestElementsRef
+  const saveToBackend = useCallback((paneId: string) => {
+    if (applyingRemoteRef.current) return
+
+    const elements = latestElementsRef.current
+    if (!elements || elements.length === 0) return
+
+    clientSeqRef.current += 1
+
+    const envelope = createSyncEnvelope(
+      elements,
+      clientIdRef.current,
+      clientSeqRef.current
+    )
+
+    const raw = JSON.stringify(envelope)
+
+    console.log("[WB SYNC SAVE]", {
+      paneId,
+      clientId: clientIdRef.current,
+      clientSeq: clientSeqRef.current,
+      elementCount: elements.length,
+    })
+
+    localStorage.setItem(WB_KEY(paneId), raw)
+    usePaneStore.getState().updatePaneContent(paneId, undefined, raw, undefined)
+  }, [])
+
+  // Schedule debounced save - does NOT capture state at call time
+  const scheduleDebouncedSave = useCallback((paneId: string) => {
+    if (applyingRemoteRef.current) return
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    pendingSaveRef.current = true
+
+    saveTimeoutRef.current = setTimeout(() => {
+      pendingSaveRef.current = false
+      saveToBackend(paneId)
+    }, SYNC_DEBOUNCE_MS)
+  }, [saveToBackend])
+
+  // Force immediate save using latestElementsRef - NOT capturing from closure
+  const forceImmediateSave = useCallback((paneId: string) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+      saveTimeoutRef.current = null
+    }
+    pendingSaveRef.current = false
+
+    // Always use the latest ref, not a captured value
+    saveToBackend(paneId)
+  }, [saveToBackend])
+
+  // Apply remote state to Excalidraw canvas
+  const applyRemoteToCanvas = useCallback((elements: readonly ExcalidrawElement[]) => {
     applyingRemoteRef.current = true
     try {
-      console.log("[WHITEBOARD SYNC] Applying remote", {
+      console.log("[WB SYNC] Applying remote to canvas", {
         paneId: pane.id,
-        fromClient: incoming.clientId,
-        toClient: clientIdRef.current,
+        elementCount: elements.length,
       })
       excalidrawApiRef.current?.updateScene({
-        elements: incoming.content,
+        elements,
       })
-      localStorage.setItem(WB_KEY(pane.id), JSON.stringify(incoming))
     } catch (e) {
-      console.error("[WHITEBOARD SYNC] Apply failed:", e)
+      console.error("[WB SYNC] Canvas apply failed:", e)
     } finally {
       queueMicrotask(() => {
         applyingRemoteRef.current = false
       })
     }
-  }
+  }, [pane.id])
 
-  const flushPendingRemote = () => {
+  // Flush queued remote update when drawing ends
+  const flushPendingRemote = useCallback(() => {
     if (isDrawingRef.current) return
     const incoming = pendingRemoteRef.current
     if (!incoming) return
+
     pendingRemoteRef.current = null
-    applyWhiteboardRemote(incoming)
-  }
+    applyRemoteToCanvas(incoming.content)
+  }, [applyRemoteToCanvas])
 
-  const scheduleWhiteboardSave = useCallback((elements: readonly ExcalidrawElement[], immediate = false) => {
-    if (applyingRemoteRef.current) return
-
-    const save = () => {
-      clientSeqRef.current += 1
-
-      const envelope = createSyncEnvelope(
-        elements,
-        clientIdRef.current,
-        clientSeqRef.current
-      )
-
-      const raw = JSON.stringify(envelope)
-
-      console.log("[WHITEBOARD SYNC LOCAL SAVE]", {
-        paneId: pane.id,
-        clientId: clientIdRef.current,
-        clientSeq: clientSeqRef.current,
-        elementCount: elements.length,
-      })
-
-      localStorage.setItem(WB_KEY(pane.id), raw)
-      usePaneStore.getState().updatePaneContent(pane.id, undefined, raw, undefined)
-    }
-
-    if (immediate) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-        saveTimeoutRef.current = null
-      }
-      save()
-    } else {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-      saveTimeoutRef.current = setTimeout(save, SYNC_DEBOUNCE_MS)
-    }
-  }, [pane.id])
-
+  // Handle local drawing changes
   const onChange = useCallback((elements: readonly ExcalidrawElement[]) => {
     try {
-      if (applyingRemoteRef.current) return
-      scheduleWhiteboardSave(elements, false)
-    } catch (e) {
-      console.error("[WHITEBOARD SYNC] onChange error:", e)
-    }
-  }, [scheduleWhiteboardSave])
+      // ALWAYS update the latest ref immediately - no debounce for local state
+      latestElementsRef.current = elements
 
+      if (applyingRemoteRef.current) return
+
+      // Skip sync save if this came from remote (applyingRemoteRef is false here anyway)
+      // But check if same-client echo - only happens via useEffect, not onChange
+
+      // Schedule debounced sync save
+      scheduleDebouncedSave(pane.id)
+    } catch (e) {
+      console.error("[WB SYNC] onChange error:", e)
+    }
+  }, [pane.id, scheduleDebouncedSave])
+
+  // Pointer down - start drawing
   const onPointerDown = useCallback(() => {
     isDrawingRef.current = true
   }, [])
 
+  // Pointer up - end stroke, force immediate save
   const onPointerUp = useCallback(() => {
     isDrawingRef.current = false
-    const elements = excalidrawApiRef.current?.getSceneElements() ?? []
-    scheduleWhiteboardSave([...elements] as readonly ExcalidrawElement[], true)
-    flushPendingRemote()
-  }, [scheduleWhiteboardSave])
 
+    // Force immediate save of complete state
+    forceImmediateSave(pane.id)
+
+    // Flush any queued remote update
+    flushPendingRemote()
+  }, [pane.id, forceImmediateSave, flushPendingRemote])
+
+  // Handle remote updates from backend
   useEffect(() => {
     const incomingRaw = pane.whiteboardData
     if (!incomingRaw) return
@@ -158,36 +205,46 @@ export function WhiteboardPane({ pane }: WhiteboardPaneProps) {
     const incoming = parseSyncEnvelope<readonly ExcalidrawElement[]>(incomingRaw)
     if (!incoming) return
 
-    const sameClient = incoming.clientId === clientIdRef.current
+    // Ignore same-client echoes - this is OUR own state echoed back from backend
+    if (incoming.clientId === clientIdRef.current) {
+      return
+    }
+
     const lastSeenSeq = lastSeenByClientRef.current[incoming.clientId] ?? -1
 
-    console.log("[WHITEBOARD SYNC REMOTE RECEIVE]", {
+    // Only accept newer sequence from same remote client
+    if (incoming.clientSeq <= lastSeenSeq) {
+      return
+    }
+
+    lastSeenByClientRef.current[incoming.clientId] = incoming.clientSeq
+
+    console.log("[WB SYNC REMOTE RECEIVE]", {
       paneId: pane.id,
       incomingClientId: incoming.clientId,
       myClientId: clientIdRef.current,
       incomingClientSeq: incoming.clientSeq,
       lastSeenForClient: lastSeenSeq,
-      sameClient,
       isDrawing: isDrawingRef.current,
+      pendingRemote: !!pendingRemoteRef.current,
     })
 
-    if (incoming.clientSeq <= lastSeenSeq) return
-
-    lastSeenByClientRef.current[incoming.clientId] = incoming.clientSeq
-
-    if (sameClient) return
-
+    // If user is drawing, queue the remote update
     if (isDrawingRef.current) {
       pendingRemoteRef.current = incoming
       return
     }
 
-    applyWhiteboardRemote(incoming)
-  }, [pane.whiteboardData])
+    // Apply immediately when idle
+    applyRemoteToCanvas(incoming.content)
+  }, [pane.whiteboardData, pane.id, applyRemoteToCanvas])
 
+  // Cleanup
   useEffect(() => {
     return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
     }
   }, [])
 
