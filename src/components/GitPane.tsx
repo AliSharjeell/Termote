@@ -46,7 +46,9 @@ export function GitPane() {
 
   const aiOptions = [
     { value: "claude", label: "Claude" },
-    { value: "claude-codex", label: "Claude CodeX" },
+    { value: "codex", label: "Codex" },
+    { value: "agy", label: "Agy" },
+    { value: "opencode", label: "Opencode" },
   ]
 
   const isCustomCommand = customSelected || (!!aiCommand && !aiOptions.some(o => o.value === aiCommand) && aiCommand !== "")
@@ -152,7 +154,7 @@ export function GitPane() {
               <Bot className="h-3 w-3" />
               Default AI CLI
             </div>
-            <div className="space-y-1">
+             <div className="space-y-1">
               {aiOptions.map((option) => (
                 <label
                   key={option.value}
@@ -169,7 +171,6 @@ export function GitPane() {
                     checked={aiCommand === option.value}
                     onChange={() => {
                       setAiCommand(option.value)
-                      setCustomCommand("")
                       setCustomSelected(false)
                     }}
                     className="sr-only"
@@ -186,37 +187,52 @@ export function GitPane() {
               ))}
               {/* Custom option */}
               <label
+                onClick={() => {
+                  setCustomSelected(true)
+                  if (customCommand.trim()) {
+                    setAiCommand(customCommand.trim())
+                  } else {
+                    setAiCommand("")
+                  }
+                }}
                 className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors text-xs ${
                   isCustomCommand
                     ? "bg-[#27272A] text-white"
                     : "hover:bg-[#27272A]/50 text-[#808080]"
                 }`}
               >
+                <input
+                  type="radio"
+                  name="git-ai-cli"
+                  checked={isCustomCommand}
+                  readOnly
+                  className="sr-only"
+                />
                 <div
                   className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
                     isCustomCommand
                       ? "border-white bg-white"
                       : "border-[#808080]"
                   }`}
-                  onClick={() => setCustomSelected(true)}
                 />
                 <span>Custom</span>
               </label>
-              {/* Custom input */}
-              <div className={`mt-1 pl-4 ${isCustomCommand ? "block" : "hidden"}`}>
-                <input
-                  type="text"
-                  value={customCommand}
-                  onChange={(e) => {
-                    setCustomCommand(e.target.value)
-                    if (e.target.value.trim()) {
-                      setAiCommand(e.target.value.trim())
-                      setCustomSelected(true)
-                    }
-                  }}
-                  placeholder="cmd..."
-                  className="w-full bg-[#1a1a1a] px-2 py-1 text-[10px] text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-[#58A6FF]"
-                />
+              {/* Custom input dropdown */}
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                isCustomCommand ? "max-h-16 opacity-100 mt-1.5 mb-1" : "max-h-0 opacity-0 pointer-events-none"
+              }`}>
+                <div className="pl-4 pr-1">
+                  <input
+                    type="text"
+                    value={customCommand}
+                    onChange={(e) => {
+                      setCustomCommand(e.target.value)
+                      setAiCommand(e.target.value)
+                    }}
+                    placeholder="Enter custom CLI command..."
+                    className="w-full bg-[#1a1a1a] px-2 py-1.5 text-[10px] text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-[#58A6FF]"
+                  />
+                </div>
               </div>
             </div>
             <div className="text-[9px] text-[#666] mt-1.5">

@@ -67,7 +67,9 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
 
   const aiOptions = [
     { value: "claude", label: "Claude" },
-    { value: "claude-codex", label: "Claude CodeX" },
+    { value: "codex", label: "Codex" },
+    { value: "agy", label: "Agy" },
+    { value: "opencode", label: "Opencode" },
   ]
 
   const isCustomCommand = customSelected || (!!aiCommand && !aiOptions.some(o => o.value === aiCommand) && aiCommand !== "")
@@ -195,7 +197,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-4">
           <div className="flex items-center gap-1.5">
             <Settings className="h-4 w-4 text-[#808080] shrink-0" />
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-normal text-white">
               Settings
             </span>
           </div>
@@ -220,7 +222,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                 <button
                   onClick={handleRestartServer}
                   disabled={!!serverAction || !serverRunning}
-                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
+                  className="flex items-center gap-2 rounded bg-transparent px-3 py-3 text-sm font-medium text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
                   Restart
@@ -228,7 +230,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                 <button
                   onClick={handleStopServer}
                   disabled={!!serverAction || !serverRunning}
-                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
+                  className="flex items-center gap-2 rounded bg-transparent px-3 py-3 text-sm font-medium text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
                 >
                   <Square className="h-3.5 w-3.5" />
                   Stop
@@ -238,14 +240,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                     setShowQRModal(true)
                     setQrBlurred(true)
                   }}
-                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
+                  className="flex items-center gap-2 rounded bg-transparent px-3 py-3 text-sm font-medium text-white hover:bg-white/[0.06] transition-colors w-full text-left"
                 >
                   <QrCode className="h-3.5 w-3.5" />
                   Mobile Access
                 </button>
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
+                  className="flex items-center gap-2 rounded bg-transparent px-3 py-3 text-sm font-medium text-white hover:bg-white/[0.06] transition-colors w-full text-left"
                 >
                   {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
                   Copy Link
@@ -260,7 +262,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
               <Bot className="h-4 w-4" />
               Default AI CLI
             </label>
-            <div className="flex flex-col gap-1.5 rounded-lg bg-[#0C0C0C] p-3">
+             <div className="flex flex-col gap-1.5 rounded-lg bg-[#0C0C0C] p-3">
               {aiOptions.map((option) => (
                 <label
                   key={option.value}
@@ -277,7 +279,6 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                     checked={aiCommand === option.value}
                     onChange={() => {
                       setAiCommand(option.value)
-                      setCustomCommand("")
                       setCustomSelected(false)
                     }}
                     className="sr-only"
@@ -294,39 +295,52 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
               ))}
               {/* Custom option */}
               <label
+                onClick={() => {
+                  setCustomSelected(true)
+                  if (customCommand.trim()) {
+                    setAiCommand(customCommand.trim())
+                  } else {
+                    setAiCommand("")
+                  }
+                }}
                 className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
                   isCustomCommand
                     ? "bg-[#27272A] text-white"
                     : "hover:bg-[#27272A]/50 text-[#808080]"
                 }`}
               >
+                <input
+                  type="radio"
+                  name="ai-cli"
+                  checked={isCustomCommand}
+                  readOnly
+                  className="sr-only"
+                />
                 <div
                   className={`h-3 w-3 rounded-full border shrink-0 ${
                     isCustomCommand
                       ? "border-white bg-white"
                       : "border-[#808080]"
                   }`}
-                  onClick={() => {
-                    setCustomSelected(true)
-                  }}
                 />
                 <span className="text-sm">Custom</span>
               </label>
-              {/* Custom input field */}
-              <div className={`mt-1 pl-5 ${isCustomCommand ? "block" : "hidden"}`}>
-                <input
-                  type="text"
-                  value={customCommand}
-                  onChange={(e) => {
-                    setCustomCommand(e.target.value)
-                    if (e.target.value.trim()) {
-                      setAiCommand(e.target.value.trim())
-                      setCustomSelected(true)
-                    }
-                  }}
-                  placeholder="Enter custom CLI command..."
-                  className="w-full bg-[#1a1a1a] px-3 py-2 text-sm text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-[#58A6FF]"
-                />
+              {/* Custom input dropdown */}
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                isCustomCommand ? "max-h-16 opacity-100 mt-1.5 mb-1" : "max-h-0 opacity-0 pointer-events-none"
+              }`}>
+                <div className="pl-5 pr-1">
+                  <input
+                    type="text"
+                    value={customCommand}
+                    onChange={(e) => {
+                      setCustomCommand(e.target.value)
+                      setAiCommand(e.target.value)
+                    }}
+                    placeholder="Enter custom CLI command..."
+                    className="w-full bg-[#1a1a1a] px-3 py-2 text-sm text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-[#58A6FF]"
+                  />
+                </div>
               </div>
             </div>
             <p className="text-[10px] text-[#808080]">
