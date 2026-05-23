@@ -64,6 +64,7 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
   const [customSelected, setCustomSelected] = useState(false)
   const [devtunnelStatus, setDevtunnelStatus] = useState<DevtunnelAuthStatus | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState(false)
+  const [tunnelReady, setTunnelReady] = useState(false)
   const [mobileUrl, setMobileUrl] = useState(() => buildMobileUrl(shareUrl || tunnelUrl, authToken))
   const toggleProfileSidebar = usePaneStore((state) => state.toggleProfileSidebar)
 
@@ -165,6 +166,7 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
     setShowQRModal(true)
     setQrBlurred(true)
     setIsCheckingAuth(true)
+    setTunnelReady(false)
 
     try {
       // Check if remote access is running or start it (which triggers auth)
@@ -183,6 +185,9 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
         // Update auth token and rebuild mobile URL
         const newMobileUrl = buildMobileUrl(updated.tunnel_url, updated.auth_token)
         setMobileUrl(newMobileUrl)
+        setTunnelReady(true)
+      } else {
+        setTunnelReady(false)
       }
     } catch (err) {
       console.error('[Mobile Access] Failed:', err)
@@ -268,42 +273,53 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
               </div>
             )}
 
-            {/* QR Code - blurred until user taps */}
-            <div
-              className={`relative rounded-xl bg-white p-4 cursor-pointer transition-transform ${qrBlurred ? 'scale-95' : 'scale-100'}`}
-              onClick={handleTapQR}
-            >
-              {qrBlurred && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-xl">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-8 w-8 rounded-full border-2 border-[#DCDCAA] border-t-transparent animate-spin" />
-                    <span className="text-xs text-[#CCCCCC]">Tap to reveal</span>
+            {/* QR Code - only show when tunnel is ready */}
+            {tunnelReady ? (
+              <>
+                <div
+                  className={`relative rounded-xl bg-white p-4 cursor-pointer transition-transform ${qrBlurred ? 'scale-95' : 'scale-100'}`}
+                  onClick={handleTapQR}
+                >
+                  {qrBlurred && (
+                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-xl">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="h-8 w-8 rounded-full border-2 border-[#DCDCAA] border-t-transparent animate-spin" />
+                        <span className="text-xs text-[#CCCCCC]">Tap to reveal</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className={`transition-all duration-300 ${qrBlurred ? "blur-md" : "blur-0"}`}>
+                    <QRCodeSVG value={mobileUrl} size={200} level="M" />
                   </div>
                 </div>
-              )}
-              <div className={`transition-all duration-300 ${qrBlurred ? "blur-md" : "blur-0"}`}>
-                <QRCodeSVG value={mobileUrl} size={200} level="M" />
-              </div>
-            </div>
 
-            <p className="mt-4 max-w-[220px] text-center text-xs text-[#808080]">
-              {qrBlurred ? "Tap the QR code to reveal it" : "Scan this QR code with your mobile device"}
-            </p>
+                <p className="mt-4 max-w-[220px] text-center text-xs text-[#808080]">
+                  {qrBlurred ? "Tap the QR code to reveal it" : "Scan this QR code with your mobile device"}
+                </p>
 
-            <button
-              onClick={handleCopyLink}
-              className="mt-3 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-2 text-sm text-white hover:bg-[#333333] transition-colors"
-            >
-              {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copiedLink ? "Copied!" : "Copy Link"}
-            </button>
+                <button
+                  onClick={handleCopyLink}
+                  className="mt-3 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-2 text-sm text-white hover:bg-[#333333] transition-colors"
+                >
+                  {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedLink ? "Copied!" : "Copy Link"}
+                </button>
 
-            {/* Show the actual link */}
-            {!qrBlurred && (
-              <div className="mt-3 max-w-[240px] break-all text-center">
-                <span className="text-[10px] text-[#666]">Link: </span>
-                <span className="text-[10px] text-[#888] font-mono">{mobileUrl.substring(0, 60)}...</span>
-              </div>
+                {/* Show the actual link */}
+                {!qrBlurred && (
+                  <div className="mt-3 max-w-[240px] break-all text-center">
+                    <span className="text-[10px] text-[#666]">Link: </span>
+                    <span className="text-[10px] text-[#888] font-mono">{mobileUrl.substring(0, 60)}...</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              !isCheckingAuth && !devtunnelStatus && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <span className="text-sm text-[#808080]">No tunnel active</span>
+                  <span className="text-xs text-[#666] mt-1">Try again or check Dev Tunnel status</span>
+                </div>
+              )
             )}
           </div>
         </div>
