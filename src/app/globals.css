@@ -152,32 +152,99 @@ html.tauri-mica .mica-terminal-container {
 }
 
 /* ============================================
-   Xterm.js container styles
+   Xterm.js container styles - seamless terminal
    ============================================ */
 
 .xterm {
   height: 100%;
-  padding: 8px;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 .xterm-viewport {
   overflow-y: auto !important;
+  background-color: transparent !important;
+}
+
+.xterm-screen {
+  background-color: transparent !important;
+}
+
+.xterm-rows {
+  background-color: transparent !important;
 }
 
 /* Allotment split pane styles */
 .split-view-view {
   overflow: hidden;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-/* Sash (divider between panes) - remove black borders */
-.sash {
-  background-color: transparent !important;
+.split-view {
+  background: transparent !important;
   border: none !important;
 }
 
-/* Remove border between panes */
+.split-view-container {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Sash (divider between panes) - subtle dark lines */
+.sash,
+.sash-container {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Subtle dividers - very dark lines for pane separation */
+.split-view-separator-border,
+.allotment-module_splitViewSeparator__e\+dWw {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: none !important;
+}
+
+/* Horizontal divider between rows */
+.split-view-row-separator,
+.allotment-module_splitViewRowSeparator__\+Q\+T7 {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: none !important;
+}
+
+/* Stronger divider on hover */
+.sash:hover,
+.sash-hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Visible pane borders (optional - very subtle) */
 .split-view-view {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+}
+
+/* ============================================
+   Terminal pane wrapper - seamless look
+   ============================================ */
+
+.terminal-pane {
+  background: transparent !important;
   border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Make terminal backgrounds consistent dark */
+.xterm {
+  --term-bg: #0d0d0d;
+  background-color: var(--term-bg) !important;
+}
+
+.xterm .xterm-viewport {
+  background-color: var(--term-bg) !important;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
 }
 
 /* Scrollbar styling for terminal */

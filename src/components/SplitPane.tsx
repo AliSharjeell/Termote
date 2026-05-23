@@ -437,12 +437,11 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             display: "grid",
             gridTemplateColumns: `repeat(${Math.max(cols, 1)}, 1fr)`,
             gridTemplateRows: `repeat(${Math.max(rows, 1)}, 1fr)`,
-            gap: "2px",
-            background: "#181818",
+            gap: 0,
           }}
         >
         {(!hasAnyPanes || isGroupEmpty) ? (
-          <div className="flex h-full w-full items-center justify-center bg-[#080808]">
+          <div className="flex h-full w-full items-center justify-center bg-transparent">
             <div className="text-center text-[#CCCCCC]">
               <p className="text-sm">
                 {!hasAnyPanes ? "No active panes" : "No panes in this group"}
@@ -465,7 +464,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           sortedActivePanes.map((pane) => (
             <div
               key={pane.id}
-              className="relative overflow-hidden bg-[#080808]"
+              className="relative overflow-hidden bg-transparent"
             >
               <div className="h-full w-full">
                 {pane.url ? (
