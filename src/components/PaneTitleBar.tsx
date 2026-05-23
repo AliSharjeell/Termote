@@ -13,9 +13,10 @@ interface PaneTitleBarProps {
   onClose: () => void
   onPin?: () => void
   onLaunchAI?: () => void
+  actions?: React.ReactNode
 }
 
-export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose, onPin, onLaunchAI }: PaneTitleBarProps) {
+export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose, onPin, onLaunchAI, actions }: PaneTitleBarProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
   const [showGroupMenu, setShowGroupMenu] = useState(false)
@@ -266,6 +267,13 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
           </span>
         )}
       </div>
+
+      {/* Custom actions (e.g., Preview button) */}
+      {actions && (
+        <div className="flex items-center gap-1 mr-2">
+          {actions}
+        </div>
+      )}
     </div>
   )
 }
