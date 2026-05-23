@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTermoteConnection } from '@/hooks/useTermoteConnection';
+import { isTauriBuild } from '@/lib/tauriDetect';
 
 function StatusIndicator({ running, error }: { running: boolean; error: string | null }) {
   if (error) {
@@ -24,50 +25,7 @@ function StatusIndicator({ running, error }: { running: boolean; error: string |
 }
 
 export default function HostManager() {
-  const { status, commands } = useTermoteConnection();
-  const [checkingUpdates, setCheckingUpdates] = useState(false);
-
-  useEffect(() => {
-    if (status.isTauri && !status.serverRunning && !status.error) {
-      commands.startServer().catch(console.error);
-    }
-  }, [status.isTauri, status.serverRunning, status.error, commands]);
-
-  const handleStart = async () => {
-    try {
-      await commands.startServer();
-    } catch (err) {
-      console.error('Start failed:', err);
-    }
-  };
-
-  const handleStop = async () => {
-    try {
-      await commands.stopServer();
-    } catch (err) {
-      console.error('Stop failed:', err);
-    }
-  };
-
-  const handleRestart = async () => {
-    try {
-      await commands.restartServer();
-    } catch (err) {
-      console.error('Restart failed:', err);
-    }
-  };
-
-  const handleCheckUpdates = async () => {
-    setCheckingUpdates(true);
-    try {
-      const result = await commands.checkForUpdates();
-      alert(result);
-    } catch (err) {
-      console.error('Update check failed:', err);
-    } finally {
-      setCheckingUpdates(false);
-    }
-  };
+  const { status } = useTermoteConnection();
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 p-8">
@@ -75,7 +33,7 @@ export default function HostManager() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Termote Host Manager</h1>
-          <p className="text-gray-400">Manage your Termote server directly from your desktop</p>
+          <p className="text-gray-400">Monitor your Termote server status and connections</p>
         </div>
 
         {/* Status Card */}
@@ -99,83 +57,39 @@ export default function HostManager() {
           )}
         </div>
 
-        {/* Controls */}
+        {/* Info Card */}
         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
           <h2 className="text-lg font-semibold mb-4">Server Controls</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={handleStart}
-              disabled={status.serverRunning}
-              className={`px-4 py-3 rounded-lg font-medium transition-colors ${
-                status.serverRunning
-                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
-            >
-              Start Server
-            </button>
-
-            <button
-              onClick={handleStop}
-              disabled={!status.serverRunning}
-              className={`px-4 py-3 rounded-lg font-medium transition-colors ${
-                !status.serverRunning
-                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-              }`}
-            >
-              Stop Server
-            </button>
-
-            <button
-              onClick={handleRestart}
-              className="px-4 py-3 rounded-lg font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-            >
-              Restart Server
-            </button>
-
-            <button
-              onClick={handleCheckUpdates}
-              disabled={checkingUpdates}
-              className="px-4 py-3 rounded-lg font-medium bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors disabled:opacity-50"
-            >
-              {checkingUpdates ? 'Checking...' : 'Check for Updates'}
-            </button>
-          </div>
-        </div>
-
-        {/* Host Manager Features - Only in Tauri mode */}
-        {status.isTauri && (
-          <div className="mt-6 bg-gray-900 rounded-xl p-6 border border-gray-800">
-            <h2 className="text-lg font-semibold mb-4">Host Manager Features</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="text-green-400 text-2xl mb-2">✓</div>
-                <h3 className="font-medium mb-1">Auto-Start</h3>
-                <p className="text-sm text-gray-400">Server auto-starts on app launch</p>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-blue-400 text-2xl mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
               </div>
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="text-green-400 text-2xl mb-2">✓</div>
-                <h3 className="font-medium mb-1">Process Management</h3>
-                <p className="text-sm text-gray-400">Full control over server process</p>
+              <h3 className="font-medium mb-1">Profile Sidebar</h3>
+              <p className="text-sm text-gray-400">Server controls (Restart, Stop, Mobile Access) are now accessible from the profile sidebar in the main dashboard.</p>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-green-400 text-2xl mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
               </div>
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="text-green-400 text-2xl mb-2">✓</div>
-                <h3 className="font-medium mb-1">Native Integration</h3>
-                <p className="text-sm text-gray-400">Deep OS integration</p>
-              </div>
+              <h3 className="font-medium mb-1">Security & Devices</h3>
+              <p className="text-sm text-gray-400">Manage connected devices and view banned IPs from the Security modal in the dashboard.</p>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Browser Mode Notice */}
         {!status.isTauri && (
           <div className="mt-6 bg-blue-900/30 rounded-xl p-6 border border-blue-800/50">
             <h2 className="text-lg font-semibold mb-2 text-blue-400">Browser Mode</h2>
             <p className="text-sm text-gray-400">
-              You're running in browser mode. For full Host Manager features like server process
-              control, use the Tauri desktop app.
+              You're running in browser mode. For full Termote features, use the Tauri desktop app.
             </p>
           </div>
         )}
