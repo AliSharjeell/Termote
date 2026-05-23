@@ -148,7 +148,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           </div>
           <button
             onClick={handleAddPane}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
           >
             <span>+</span>
             <span>New Terminal</span>
@@ -156,7 +156,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={handleSpawnFromDirectory}
             title="Open terminal in folder..."
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -166,7 +166,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={() => usePaneStore.getState().openBrowserModal()}
             title="Open browser..."
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/>
@@ -178,7 +178,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={() => usePaneStore.getState().spawnNotePane()}
             title="New note..."
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -192,7 +192,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={() => usePaneStore.getState().spawnImagePane()}
             title="New image pane..."
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -204,7 +204,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={() => usePaneStore.getState().spawnWhiteboardPane()}
             title="New whiteboard..."
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] font-medium shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-medium shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -222,7 +222,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === null
               ? "text-[#CCCCCC] bg-white/[0.08]"
-              : "text-[#CCCCCC] hover:bg-white/[0.06]"
+              : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
           }`}
         >
           <button
@@ -285,7 +285,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
             selectedGroupId === "__ungrouped__"
               ? "text-[#CCCCCC] bg-white/[0.08]"
-              : "text-[#CCCCCC] hover:bg-white/[0.06]"
+              : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
           }`}
         >
           <button
@@ -353,7 +353,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id
                     ? "text-[#CCCCCC] bg-white/[0.08]"
-                    : "text-[#CCCCCC] hover:bg-white/[0.06]"
+                    : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
                 }`}
               >
                 <button
