@@ -126,3 +126,16 @@ Run it from the **Actions** tab or push a tag such as `termote-v0.1.0`. If `Term
 ## License
 
 MIT License
+
+---
+
+## Disclaimer ⚠️
+
+**This is pre-alpha software.** Development is ongoing and features may change.
+
+**Known limitations:**
+- **macOS & Linux builds** — Not fully tested. Contributions welcome!
+- **Browser panes** — Functional but not polished.
+- **Whiteboard panes** — Experimental, needs refinement.
+
+If you'd like to contribute to testing or development, please open an issue or reach out at `alisharjeelofficial@gmail.com`.
