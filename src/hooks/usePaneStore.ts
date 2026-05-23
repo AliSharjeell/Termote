@@ -1478,7 +1478,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
 // Initialize view mode from localStorage
 const initialPersisted = loadPersistedState()
-usePaneStore.setState({ viewMode: initialPersisted.viewMode })
+const isTauriEnv = typeof window !== "undefined" && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window)
+
+usePaneStore.setState({
+  viewMode: isTauriEnv ? "panes" : initialPersisted.viewMode,
+  profileSidebarCollapsed: isTauriEnv ? true : false,
+  tabsProfileSidebarCollapsed: isTauriEnv ? true : false,
+})
 
 // Initialize AI command from localStorage
 usePaneStore.setState({ aiCommand: loadAiCommand() })

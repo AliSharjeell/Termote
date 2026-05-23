@@ -19,7 +19,7 @@ import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { useIsTauri } from "@/hooks/useIsTauri"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2, PanelRight } from "lucide-react"
+import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2, PanelRight, X } from "lucide-react"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
@@ -414,11 +414,20 @@ function DashboardContent() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
-                    className="h-7 w-48 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
+                    className="h-7 w-56 rounded-md bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 pl-8 pr-7 text-xs text-white placeholder-zinc-400 outline-none transition-all duration-150 focus:bg-[#1a1a1a]/95 focus:border-white/20 focus:ring-1 focus:ring-zinc-700 shadow-sm"
                     onBlur={() => {
                       if (!searchQuery) setSearchOpen(false)
                     }}
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2 flex h-4 w-4 items-center justify-center rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                      title="Clear"
+                    >
+                      <X size={10} />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <button
@@ -500,11 +509,20 @@ function DashboardContent() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
-                      className="h-8 w-48 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
+                      className="h-8 w-56 rounded-md bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 pl-8 pr-7 text-xs text-white placeholder-zinc-400 outline-none transition-all duration-150 focus:bg-[#1a1a1a]/95 focus:border-white/20 focus:ring-1 focus:ring-zinc-700 shadow-sm"
                       onBlur={() => {
                         if (!searchQuery) setSearchOpen(false)
                       }}
                     />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2 flex h-4 w-4 items-center justify-center rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                        title="Clear"
+                      >
+                        <X size={10} />
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <button
@@ -520,7 +538,11 @@ function DashboardContent() {
           )}
 
           {/* Main panes area */}
-          <div className="flex-1 overflow-hidden">
+          <div className={`flex-1 overflow-hidden ${
+            tauriChecked && isTauriApp
+              ? "rounded-tl-xl border-t border-l border-[#252525]/40 bg-[#080808]"
+              : ""
+          }`}>
             {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
           </div>
         </div>
@@ -528,7 +550,7 @@ function DashboardContent() {
         {/* Profile sidebar - Tauri only, on RIGHT */}
         {tauriChecked && isTauriApp && (
           profileSidebarCollapsed ? (
-            <div data-mica-surface className="profile-sidebar shrink-0 flex flex-col items-center gap-1 border-l border-[#252525] p-1 w-10 h-full">
+            <div className="shrink-0 flex flex-col items-center gap-1 border-l border-[#353535] p-1 w-10 h-full bg-[#0d0d0d]">
               <button
                 onClick={toggleProfileSidebar}
                 title="Expand profile sidebar"
