@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { PanelRight, RefreshCw, Square, QrCode, Copy, Check, Bot, Link2, X } from "lucide-react"
+import { PanelRight, RefreshCw, Square, QrCode, Copy, Check, Bot, Link2, X, Settings } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { useIsTauri } from "@/hooks/useIsTauri"
@@ -152,10 +152,11 @@ export function ProfilePane({ tunnelUrl, authToken }: ProfilePaneProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {/* Profile header */}
-          <div className={`px-3 py-3 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
-            <span className="text-xs font-medium text-white uppercase tracking-wider">
-              {checked ? (isTauri ? "Profile (Tauri)" : "Profile") : "Loading..."}
+          {/* Settings header */}
+          <div className={`px-3 py-3 flex items-center gap-1.5 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
+            <Settings className="h-3.5 w-3.5 text-[#808080] shrink-0" />
+            <span className="text-xs font-semibold text-white uppercase tracking-wider">
+              Settings
             </span>
           </div>
 

@@ -528,7 +528,7 @@ function DashboardContent() {
         {/* Profile sidebar - Tauri only, on RIGHT */}
         {tauriChecked && isTauriApp && (
           profileSidebarCollapsed ? (
-            <div data-mica-surface className="profile-sidebar shrink-0 flex flex-col items-center gap-1 border-l border-[#252525] p-1 w-10 h-full">
+            <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-10 h-full">
               <button
                 onClick={toggleProfileSidebar}
                 title="Expand profile sidebar"

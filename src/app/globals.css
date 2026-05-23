@@ -92,7 +92,14 @@ html.tauri-mica .mica-terminal-container {
   border-right: none !important;
   border-bottom: none !important;
   background-color: #080808 !important;
-  border-top-left-radius: 0.75rem !important; /* rounded-tl-xl */
+  border-top-left-radius: 1.5rem !important; /* more curved */
+}
+
+/* Solid dark background for the right profile sidebar when collapsed */
+.profile-sidebar-collapsed {
+  background: #0d0d0d !important;
+  background-color: #0d0d0d !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 /* ============================================

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Copy, Check, X, QrCode, Bot, RefreshCw, Square, Link2 } from "lucide-react"
+import { Copy, Check, X, QrCode, Bot, RefreshCw, Square, Link2, Settings } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { useIsTauri } from "@/hooks/useIsTauri"
@@ -193,9 +193,12 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
       <div className="fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-[#161616] shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-4">
-          <span className="text-sm font-medium text-white">
-            Profile {checked ? (isTauri ? "(Tauri)" : "(Browser)") : "(Loading...)"}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <Settings className="h-4 w-4 text-[#808080] shrink-0" />
+            <span className="text-sm font-medium text-white">
+              Settings
+            </span>
+          </div>
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
