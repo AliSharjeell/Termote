@@ -383,7 +383,7 @@ function DashboardContent() {
             <div data-tauri-no-drag className="flex items-center p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
               <button
                 onClick={() => setViewMode("tabs")}
-                className={`rounded-full px-3.5 py-1 text-[11px] font-medium transition-all duration-150 cursor-pointer ${
+                className={`rounded-full px-3.5 py-1 text-[11px] font-normal transition-all duration-150 cursor-pointer ${
                   viewMode === "tabs"
                     ? "bg-white/10 text-white"
                     : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
@@ -393,7 +393,7 @@ function DashboardContent() {
               </button>
               <button
                 onClick={() => setViewMode("panes")}
-                className={`rounded-full px-3.5 py-1 text-[11px] font-medium transition-all duration-150 cursor-pointer ${
+                className={`rounded-full px-3.5 py-1 text-[11px] font-normal transition-all duration-150 cursor-pointer ${
                   viewMode === "panes"
                     ? "bg-white/10 text-white"
                     : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
@@ -462,14 +462,14 @@ function DashboardContent() {
                       : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
                   }}
                 />
-                <span className="text-base font-medium text-[#CCCCCC] tracking-wide">Termote</span>
+                 <span className="text-base font-normal text-[#CCCCCC] tracking-wide">Termote</span>
               </div>
 
               {/* View mode toggle - centered */}
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
                 <button
                   onClick={() => setViewMode("tabs")}
-                  className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer ${
+                  className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
                     viewMode === "tabs"
                       ? "bg-white/10 text-white"
                       : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
@@ -479,7 +479,7 @@ function DashboardContent() {
                 </button>
                 <button
                   onClick={() => setViewMode("panes")}
-                  className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer ${
+                  className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
                     viewMode === "panes"
                       ? "bg-white/10 text-white"
                       : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
@@ -525,23 +525,21 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Profile sidebar - Tauri only, on RIGHT */}
-        {tauriChecked && isTauriApp && (
-          profileSidebarCollapsed ? (
-            <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-10 h-full">
-              <button
-                onClick={toggleProfileSidebar}
-                title="Expand profile sidebar"
-                className="w-8 h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
-              >
-                <PanelRight size={14} className="rotate-180" />
-              </button>
-            </div>
-          ) : (
-            <div className="profile-sidebar shrink-0 h-full" data-mica-surface>
-              <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
-            </div>
-          )
+        {/* Profile sidebar - on RIGHT */}
+        {profileSidebarCollapsed ? (
+          <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-10 h-full">
+            <button
+              onClick={toggleProfileSidebar}
+              title="Expand profile sidebar"
+              className="w-8 h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
+            >
+              <PanelRight size={14} className="rotate-180" />
+            </button>
+          </div>
+        ) : (
+          <div className="profile-sidebar shrink-0 h-full">
+            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} />
+          </div>
         )}
       </div>
 
