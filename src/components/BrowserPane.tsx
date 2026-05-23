@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Monitor, Globe, RefreshCw, ExternalLink } from "lucide-react"
+import { Monitor, Globe, RefreshCw } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import { DevicePreviewModal } from "./DevicePreviewModal"
@@ -39,12 +39,6 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
     setTimeout(() => setIsRefreshing(false), 500)
   }
 
-  const handleOpenExternal = () => {
-    if (pane.url) {
-      window.open(pane.url, "_blank", "noopener,noreferrer")
-    }
-  }
-
   if (!pane.url) {
     return (
       <div className="flex flex-col h-full bg-[#0C0C0C]">
@@ -56,6 +50,7 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
           onClose={() => killPane(pane.id)}
           onRename={handleRename}
           onPin={() => togglePin(pane.id)}
+          onLaunchAI={() => setShowPreview(true)}
         />
         {/* URL input bar when no URL is set */}
         <form onSubmit={handleUrlSubmit} className="flex items-center gap-2 px-3 py-2 border-b border-[#252525] bg-[#161616]">
@@ -86,16 +81,7 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
           onClose={() => killPane(pane.id)}
           onRename={handleRename}
           onPin={() => togglePin(pane.id)}
-          actions={
-            <button
-              onClick={() => setShowPreview(true)}
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-[#CCCCCC] hover:bg-white/10 transition-colors"
-              title="Device preview"
-            >
-              <Monitor className="h-3.5 w-3.5" />
-              <span>Preview</span>
-            </button>
-          }
+          onLaunchAI={() => setShowPreview(true)}
         />
         {/* URL bar */}
         <div className="flex items-center gap-2 px-3 py-2 border-b border-[#252525] bg-[#161616]">
@@ -114,22 +100,13 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
             onSubmit={handleUrlSubmit}
             className="flex-1 bg-transparent text-sm text-[#CCCCCC] placeholder-[#555] outline-none"
           />
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={handleRefresh}
-              className={`p-1.5 rounded text-[#808080] hover:text-white hover:bg-white/10 transition-colors ${isRefreshing ? "animate-spin" : ""}`}
-              title="Refresh"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-            <button
-              onClick={handleOpenExternal}
-              className="p-1.5 rounded text-[#808080] hover:text-white hover:bg-white/10 transition-colors"
-              title="Open in new tab"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </button>
-          </div>
+          <button
+            onClick={handleRefresh}
+            className={`p-1.5 rounded text-[#808080] hover:text-white hover:bg-white/10 transition-colors shrink-0 ${isRefreshing ? "animate-spin" : ""}`}
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
         </div>
         <div className="flex-1 relative">
           <iframe
