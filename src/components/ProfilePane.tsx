@@ -8,37 +8,16 @@ import { useIsTauri } from "@/hooks/useIsTauri"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
 
-function toWebSocketUrl(url: string): string {
-  const parsed = new URL(url)
-  if (parsed.protocol === "https:") parsed.protocol = "wss:"
-  else if (parsed.protocol === "http:") parsed.protocol = "ws:"
-  parsed.pathname = parsed.pathname.replace(/\/+$/, "")
-  if (!parsed.pathname.endsWith("/ws")) parsed.pathname = `${parsed.pathname}/ws`.replace(/\/{2,}/g, "/")
-  parsed.search = ""
-  parsed.hash = ""
-  return parsed.toString()
-}
-
-function buildMobileUrl(tunnelUrl: string, authToken: string): string {
-  try {
-    const wsUrl = toWebSocketUrl(tunnelUrl)
-    const dashboardUrl = new URL(wsUrl)
-    dashboardUrl.protocol = dashboardUrl.protocol === "wss:" ? "https:" : "http:"
-    dashboardUrl.pathname = "/dashboard/"
-    dashboardUrl.search = ""
-    dashboardUrl.hash = ""
-    dashboardUrl.searchParams.set("tunnel", wsUrl)
-    dashboardUrl.searchParams.set("token", authToken)
-    return dashboardUrl.toString()
-  } catch {
-    return `${tunnelUrl.replace(/\/+$/, "")}/dashboard/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
-  }
-}
-
 interface DevtunnelAuthStatus {
   status: string
   message: string
   url: string | null
+}
+
+interface RuntimeState {
+  tunnel_url: string | null
+  tunnel_running: boolean
+  auth_token: string | null
 }
 
 interface ProfilePaneProps {
@@ -47,6 +26,110 @@ interface ProfilePaneProps {
   shareUrl?: string
   onStartRemoteAccess?: () => Promise<void>
   onDevtunnelAuthStatusChange?: (status: DevtunnelAuthStatus | null) => void
+}
+
+// Normalize Dev Tunnel base URL to origin
+function normalizeDevTunnelBaseUrl(rawUrl: string | null | undefined): string | null {
+  if (!rawUrl) return null
+
+  let url = rawUrl.trim()
+
+  // If backend accidentally returns websocket URL, convert it back to HTTP base
+  if (url.startsWith("wss://")) {
+    url = url.replace("wss://", "https://")
+  }
+  if (url.startsWith("ws://")) {
+    url = url.replace("ws://", "http://")
+  }
+
+  // If backend returns host only, assume HTTPS
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`
+  }
+
+  try {
+    const parsed = new URL(url)
+    return parsed.origin
+  } catch {
+    return null
+  }
+}
+
+// Build WebSocket URL from Dev Tunnel base
+function toDevTunnelWebSocketUrl(rawUrl: string | null | undefined): string | null {
+  const base = normalizeDevTunnelBaseUrl(rawUrl)
+  if (!base) return null
+
+  const parsed = new URL(base)
+  parsed.protocol = parsed.protocol === "https:" ? "wss:" : "ws:"
+  parsed.pathname = "/ws"
+  parsed.search = ""
+  parsed.hash = ""
+
+  return parsed.toString()
+}
+
+// Build mobile dashboard URL with tunnel and token params
+function buildMobileUrl(tunnelUrl: string | null | undefined, authToken: string | null | undefined): string | null {
+  if (!tunnelUrl || !authToken) return null
+
+  const base = normalizeDevTunnelBaseUrl(tunnelUrl)
+  const wsUrl = toDevTunnelWebSocketUrl(tunnelUrl)
+
+  if (!base || !wsUrl) return null
+
+  const mobileUrl = new URL("/dashboard/", base)
+  mobileUrl.searchParams.set("tunnel", wsUrl)
+  mobileUrl.searchParams.set("token", authToken)
+
+  return mobileUrl.toString()
+}
+
+// Normalize runtime state from Rust (handles snake_case/camelCase)
+function normalizeRuntimeState(state: any): RuntimeState {
+  return {
+    tunnel_url: state?.tunnel_url ?? state?.tunnelUrl ?? null,
+    tunnel_running: state?.tunnel_running ?? state?.tunnelRunning ?? false,
+    auth_token: state?.auth_token ?? state?.authToken ?? null,
+  }
+}
+
+// Wait for Dev Tunnel to be ready with polling
+async function waitForDevTunnelReady(
+  timeoutMs: number = 120000,
+  intervalMs: number = 1000,
+  onStatus?: (status: DevtunnelAuthStatus) => void
+): Promise<RuntimeState> {
+  const startedAt = Date.now()
+  let lastState: RuntimeState | null = null
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const rawState = await invoke("get_runtime_state")
+    const state = normalizeRuntimeState(rawState)
+    lastState = state
+
+    console.log("[MOBILE ACCESS] polling Dev Tunnel state", {
+      tunnel_running: state.tunnel_running,
+      has_tunnel_url: !!state.tunnel_url,
+      has_auth_token: !!state.auth_token,
+    })
+
+    onStatus?.({
+      status: "checking",
+      message: "Waiting for Dev Tunnel...",
+      url: null,
+    })
+
+    if (state.tunnel_running && state.tunnel_url && state.auth_token) {
+      return state
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, intervalMs))
+  }
+
+  throw new Error(
+    `Timed out waiting for Dev Tunnel. Last state: ${JSON.stringify(lastState)}`
+  )
 }
 
 export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthStatusChange }: ProfilePaneProps) {
@@ -64,8 +147,8 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
   const [customSelected, setCustomSelected] = useState(false)
   const [devtunnelStatus, setDevtunnelStatus] = useState<DevtunnelAuthStatus | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState(false)
-  const [tunnelReady, setTunnelReady] = useState(false)
-  const [mobileUrl, setMobileUrl] = useState(() => buildMobileUrl(shareUrl || tunnelUrl, authToken))
+  const [mobileUrl, setMobileUrl] = useState<string | null>(null)
+  const [mobileAccessError, setMobileAccessError] = useState<string | null>(null)
   const toggleProfileSidebar = usePaneStore((state) => state.toggleProfileSidebar)
 
   const isMica = false
@@ -99,23 +182,6 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
       if (unlisten) unlisten()
     }
   }, [onDevtunnelAuthStatusChange])
-
-  // Update mobileUrl when shareUrl changes
-  useEffect(() => {
-    setMobileUrl(buildMobileUrl(shareUrl || tunnelUrl, authToken))
-  }, [shareUrl, tunnelUrl, authToken])
-
-  // Update mobileUrl when tunnel URL becomes available after auth
-  useEffect(() => {
-    if (devtunnelStatus?.status === 'login_success' && devtunnelStatus?.url === null) {
-      // Auth succeeded, refresh to get tunnel URL
-      invoke<{ tunnel_url: string | null; auth_token: string }>('get_runtime_state').then(updated => {
-        if (updated.tunnel_url) {
-          setMobileUrl(buildMobileUrl(updated.tunnel_url, updated.auth_token))
-        }
-      }).catch(console.error)
-    }
-  }, [devtunnelStatus])
 
   const aiOptions = [
     { value: "claude", label: "Claude" },
@@ -154,6 +220,7 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
   }
 
   const handleCopyLink = async () => {
+    if (!mobileUrl) return
     try {
       await navigator.clipboard.writeText(mobileUrl)
       setCopiedLink(true)
@@ -161,29 +228,27 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
     } catch {}
   }
 
-  // Main Mobile Access handler - checks auth, starts remote if needed, shows QR
+  // Main Mobile Access handler
   const handleMobileAccessClick = async () => {
+    setMobileAccessError(null)
+    setMobileUrl(null)
     setShowQRModal(true)
     setQrBlurred(true)
     setIsCheckingAuth(true)
-    setTunnelReady(false)
     setDevtunnelStatus(null)
 
     // Use a ref to track the unlisten function
     const unlistenRef: { current: (() => void) | null } = { current: null }
 
     try {
-      // Step 1: Set up listener FIRST before checking anything
+      console.log("[MOBILE ACCESS] clicked")
+
+      // Step 1: Set up listener for auth events
       const authEventPromise = new Promise<DevtunnelAuthStatus>((resolve) => {
         listen<DevtunnelAuthStatus>('devtunnel-login-status', (event) => {
           console.log('[DevTunnel] Auth status update:', event.payload)
           setDevtunnelStatus(event.payload)
           onDevtunnelAuthStatusChange?.(event.payload)
-
-          // Also update isCheckingAuth when we get login_success
-          if (event.payload.status === 'login_success') {
-            setIsCheckingAuth(false)
-          }
 
           if (event.payload.status === 'login_success' ||
               event.payload.status === 'login_failed' ||
@@ -202,25 +267,35 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
       await new Promise(r => setTimeout(r, 100))
 
       // Step 2: Check current runtime state
-      const runtimeState = await invoke<{ tunnel_url: string | null; tunnel_running: boolean; auth_token: string }>('get_runtime_state')
-      console.log('[DevTunnel] Runtime state:', runtimeState)
+      const rawState = await invoke("get_runtime_state")
+      const state = normalizeRuntimeState(rawState)
+
+      console.log("[MOBILE ACCESS] initial runtime state", {
+        tunnel_url: state.tunnel_url,
+        auth_token: state.auth_token ? "***" : null,
+        tunnel_running: state.tunnel_running,
+      })
 
       // Step 3: If tunnel already running with URL, we're good
-      if (runtimeState.tunnel_running && runtimeState.tunnel_url) {
-        const newMobileUrl = buildMobileUrl(runtimeState.tunnel_url, runtimeState.auth_token)
-        setMobileUrl(newMobileUrl)
-        setDevtunnelStatus({ status: 'login_success', message: 'Already connected', url: null })
-        setTunnelReady(true)
+      if (state.tunnel_running && state.tunnel_url && state.auth_token) {
+        const url = buildMobileUrl(state.tunnel_url, state.auth_token)
+        console.log("[DEV TUNNEL URL TEST]", {
+          tunnelUrl: state.tunnel_url,
+          authToken: state.auth_token ? "***" : null,
+          websocketUrl: toDevTunnelWebSocketUrl(state.tunnel_url),
+          mobileUrl: url,
+        })
+        setMobileUrl(url)
+        setDevtunnelStatus({ status: 'login_success', message: 'Dev Tunnel ready', url: null })
         setIsCheckingAuth(false)
         return
       }
 
       // Step 4: Not connected, start remote access
-      setDevtunnelStatus({ status: 'checking', message: 'Starting remote access...', url: null })
+      setDevtunnelStatus({ status: 'checking', message: 'Starting Dev Tunnel...', url: null })
       await invoke('start_remote_access')
 
       // Step 5: Wait for auth result
-      setDevtunnelStatus({ status: 'checking', message: 'Waiting for authentication...', url: null })
       const authResult = await authEventPromise
 
       if (authResult.status !== 'login_success') {
@@ -228,27 +303,45 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
         return
       }
 
-      // Step 6: Auth succeeded, generate tunnel URL
-      setDevtunnelStatus({ status: 'checking', message: 'Generating tunnel URL...', url: null })
-      const result = await invoke<{ tunnel_url: string | null; auth_token: string }>('get_runtime_state')
+      // Step 6: Wait for tunnel to be ready
+      setDevtunnelStatus({ status: 'checking', message: 'Waiting for tunnel URL...', url: null })
+      const finalState = await waitForDevTunnelReady(120000, 1000, setDevtunnelStatus)
 
-      if (result.tunnel_url) {
-        const newMobileUrl = buildMobileUrl(result.tunnel_url, result.auth_token)
-        setMobileUrl(newMobileUrl)
-        setTunnelReady(true)
-      } else {
-        setDevtunnelStatus({
-          status: 'login_failed',
-          message: 'Failed to generate tunnel URL',
-          url: null
-        })
+      if (!finalState.tunnel_url || !finalState.auth_token) {
+        throw new Error("Dev Tunnel started but tunnel_url or auth_token is missing")
       }
-    } catch (err) {
-      console.error('[Mobile Access] Failed:', err)
+
+      // Step 7: Build mobile URL
+      const url = buildMobileUrl(finalState.tunnel_url, finalState.auth_token)
+
+      console.log("[DEV TUNNEL URL TEST]", {
+        tunnelUrl: finalState.tunnel_url,
+        authToken: finalState.auth_token ? "***" : null,
+        websocketUrl: toDevTunnelWebSocketUrl(finalState.tunnel_url),
+        mobileUrl: url,
+      })
+
+      if (url) {
+        setMobileUrl(url)
+        setDevtunnelStatus({ status: 'login_success', message: 'Dev Tunnel ready', url: null })
+      } else {
+        throw new Error("Failed to build mobile URL")
+      }
+    } catch (error) {
+      console.error("[MOBILE ACCESS] failed", error)
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Failed to generate Dev Tunnel mobile access URL"
+
+      setMobileAccessError(message)
       setDevtunnelStatus({
         status: 'login_failed',
-        message: `Failed: ${String(err)}`,
-        url: null
+        message,
+        url: null,
       })
     } finally {
       setIsCheckingAuth(false)
@@ -274,14 +367,15 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
               </button>
             </div>
 
-            {/* DevTunnel Auth Status - show when actively checking and no other status */}
+            {/* Loading state */}
             {isCheckingAuth && !devtunnelStatus && (
               <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-3">
                 <Loader2 className="h-4 w-4 animate-spin text-[#DCDCAA]" />
-                <span className="text-sm text-[#CCCCCC]">Checking Dev Tunnel auth...</span>
+                <span className="text-sm text-[#CCCCCC]">Connecting to Dev Tunnel...</span>
               </div>
             )}
 
+            {/* DevTunnel Auth Status */}
             {devtunnelStatus && devtunnelStatus.status !== 'login_success' && (
               <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 w-full max-w-[240px]">
                 {devtunnelStatus.status === 'checking' && (
@@ -323,15 +417,8 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
               </div>
             )}
 
-            {devtunnelStatus?.status === 'login_success' && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#1a2e1a] px-4 py-3">
-                <Check className="h-4 w-4 text-[#16C60C] shrink-0" />
-                <span className="text-sm text-[#16C60C]">Signed in to Dev Tunnels</span>
-              </div>
-            )}
-
-            {/* QR Code - only show when tunnel is ready */}
-            {tunnelReady ? (
+            {/* Success state - show QR and link */}
+            {mobileUrl ? (
               <>
                 <div
                   className={`relative rounded-xl bg-white p-4 cursor-pointer transition-transform ${qrBlurred ? 'scale-95' : 'scale-100'}`}
@@ -346,17 +433,18 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
                     </div>
                   )}
                   <div className={`transition-all duration-300 ${qrBlurred ? "blur-md" : "blur-0"}`}>
-                    <QRCodeSVG value={mobileUrl} size={200} level="M" />
+                    <QRCodeSVG value={mobileUrl} size={220} level="M" />
                   </div>
                 </div>
 
-                <p className="mt-4 max-w-[220px] text-center text-xs text-[#808080]">
+                <p className="mt-4 max-w-[260px] text-center text-xs text-[#808080]">
                   {qrBlurred ? "Tap the QR code to reveal it" : "Scan this QR code with your mobile device"}
                 </p>
 
                 <button
                   onClick={handleCopyLink}
-                  className="mt-3 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-2 text-sm text-white hover:bg-[#333333] transition-colors"
+                  disabled={!mobileUrl}
+                  className="mt-3 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-2 text-sm text-white hover:bg-[#333333] disabled:opacity-50 transition-colors"
                 >
                   {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copiedLink ? "Copied!" : "Copy Link"}
@@ -364,19 +452,20 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
 
                 {/* Show the actual link */}
                 {!qrBlurred && (
-                  <div className="mt-3 max-w-[240px] break-all text-center">
-                    <span className="text-[10px] text-[#666]">Link: </span>
-                    <span className="text-[10px] text-[#888] font-mono">{mobileUrl.substring(0, 60)}...</span>
+                  <div className="mt-3 max-w-[280px] break-all text-center">
+                    <code className="text-[10px] text-[#888] font-mono bg-[#1a1a1a] px-2 py-1 rounded">
+                      {mobileUrl}
+                    </code>
                   </div>
                 )}
               </>
-            ) : (
-              !isCheckingAuth && !devtunnelStatus && (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <span className="text-sm text-[#808080]">No tunnel active</span>
-                  <span className="text-xs text-[#666] mt-1">Try again or check Dev Tunnel status</span>
-                </div>
-              )
+            ) : !isCheckingAuth && (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <span className="text-sm text-[#808080]">Dev Tunnel not ready</span>
+                {mobileAccessError && (
+                  <span className="text-xs text-[#E74856] mt-2">{mobileAccessError}</span>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -437,7 +526,8 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
                 </button>
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 w-full rounded bg-transparent px-1.5 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] transition-colors text-left"
+                  disabled={!mobileUrl}
+                  className="flex items-center gap-1.5 w-full rounded bg-transparent px-1.5 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] disabled:opacity-50 transition-colors text-left"
                 >
                   {copiedLink ? <Check className="h-3 w-3 shrink-0 text-[#16C60C]" /> : <Link2 className="h-3 w-3 shrink-0" />}
                   Copy Link
