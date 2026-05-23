@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Eye, EyeOff, Copy, Check, X, Link, Key, LogOut, QrCode, Shield, Bot } from "lucide-react"
+import { Copy, Check, X, QrCode, Bot, RefreshCw, Square, Link2 } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { invoke } from "@tauri-apps/api/core"
 
 interface ProfileSidebarProps {
   isOpen: boolean
@@ -47,57 +48,92 @@ function buildMobileUrl(tunnelUrl: string, authToken: string): string {
   }
 }
 
+function detectTauri(): boolean {
+  return typeof window !== "undefined" && "__TAURI__" in window
+}
+
 export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUrl: providedMobileUrl, onSignOut }: ProfileSidebarProps) {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showUrl, setShowUrl] = useState(false)
-  const [copiedUrl, setCopiedUrl] = useState(false)
-  const [copiedPassword, setCopiedPassword] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
+  const [qrBlurred, setQrBlurred] = useState(true)
   const [customCommand, setCustomCommand] = useState("")
+  const [serverRunning, setServerRunning] = useState(true)
+  const [serverAction, setServerAction] = useState<string | null>(null)
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
+  const isTauri = detectTauri()
   const mobileUrl = providedMobileUrl || buildMobileUrl(tunnelUrl, authToken)
   const aiCommand = usePaneStore((state) => state.aiCommand)
   const setAiCommand = usePaneStore((state) => state.setAiCommand)
 
   const aiOptions = [
-    { value: "claude", label: "Claude Code" },
-    { value: "gemini", label: "Gemini CLI" },
-    { value: "aichat", label: "aichat" },
-    { value: "codex", label: "Codex" },
-    { value: "llm", label: "llm" },
-    { value: "opencode", label: "OpenCode" },
+    { value: "claude", label: "Claude" },
+    { value: "claude-codex", label: "Claude CodeX" },
+    { value: "custom", label: "Custom..." },
   ]
 
-  const isCustomCommand = !!aiCommand && !aiOptions.some(o => o.value === aiCommand)
+  const isCustomCommand = !!aiCommand && !aiOptions.slice(0, -1).some(o => o.value === aiCommand)
 
-  // Sync custom command when aiCommand loads from localStorage
   useEffect(() => {
-    const isCustom = !aiOptions.some(o => o.value === aiCommand)
+    if (isOpen && qrBlurred) {
+      const timer = setTimeout(() => setQrBlurred(false), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, qrBlurred])
+
+  useEffect(() => {
+    const isCustom = !aiOptions.slice(0, -1).some(o => o.value === aiCommand)
     if (isCustom && aiCommand) {
       setCustomCommand(aiCommand)
     }
   }, [aiCommand])
 
-  const maskValue = (value: string) => "\u2022".repeat(Math.min(value.length, 20))
-
-  const handleCopyUrl = async () => {
+  const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(mobileUrl)
-      setCopiedUrl(true)
-      setTimeout(() => setCopiedUrl(false), 2000)
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 2000)
     } catch {
       // clipboard not available
     }
   }
 
-  const handleCopyPassword = async () => {
+  const handleRestartServer = async () => {
+    if (!isTauri) return
+    setServerAction("restarting")
     try {
-      await navigator.clipboard.writeText(authToken)
-      setCopiedPassword(true)
-      setTimeout(() => setCopiedPassword(false), 2000)
-    } catch {
-      // clipboard not available
+      await invoke("restart_server")
+      setServerRunning(true)
+    } catch (err) {
+      console.error("Restart failed:", err)
+    } finally {
+      setTimeout(() => setServerAction(null), 1000)
+    }
+  }
+
+  const handleStopServer = async () => {
+    if (!isTauri) return
+    setServerAction("stopping")
+    try {
+      await invoke("stop_server")
+      setServerRunning(false)
+    } catch (err) {
+      console.error("Stop failed:", err)
+    } finally {
+      setTimeout(() => setServerAction(null), 1000)
+    }
+  }
+
+  const handleStartServer = async () => {
+    if (!isTauri) return
+    setServerAction("starting")
+    try {
+      await invoke("start_server")
+      setServerRunning(true)
+    } catch (err) {
+      console.error("Start failed:", err)
+    } finally {
+      setTimeout(() => setServerAction(null), 1000)
     }
   }
 
@@ -115,25 +151,42 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
       {showQRModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="flex flex-col items-center rounded-2xl bg-[#161616] p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between w-full">
-              <span className="text-sm font-medium text-white">Scan to Connect</span>
+            <div className="mb-4 flex w-full items-center justify-between">
+              <span className="text-sm font-medium text-white">Mobile Access</span>
               <button
-                onClick={() => setShowQRModal(false)}
+                onClick={() => {
+                  setShowQRModal(false)
+                  setQrBlurred(true)
+                }}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="rounded-xl bg-white p-4">
-              <QRCodeSVG
-                value={mobileUrl}
-                size={200}
-                level="M"
-              />
+            <div className="relative rounded-xl bg-white p-4">
+              {qrBlurred && (
+                <div className="absolute inset-4 z-10 flex items-center justify-center">
+                  <div className="h-4 w-4 animate-ping rounded-full bg-gray-400 opacity-75" />
+                </div>
+              )}
+              <div className={`transition-all duration-500 ${qrBlurred ? "blur-md" : "blur-0"}`}>
+                <QRCodeSVG
+                  value={mobileUrl}
+                  size={200}
+                  level="M"
+                />
+              </div>
             </div>
-            <p className="mt-4 text-xs text-[#808080] text-center max-w-[220px]">
+            <p className="mt-4 max-w-[220px] text-center text-xs text-[#808080]">
               Scan this QR code with your mobile device to instantly connect and auto-login
             </p>
+            <button
+              onClick={handleCopyLink}
+              className="mt-3 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-2 text-sm text-white hover:bg-[#333333] transition-colors"
+            >
+              {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedLink ? "Copied!" : "Copy Link"}
+            </button>
           </div>
         </div>
       )}
@@ -153,63 +206,50 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* URL Field */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
-              <Link className="h-4 w-4" />
-              URL
-            </label>
-            <div className="flex flex-col gap-2 rounded-lg bg-[#0C0C0C] p-3">
-              <span className="break-all text-sm text-[#CCCCCC] font-mono leading-relaxed">
-                {showUrl ? tunnelUrl : maskValue(tunnelUrl)}
-              </span>
-              <div className="flex items-center gap-1 self-end">
+          {/* Server Controls - Tauri only */}
+          {isTauri && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
+                <RefreshCw className="h-4 w-4" />
+                Server Controls
+              </label>
+              <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#0C0C0C] p-3">
                 <button
-                  onClick={() => setShowUrl(!showUrl)}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
-                  title={showUrl ? "Hide" : "Show"}
+                  onClick={handleRestartServer}
+                  disabled={!!serverAction || !serverRunning}
+                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {showUrl ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
+                  Restart
                 </button>
                 <button
-                  onClick={handleCopyUrl}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
-                  title="Copy"
+                  onClick={handleStopServer}
+                  disabled={!!serverAction || !serverRunning}
+                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {copiedUrl ? <Check className="h-4 w-4 text-[#16C60C]" /> : <Copy className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Password Field */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
-              <Key className="h-4 w-4" />
-              Password
-            </label>
-            <div className="flex items-center gap-2 rounded-lg bg-[#0C0C0C] p-3">
-              <span className="flex-1 truncate text-sm text-[#CCCCCC] font-mono">
-                {showPassword ? authToken : maskValue(authToken)}
-              </span>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
-                  title={showPassword ? "Hide" : "Show"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <Square className="h-3.5 w-3.5" />
+                  Stop
                 </button>
                 <button
-                  onClick={handleCopyPassword}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
-                  title="Copy"
+                  onClick={() => {
+                    setShowQRModal(true)
+                    setQrBlurred(true)
+                  }}
+                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
                 >
-                  {copiedPassword ? <Check className="h-4 w-4 text-[#16C60C]" /> : <Copy className="h-4 w-4" />}
+                  <QrCode className="h-3.5 w-3.5" />
+                  Mobile Access
+                </button>
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-2 text-xs font-medium text-white hover:bg-[#333333] transition-colors"
+                >
+                  {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
+                  Copy Link
                 </button>
               </div>
             </div>
-          </div>
+          )}
 
           {/* AI CLI Settings */}
           <div className="space-y-2">
@@ -222,7 +262,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                 <label
                   key={option.value}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                    aiCommand === option.value
+                    aiCommand === option.value || (option.value === "custom" && isCustomCommand)
                       ? "bg-[#27272A] text-white"
                       : "hover:bg-[#27272A]/50 text-[#808080]"
                   }`}
@@ -231,16 +271,22 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                     type="radio"
                     name="ai-cli"
                     value={option.value}
-                    checked={aiCommand === option.value}
+                    checked={aiCommand === option.value || (option.value === "custom" && isCustomCommand)}
                     onChange={() => {
-                      setAiCommand(option.value)
-                      setCustomCommand("")
+                      if (option.value === "custom") {
+                        if (customCommand) {
+                          setAiCommand(customCommand)
+                        }
+                      } else {
+                        setAiCommand(option.value)
+                        setCustomCommand("")
+                      }
                     }}
                     className="sr-only"
                   />
                   <div
                     className={`h-3 w-3 rounded-full border ${
-                      aiCommand === option.value
+                      aiCommand === option.value || (option.value === "custom" && isCustomCommand)
                         ? "border-white bg-white"
                         : "border-[#808080]"
                     }`}
@@ -248,35 +294,6 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                   <span className="text-sm">{option.label}</span>
                 </label>
               ))}
-              {/* Custom command option */}
-              <label
-                className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                  isCustomCommand
-                    ? "bg-[#27272A] text-white"
-                    : "hover:bg-[#27272A]/50 text-[#808080]"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="ai-cli"
-                  value="__custom__"
-                  checked={isCustomCommand}
-                  onChange={() => {
-                    if (customCommand) {
-                      setAiCommand(customCommand)
-                    }
-                  }}
-                  className="sr-only"
-                />
-                <div
-                  className={`h-3 w-3 rounded-full border ${
-                    isCustomCommand
-                      ? "border-white bg-white"
-                      : "border-[#808080]"
-                  }`}
-                />
-                <span className="text-sm">Custom...</span>
-              </label>
               {isCustomCommand && (
                 <div className="mt-1 pl-6">
                   <input
@@ -292,38 +309,39 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                       }
                     }}
                     placeholder="Enter custom CLI command..."
-                    className="w-full bg-[#1a1a1a] px-2 py-1.5 text-xs text-[#CCCCCC] outline-none focus:outline-none border border-[#3B3B3B] rounded focus:border-white"
+                    className="w-full bg-[#1a1a1a] px-2 py-1.5 text-xs text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-white"
                   />
                 </div>
               )}
             </div>
             <p className="text-[10px] text-[#808080]">
-              Quick-launch button in terminal header sends: {aiCommand}
+              Quick-launch button in terminal header sends: {aiCommand || "claude"}
             </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#333333] p-4 space-y-2">
+        <div className="space-y-2 border-t border-[#333333] p-4">
           <button
-            onClick={handleCopyUrl}
+            onClick={() => setShowSecurityModal(true)}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
           >
-            {copiedUrl ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copiedUrl ? "Link Copied!" : "Copy Link"}
-          </button>
-          <button
-            onClick={() => setShowQRModal(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
-          >
-            <QrCode className="h-4 w-4" />
-            Open in Mobile
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            Security & Devices
           </button>
           <button
             onClick={onSignOut}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#E74856] px-4 py-3 text-sm font-medium text-white hover:bg-[#ff3b30] transition-colors"
           >
-            <LogOut className="h-4 w-4" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
             Sign Out
           </button>
         </div>

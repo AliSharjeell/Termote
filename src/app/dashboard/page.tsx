@@ -17,12 +17,10 @@ import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { User, Search, Play, Square, RotateCw, Zap, Globe2, Copy, Check, Loader2, AlertTriangle, ExternalLink } from "lucide-react"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
 const LOCAL_WS_URL = 'ws://127.0.0.1:9090/ws'
-
 type RuntimeSnapshot = {
   backendRunning: boolean
   tunnelRunning: boolean
@@ -31,113 +29,6 @@ type RuntimeSnapshot = {
   authToken: string
   tunnelUrl: string | null
   mobileUrl: string
-}
-
-function ServerControls({ serverRunning, onStart, onStop, onRestart, loading }: {
-  serverRunning: boolean
-  onStart: () => void
-  onStop: () => void
-  onRestart: () => void
-  loading: boolean
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {loading ? (
-        <span className="text-xs text-[#A1A1AA]">Checking...</span>
-      ) : serverRunning ? (
-        <>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#16C60C]" style={{ boxShadow: '0 0 6px #16C60C' }} />
-            <span className="text-xs text-[#16C60C]">Server Running</span>
-          </div>
-          <button
-            onClick={onRestart}
-            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors"
-            title="Restart Server"
-          >
-            <RotateCw className="h-3 w-3" />
-            Restart
-          </button>
-          <button
-            onClick={onStop}
-            className="flex items-center gap-1 rounded-full bg-red-900/50 px-2.5 py-1 text-xs text-red-400 hover:bg-red-900 transition-colors"
-            title="Stop Server"
-          >
-            <Square className="h-3 w-3 fill-current" />
-            Stop
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#E74856]" style={{ boxShadow: '0 0 6px #E74856' }} />
-            <span className="text-xs text-[#E74856]">Server Stopped</span>
-          </div>
-          <button
-            onClick={onStart}
-            className="flex items-center gap-1 rounded-full bg-green-900/50 px-2.5 py-1 text-xs text-green-400 hover:bg-green-900 transition-colors"
-            title="Start Server"
-          >
-            <Play className="h-3 w-3 fill-current" />
-            Start
-          </button>
-        </>
-      )}
-    </div>
-  )
-}
-
-function RemoteAccessControls({ runtime, loading, error, copied, onStart, onStop, onCopy }: {
-  runtime: RuntimeSnapshot | null
-  loading: boolean
-  error: string | null
-  copied: boolean
-  onStart: () => void
-  onStop: () => void
-  onCopy: () => void
-}) {
-  const running = !!runtime?.tunnelRunning && !!runtime?.tunnelUrl
-
-  return (
-    <div className="flex items-center gap-2">
-      {error && <span className="max-w-48 truncate text-xs text-[#E74856]" title={error}>{error}</span>}
-      {running ? (
-        <>
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-[#58A6FF]" style={{ boxShadow: "0 0 6px #58A6FF" }} />
-            <span className="text-xs text-[#58A6FF]">Mobile Access</span>
-          </div>
-          <button
-            onClick={onCopy}
-            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors"
-            title="Copy mobile link"
-          >
-            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-            {copied ? "Copied" : "Copy"}
-          </button>
-          <button
-            onClick={onStop}
-            disabled={loading}
-            className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors disabled:opacity-50"
-            title="Stop mobile access"
-          >
-            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Square className="h-3 w-3 fill-current" />}
-            Stop
-          </button>
-        </>
-      ) : (
-        <button
-          onClick={onStart}
-          disabled={loading}
-          className="flex items-center gap-1 rounded-full bg-[#27272A] px-2.5 py-1 text-xs text-[#A1A1AA] hover:bg-[#353535] hover:text-white transition-colors disabled:opacity-50"
-          title="Start Dev Tunnel for mobile access"
-        >
-          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe2 className="h-3 w-3" />}
-          Mobile Access
-        </button>
-      )}
-    </div>
-  )
 }
 
 function DashboardContent() {
@@ -425,23 +316,16 @@ function DashboardContent() {
         {/* Status + Server Controls - left side */}
         <div className="flex items-center gap-4">
           {isTauri ? (
-            <>
-              <ServerControls
-                serverRunning={serverRunning}
-                onStart={handleServerStart}
-                onStop={handleServerStop}
-                onRestart={handleServerRestart}
-                loading={checkingServer}
+            <div className="flex items-center gap-2">
+              <div
+                className={`h-2 w-2 rounded-full shrink-0 ${
+                  serverRunning ? "bg-[#16C60C]" : "bg-[#E74856]"
+                }`}
+                style={{
+                  boxShadow: serverRunning ? "0 0 6px #16C60C" : "0 0 6px #E74856"
+                }}
               />
-              <RemoteAccessControls
-                runtime={runtime}
-                loading={remoteLoading}
-                error={remoteError}
-                copied={copiedMobileUrl}
-                onStart={handleRemoteStart}
-                onStop={handleRemoteStop}
-                onCopy={handleCopyMobileUrl}
-              />
+              <span className="text-sm text-[#CCCCCC]">Termote</span>
               {serverError && (
                 <div className="flex min-w-0 max-w-80 items-center gap-2 rounded-full bg-[#3b1117] px-3 py-1 text-xs text-[#FCA5A5]" title={serverError}>
                   <AlertTriangle className="h-3 w-3 shrink-0" />
@@ -479,7 +363,7 @@ function DashboardContent() {
                   )}
                 </div>
               )}
-            </>
+            </div>
           ) : (
             <>
               <div
