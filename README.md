@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![Termote](https://img.shields.io/github/stars/AliSharjeell/TermoteUI?style=social)
+![Termote](https://img.shields.io/github/stars/AliSharjeell/Termote?style=social)
 
 **Termote is a lightweight ADE (Agent Development Environment) that boosts your productivity with a persistent multi-pane workspace, built-in tools, and one-click remote access so you can keep working from your phone, anywhere.**
 
@@ -22,7 +22,7 @@ Termote lets you use your terminal from your phone, tablet, or another computer 
 
 ## Quick Install
 
-**Download from [TermoteUI Releases](https://github.com/AliSharjeell/TermoteUI/releases)**
+**Download from [Termote Releases](https://github.com/AliSharjeell/Termote/releases)**
 
 The installer includes everything — one download, one install, done.
 
@@ -85,7 +85,7 @@ Two parts work together:
 | Component | Where it runs | Built with |
 |-----------|---------------|------------|
 | **Frontend** (this repo) | Your desktop | Tauri + Next.js |
-| **Backend** ([Termote](https://github.com/AliSharjeell/Termote)) | Sidecar process | Rust |
+| **Backend** ([TermoteBackend](https://github.com/AliSharjeell/TermoteBackend)) | Sidecar process | Rust |
 
 The installer packages both together. You install one app.
 
@@ -95,8 +95,8 @@ The installer packages both together. You install one app.
 
 ```powershell
 # Clone both repos
-git clone https://github.com/AliSharjeell/TermoteUI.git
 git clone https://github.com/AliSharjeell/Termote.git
+git clone https://github.com/AliSharjeell/TermoteBackend.git
 
 # Build
 cd TermoteUI
