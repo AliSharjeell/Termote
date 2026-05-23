@@ -62,8 +62,8 @@ html.tauri-mica [data-nextjs-root] {
 
 /* The main app shell */
 .tauri-mica-shell {
-  background: transparent !important;
-  background-color: transparent !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
 }
 
 /* ============================================
