@@ -20,7 +20,7 @@ export function DirectoryPickerModal() {
 
   const filteredContents = isImagePickerMode
     ? explorerContents.filter((item) =>
-        !item.is_dir && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(item.name)
+        item.is_dir || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(item.name)
       )
     : explorerContents
 
@@ -39,7 +39,9 @@ export function DirectoryPickerModal() {
 
   const handleItemClick = (item: { absolute_path: string; is_dir: boolean }) => {
     if (isImagePickerMode) {
-      if (!item.is_dir) {
+      if (item.is_dir) {
+        fetchDirectory(item.absolute_path)
+      } else {
         // Read the image file directly
         readImageFile(item.absolute_path)
         closeImagePicker()
@@ -108,7 +110,7 @@ export function DirectoryPickerModal() {
                 <button
                   key={item.absolute_path}
                   onClick={() => handleItemClick(item)}
-                  disabled={!item.is_dir}
+                  disabled={!isImagePickerMode && !item.is_dir}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
                     item.is_dir
                       ? "text-[#CCCCCC] hover:bg-[#27272A] cursor-pointer"

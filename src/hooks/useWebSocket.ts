@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react"
 import { usePaneStore } from "./usePaneStore"
 import type { ServerMessage } from "@/lib/types"
+import { setTerminalScrollback, writeOrBufferTerminalOutput } from "@/lib/terminalRegistry"
 
 interface UseWebSocketOptions {
   url: string | null
@@ -10,16 +11,33 @@ interface UseWebSocketOptions {
 }
 
 function toWebSocketUrl(url: string): string {
-  let wsUrl = url.trim()
-  if (wsUrl.startsWith("https://")) {
-    wsUrl = "wss://" + wsUrl.slice(8)
-  } else if (wsUrl.startsWith("http://")) {
-    wsUrl = "ws://" + wsUrl.slice(7)
+  const rawUrl = url.trim()
+
+  try {
+    const parsed = new URL(rawUrl)
+    if (parsed.protocol === "https:") {
+      parsed.protocol = "wss:"
+    } else if (parsed.protocol === "http:") {
+      parsed.protocol = "ws:"
+    }
+
+    parsed.pathname = parsed.pathname.replace(/\/+$/, "")
+    if (!parsed.pathname.endsWith("/ws")) {
+      parsed.pathname = `${parsed.pathname}/ws`.replace(/\/{2,}/g, "/")
+    }
+    parsed.search = ""
+    parsed.hash = ""
+    return parsed.toString()
+  } catch {
+    let wsUrl = rawUrl
+    if (wsUrl.startsWith("https://")) {
+      wsUrl = "wss://" + wsUrl.slice(8)
+    } else if (wsUrl.startsWith("http://")) {
+      wsUrl = "ws://" + wsUrl.slice(7)
+    }
+    wsUrl = wsUrl.replace(/\/+$/, "")
+    return wsUrl.endsWith("/ws") ? wsUrl : `${wsUrl}/ws`
   }
-  if (!wsUrl.endsWith("/ws")) {
-    wsUrl = wsUrl.replace(/\/?$/, "/ws")
-  }
-  return wsUrl
 }
 
 function tunnelCheckUrl(wsUrl: string): string | null {
@@ -113,20 +131,12 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           // Replay scrollback buffers to populate terminal history
           if (message.scrollback_buffers) {
             Object.entries(message.scrollback_buffers).forEach(([paneId, data]) => {
-              window.dispatchEvent(
-                new CustomEvent("terminal-output", {
-                  detail: { paneId, data },
-                })
-              )
+              setTerminalScrollback(paneId, data)
             })
           }
           break
         case "output":
-          window.dispatchEvent(
-            new CustomEvent("terminal-output", {
-              detail: { paneId: message.pane_id, data: message.data },
-            })
-          )
+          writeOrBufferTerminalOutput(message.pane_id, message.data)
           break
         case "auth_result":
           if (message.success) {

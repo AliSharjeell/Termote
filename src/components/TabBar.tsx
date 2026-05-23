@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { PanelLeft, PanelRight } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { refitTerminal } from "@/lib/terminalRegistry"
 import { XtermPane } from "./XtermPane"
 import { SourceControlPane } from "./SourceControlPane"
 import { PortManager } from "./PortManager"
@@ -87,6 +88,12 @@ export function TabBar({ searchQuery }: TabBarProps) {
   const searchFiltered = searchQuery
     ? panes.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : panes
+
+  useEffect(() => {
+    if (selectedTab) {
+      refitTerminal(selectedTab)
+    }
+  }, [selectedTab])
 
 
   return (

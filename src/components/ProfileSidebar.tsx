@@ -14,6 +14,39 @@ interface ProfileSidebarProps {
   onSignOut: () => void
 }
 
+function toWebSocketUrl(url: string): string {
+  const parsed = new URL(url)
+  if (parsed.protocol === "https:") {
+    parsed.protocol = "wss:"
+  } else if (parsed.protocol === "http:") {
+    parsed.protocol = "ws:"
+  }
+  parsed.pathname = parsed.pathname.replace(/\/+$/, "")
+  if (!parsed.pathname.endsWith("/ws")) {
+    parsed.pathname = `${parsed.pathname}/ws`.replace(/\/{2,}/g, "/")
+  }
+  parsed.search = ""
+  parsed.hash = ""
+  return parsed.toString()
+}
+
+function buildMobileUrl(tunnelUrl: string, authToken: string): string {
+  try {
+    const wsUrl = toWebSocketUrl(tunnelUrl)
+    const dashboardUrl = new URL(wsUrl)
+    dashboardUrl.protocol = dashboardUrl.protocol === "wss:" ? "https:" : "http:"
+    dashboardUrl.pathname = "/dashboard/"
+    dashboardUrl.search = ""
+    dashboardUrl.hash = ""
+
+    dashboardUrl.searchParams.set("tunnel", wsUrl)
+    dashboardUrl.searchParams.set("token", authToken)
+    return dashboardUrl.toString()
+  } catch {
+    return `${tunnelUrl.replace(/\/+$/, "")}/dashboard/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
+  }
+}
+
 export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUrl: providedMobileUrl, onSignOut }: ProfileSidebarProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showUrl, setShowUrl] = useState(false)
@@ -23,7 +56,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
   const [customCommand, setCustomCommand] = useState("")
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
-  const mobileUrl = providedMobileUrl || `${tunnelUrl.replace(/\/$/, "")}/dashboard/?tunnel=${encodeURIComponent(tunnelUrl)}&token=${encodeURIComponent(authToken)}`
+  const mobileUrl = providedMobileUrl || buildMobileUrl(tunnelUrl, authToken)
   const aiCommand = usePaneStore((state) => state.aiCommand)
   const setAiCommand = usePaneStore((state) => state.setAiCommand)
 

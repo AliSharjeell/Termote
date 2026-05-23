@@ -9,6 +9,7 @@ import {
   removeTerminal,
   disconnectResizeObserver,
   createResizeObserverCallback,
+  drainBufferedTerminalOutput,
   scheduleFitAndRefresh,
   type TerminalInstance,
 } from "@/lib/terminalRegistry"
@@ -79,14 +80,16 @@ export function XtermPane({ pane }: XtermPaneProps) {
     isMountedRef.current = true
 
     // Get or create terminal from registry
-    const instance = getOrCreateTerminal(pane.id, pane.cols, pane.rows)
+    const instance = getOrCreateTerminal(pane.id, 80, 24)
 
     // Store ref for use in event listeners
     terminalInstanceRef.current = instance
 
     // Set up key handler if not already set
     if (!instance.keyHandler) {
-      instance.terminal.attachCustomKeyEventHandler(getKeyHandler(instance.terminal))
+      const keyHandler = getKeyHandler(instance.terminal)
+      instance.terminal.attachCustomKeyEventHandler(keyHandler)
+      instance.keyHandler = keyHandler
     }
 
     // Open terminal to DOM element
@@ -94,14 +97,12 @@ export function XtermPane({ pane }: XtermPaneProps) {
       onData: handleData,
       onResize: handleResize,
     })
+    drainBufferedTerminalOutput(pane.id)
+    scheduleFitAndRefresh(instance)
 
     // Create and attach ResizeObserver
     resizeObserverCallbackRef.current = createResizeObserverCallback(pane.id, handleResize)
     resizeObserverCallbackRef.current(terminalRef.current)
-
-    // Send initial resize
-    const dims = instance.fitAddon.proposeDimensions() || { cols: instance.terminal.cols, rows: instance.terminal.rows }
-    sendResizeRef.current(pane.id, dims.cols, dims.rows)
 
     return () => {
       isMountedRef.current = false
@@ -109,21 +110,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
       // Just disconnect the resize observer - the terminal stays alive in the registry
       disconnectResizeObserver(pane.id)
     }
-  }, [pane.id, pane.cols, pane.rows, handleData, handleResize, getKeyHandler])
-
-  // Listen for output events from backend
-  useEffect(() => {
-    const handleOutput = (event: CustomEvent<{ paneId: string; data: string }>) => {
-      if (event.detail.paneId === pane.id && terminalInstanceRef.current) {
-        terminalInstanceRef.current.terminal.write(event.detail.data)
-      }
-    }
-
-    window.addEventListener("terminal-output", handleOutput as EventListener)
-    return () => {
-      window.removeEventListener("terminal-output", handleOutput as EventListener)
-    }
-  }, [pane.id])
+  }, [pane.id, handleData, handleResize, getKeyHandler])
 
   // Re-fit terminal when pane becomes visible (handles TabBar visibility toggle)
   useEffect(() => {
@@ -133,13 +120,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
     const observer = new MutationObserver(() => {
       if (isMountedRef.current && terminalInstanceRef.current) {
         const instance = terminalInstanceRef.current
-        // Directly trigger fit and refresh
-        try {
-          instance.fitAddon.fit()
-          instance.terminal.refresh(0, instance.terminal.rows - 1)
-        } catch (e) {
-          // Ignore fit failures
-        }
+        scheduleFitAndRefresh(instance)
       }
     })
 

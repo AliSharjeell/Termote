@@ -19,6 +19,8 @@ export interface TerminalInstance {
   paneId: string
   /** Whether the terminal's DOM element is currently attached */
   isAttached: boolean
+  /** React container currently owning the terminal DOM */
+  containerElement: HTMLElement | null
   /** Custom key event handler registered on this terminal */
   keyHandler: ((arg: unknown) => boolean) | null
   /** Data handler disposable for cleanup */
@@ -28,6 +30,8 @@ export interface TerminalInstance {
 }
 
 const terminalRegistry = new Map<string, TerminalInstance>()
+const pendingOutput = new Map<string, string>()
+const MAX_PENDING_OUTPUT_LENGTH = 5_000_000
 
 const DEFAULT_TERMINAL_OPTIONS: Partial<ITerminalOptions> = {
   fontFamily: "'Cascadia Code', Consolas, monospace",
@@ -70,8 +74,6 @@ export function getOrCreateTerminal(
 ): TerminalInstance {
   const existing = terminalRegistry.get(paneId)
   if (existing) {
-    // Update dimensions if changed
-    existing.terminal.resize(cols, rows)
     return existing
   }
 
@@ -93,6 +95,7 @@ export function getOrCreateTerminal(
     fitAddon,
     paneId,
     isAttached: false,
+    containerElement: null,
     keyHandler: null,
     dataDisposable: null,
     resizeObserver: null,
@@ -102,11 +105,76 @@ export function getOrCreateTerminal(
   return instance
 }
 
+function fitAndRefreshIfVisible(instance: TerminalInstance): boolean {
+  const container = instance.containerElement ?? instance.terminal.element?.parentElement
+  if (!container) return false
+
+  const rect = container.getBoundingClientRect()
+  if (rect.width < 20 || rect.height < 20) return false
+
+  try {
+    instance.fitAddon.fit()
+    instance.terminal.refresh(0, Math.max(instance.terminal.rows - 1, 0))
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * Get an existing terminal instance without creating a new one.
  */
 export function getTerminal(paneId: string): TerminalInstance | undefined {
   return terminalRegistry.get(paneId)
+}
+
+function appendPendingOutput(paneId: string, data: string): void {
+  const existing = pendingOutput.get(paneId) ?? ""
+  const next = existing + data
+  pendingOutput.set(
+    paneId,
+    next.length > MAX_PENDING_OUTPUT_LENGTH
+      ? next.slice(next.length - MAX_PENDING_OUTPUT_LENGTH)
+      : next
+  )
+}
+
+export function writeOrBufferTerminalOutput(paneId: string, data: string): void {
+  const instance = terminalRegistry.get(paneId)
+  if (!instance) {
+    appendPendingOutput(paneId, data)
+    return
+  }
+
+  instance.terminal.write(data)
+}
+
+export function setTerminalScrollback(paneId: string, data: string): void {
+  const instance = terminalRegistry.get(paneId)
+  if (!instance) {
+    pendingOutput.set(
+      paneId,
+      data.length > MAX_PENDING_OUTPUT_LENGTH
+        ? data.slice(data.length - MAX_PENDING_OUTPUT_LENGTH)
+        : data
+    )
+    return
+  }
+
+  instance.terminal.reset()
+  if (data) {
+    instance.terminal.write(data)
+  }
+  scheduleFitAndRefresh(instance)
+}
+
+export function drainBufferedTerminalOutput(paneId: string): void {
+  const instance = terminalRegistry.get(paneId)
+  const data = pendingOutput.get(paneId)
+  if (!instance || !data) return
+
+  pendingOutput.delete(paneId)
+  instance.terminal.write(data)
 }
 
 /**
@@ -128,6 +196,10 @@ export function removeTerminal(paneId: string): void {
   if (instance.resizeObserver) {
     instance.resizeObserver.disconnect()
     instance.resizeObserver = null
+  }
+  if (instance.dataDisposable) {
+    instance.dataDisposable.dispose()
+    instance.dataDisposable = null
   }
 
   // Dispose the terminal
@@ -151,26 +223,6 @@ export function openTerminal(
   const instance = terminalRegistry.get(paneId)
   if (!instance) return null
 
-  // If already attached to a different element, detach first
-  if (instance.isAttached) {
-    // Check if already attached to this element
-    try {
-      if (instance.terminal.element && element.contains(instance.terminal.element)) {
-        // Already attached to this element, just refresh
-        try {
-          instance.fitAddon.fit()
-          instance.terminal.refresh(0, instance.terminal.rows - 1)
-        } catch {
-          // Ignore refresh failures
-        }
-        return instance
-      }
-    } catch {
-      // DOM comparison failed, continue to reattach
-    }
-    // Terminal was attached elsewhere - element was replaced, just reopen
-  }
-
   // Register data handler if provided
   if (options?.onData) {
     // Remove old handler if exists
@@ -180,20 +232,26 @@ export function openTerminal(
     instance.dataDisposable = instance.terminal.onData(options.onData)
   }
 
-  // Open terminal to element
-  instance.terminal.open(element)
+  const terminalElement = instance.terminal.element
+  if (terminalElement) {
+    // xterm Terminal.open() is a one-time operation. When React remounts a
+    // pane, move the existing xterm DOM into the new container instead.
+    if (!element.contains(terminalElement)) {
+      element.replaceChildren(terminalElement)
+    }
+  } else {
+    // First attachment for this terminal instance.
+    element.replaceChildren()
+    instance.terminal.open(element)
+  }
+
   instance.isAttached = true
+  instance.containerElement = element
 
   // Skip WebGL addon - it causes context loss issues when switching views
   // The DOM renderer is stable and works reliably
 
-  // Fit and refresh after DOM is fully rendered
-  try {
-    instance.fitAddon.fit()
-    instance.terminal.refresh(0, instance.terminal.rows - 1)
-  } catch {
-    // Ignore fit failures during rapid view switches
-  }
+  fitAndRefreshIfVisible(instance)
 
   return instance
 }
@@ -202,18 +260,16 @@ export function openTerminal(
  * Schedule fit() and refresh() after a brief delay to ensure
  * the DOM element has actual dimensions (not 0x0).
  */
-export function scheduleFitAndRefresh(instance: TerminalInstance): void {
+export function scheduleFitAndRefresh(instance: TerminalInstance, attempts = 8): void {
   // Use requestAnimationFrame to wait for DOM paint
   requestAnimationFrame(() => {
     // Also add a small delay for cases where rAF isn't enough
     setTimeout(() => {
-      try {
-        instance.fitAddon.fit()
-        // Force xterm to redraw the entire buffer
-        instance.terminal.refresh(0, instance.terminal.rows - 1)
-      } catch (e) {
-        // Fit can fail if element has 0x0 dimensions - this is safe to ignore
-        console.warn(`[TerminalRegistry] Fit failed for pane ${instance.paneId}:`, e)
+      if (fitAndRefreshIfVisible(instance)) {
+        return
+      }
+      if (attempts > 0) {
+        scheduleFitAndRefresh(instance, attempts - 1)
       }
     }, 10)
   })
@@ -276,6 +332,11 @@ export function createResizeObserverCallback(
 
       instance.resizeObserver = new ResizeObserver(() => {
         try {
+          const container = instance.containerElement ?? instance.terminal.element?.parentElement
+          if (!container) return
+          const rect = container.getBoundingClientRect()
+          if (rect.width < 20 || rect.height < 20) return
+
           const dims = instance.fitAddon.proposeDimensions()
           if (!dims) return
 
@@ -289,15 +350,11 @@ export function createResizeObserverCallback(
 
           // Debounced fit
           setTimeout(() => {
-            try {
-              instance.fitAddon.fit()
-              instance.terminal.refresh(0, instance.terminal.rows - 1)
+            if (fitAndRefreshIfVisible(instance)) {
               onResize(dims.cols, dims.rows)
-            } catch (e) {
-              // Ignore fit failures during rapid resize
             }
           }, 50)
-        } catch (e) {
+        } catch {
           // Ignore resize observation errors
         }
       })
@@ -313,9 +370,13 @@ export function createResizeObserverCallback(
  */
 export function disconnectResizeObserver(paneId: string): void {
   const instance = terminalRegistry.get(paneId)
-  if (!instance || !instance.resizeObserver) return
+  if (!instance) return
 
-  instance.resizeObserver.disconnect()
+  if (instance.resizeObserver) {
+    instance.resizeObserver.disconnect()
+  }
+  instance.isAttached = false
+  instance.containerElement = null
 }
 
 /**

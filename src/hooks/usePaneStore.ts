@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem } from "@/lib/types"
+import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -44,6 +44,76 @@ function sendIfSocketOpen(ws: WebSocket | null, message: unknown, label: string)
   return true
 }
 
+type SharedPaneType = Exclude<PaneType, "terminal">
+
+const SHARED_PANE_TYPES: SharedPaneType[] = ["note", "image", "whiteboard", "browser"]
+
+function isSharedPaneType(value: unknown): value is SharedPaneType {
+  return typeof value === "string" && SHARED_PANE_TYPES.includes(value as SharedPaneType)
+}
+
+function getSharedPaneType(pane: Pane): SharedPaneType | null {
+  if (isSharedPaneType(pane.paneType)) return pane.paneType
+  if (isSharedPaneType(pane.shell)) return pane.shell
+  return pane.url ? "browser" : null
+}
+
+function buildBrowserProxyUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+
+  try {
+    const target = new URL(url)
+    let baseUrl: string | null = null
+
+    try {
+      const stored = localStorage.getItem("tunnelUrl")
+      if (stored) {
+        const wsUrl = new URL(stored)
+        baseUrl = `${wsUrl.protocol === "wss:" ? "https" : "http"}://${wsUrl.host}`
+      }
+    } catch {}
+
+    if (!baseUrl && typeof window !== "undefined") {
+      baseUrl = window.location.origin
+    }
+    if (!baseUrl) return null
+
+    const scheme = target.protocol === "https:" ? "https" : "http"
+    return `${baseUrl}/proxy/${scheme}/${target.host}${target.pathname}${target.search}${target.hash}`
+  } catch {
+    return null
+  }
+}
+
+function createSharedPaneMessage(pane: Pane, paneType: SharedPaneType) {
+  return {
+    action: "create_pane",
+    pane_id: pane.id,
+    pane_type: paneType,
+    name: pane.name,
+    url: pane.url ?? null,
+    note_content: pane.noteContent ?? null,
+    whiteboard_data: pane.whiteboardData ?? null,
+    image_data: pane.imageData ?? null,
+  }
+}
+
+function normalizeBackendPane(pane: Pane, existingPane: Pane | undefined): Pane {
+  const paneType = getSharedPaneType(pane)
+  const url = existingPane?.url ?? pane.url ?? null
+
+  return {
+    ...pane,
+    shell: paneType ?? pane.shell,
+    paneType: pane.paneType ?? (paneType ? paneType : "terminal"),
+    url,
+    proxyUrl: existingPane?.proxyUrl ?? pane.proxyUrl ?? buildBrowserProxyUrl(url),
+    noteContent: pane.noteContent ?? existingPane?.noteContent ?? null,
+    whiteboardData: pane.whiteboardData ?? existingPane?.whiteboardData ?? null,
+    imageData: pane.imageData ?? existingPane?.imageData ?? null,
+  }
+}
+
 interface PaneState {
   panes: Pane[]
   activePanes: string[]
@@ -69,6 +139,7 @@ interface PaneState {
   // File explorer state
   explorerOpen: boolean
   imagePickerOpen: boolean
+  imagePickerPaneId: string | null
   browserModalOpen: boolean
   explorerCurrentPath: string
   explorerContents: DirectoryItem[]
@@ -188,7 +259,7 @@ interface PaneState {
   closeBrowserModal: () => void
   spawnBrowserPane: (url: string) => void
   closeExplorer: () => void
-  openImagePicker: () => void
+  openImagePicker: (paneId: string) => void
   closeImagePicker: () => void
   fetchDirectory: (path: string) => void
   handleDirectoryContents: (path: string, items: DirectoryItem[]) => void
@@ -198,7 +269,7 @@ interface PaneState {
   handleFileUploaded: (paneId: string, fileName: string) => void
   setPaneContent: (paneId: string, noteContent: string | null, whiteboardData: string | null, imageData: string | null) => void
   readImageFile: (absolute_path: string) => void
-  handleImageFileRead: (result: { success: boolean; absolute_path: string; data?: string; error?: string }) => void
+  handleImageFileRead: (result: { success: boolean; absolute_path: string; pane_id?: string; data?: string; error?: string }) => void
   // Git actions
   getGitStatus: (paneId: string) => void
   gitCommit: (paneId: string, message: string) => void
@@ -523,6 +594,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   showSecurityModal: false,
   explorerOpen: false,
   imagePickerOpen: false,
+  imagePickerPaneId: null,
   browserModalOpen: false,
   explorerCurrentPath: "",
   explorerContents: [],
@@ -546,24 +618,28 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const state = get()
     let selectedTab = state.selectedTab
 
-    // Preserve frontend-only panes (browser, note, image, whiteboard) - they don't come from backend
-    const frontendPanes = state.panes.filter(p => p.url != null || ["note", "image", "whiteboard"].includes(p.shell))
+    // Preserve panes created while offline or before the backend echo arrives.
+    const sharedPanes = state.panes.filter(p => getSharedPaneType(p) != null)
     const backendPaneIds = new Set(panes.map(p => p.id))
-    const survivingFrontendPanes = frontendPanes.filter(p => backendPaneIds.has(p.id) || state.activePanes.includes(p.id))
+    const localOnlySharedPanes = sharedPanes.filter(p => !backendPaneIds.has(p.id) && state.activePanes.includes(p.id))
 
     // Load persisted pinned pane IDs
     const persisted = loadPersistedState()
     const pinnedPaneIdSet = new Set(persisted.pinnedPaneIds)
     // Apply pinned state from localStorage, use groupId from backend or localStorage
-    const updatedPanes = [...survivingFrontendPanes, ...panes.map(p => ({
-      ...p,
-      pinned: pinnedPaneIdSet.has(p.id),
-      // Restore groupId from localStorage if backend doesn't provide it
-      groupId: p.groupId ?? persisted.paneGroupMap[p.id] ?? null,
-      // Preserve url and proxyUrl if this pane has one
-      url: state.panes.find(sp => sp.id === p.id)?.url ?? p.url,
-      proxyUrl: state.panes.find(sp => sp.id === p.id)?.proxyUrl ?? p.proxyUrl,
-    }))]
+    const updatedPanes = [
+      ...localOnlySharedPanes,
+      ...panes.map(p => {
+        const existingPane = state.panes.find(sp => sp.id === p.id)
+        const normalizedPane = normalizeBackendPane(p, existingPane)
+        return {
+          ...normalizedPane,
+          pinned: normalizedPane.pinned ?? pinnedPaneIdSet.has(p.id),
+          // Restore groupId from localStorage if backend doesn't provide it
+          groupId: normalizedPane.groupId ?? persisted.paneGroupMap[p.id] ?? null,
+        }
+      }),
+    ]
     // Auto-select the last pane if count increased (new pane spawned) and current selection is gone
     const prevPaneCount = state.panes.length
     if (!selectedTab || !updatedPanes.find(p => p.id === selectedTab)) {
@@ -578,10 +654,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Also preserve existing groups if backend sends empty array (backend might not persist groups)
     const hasGroups = groups && groups.length > 0
     const finalGroups = hasGroups ? groups : state.groups
-    // Preserve ALL frontend panes that exist in state.panes (note, image, whiteboard, browser)
-    // They don't come from backend so we always keep them
-    const frontendPaneIds = frontendPanes.map(p => p.id)
-    const mergedActivePanes = [...new Set([...activePanes, ...frontendPaneIds])]
+    const localOnlySharedPaneIds = localOnlySharedPanes.map(p => p.id)
+    const mergedActivePanes = [...new Set([...activePanes, ...localOnlySharedPaneIds])]
     // Prune repos whose cwd is no longer used by any open pane
     const remainingCwds = new Set(
       updatedPanes
@@ -621,15 +695,17 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   spawnNotePane: () => {
-    const { panes, activePanes } = get()
+    const { panes, activePanes, ws, isAuthenticated } = get()
     const id = `note-${Date.now()}`
+    const paneType = "note"
     const newPane: Pane = {
       id,
       pid: 0,
-      shell: "note",
+      shell: paneType,
       name: "Untitled Note",
       cols: 80,
       rows: 24,
+      paneType,
     }
     const updatedPanes = [...panes, newPane]
     set({
@@ -640,18 +716,23 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     savePanes(updatedPanes)
     saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
+    if (isAuthenticated) {
+      sendIfSocketOpen(ws, createSharedPaneMessage(newPane, paneType), "create_pane")
+    }
   },
 
   spawnImagePane: () => {
-    const { panes, activePanes } = get()
+    const { panes, activePanes, ws, isAuthenticated } = get()
     const id = `image-${Date.now()}`
+    const paneType = "image"
     const newPane: Pane = {
       id,
       pid: 0,
-      shell: "image",
+      shell: paneType,
       name: "Image Viewer",
       cols: 80,
       rows: 24,
+      paneType,
     }
     const updatedPanes = [...panes, newPane]
     set({
@@ -662,18 +743,23 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     savePanes(updatedPanes)
     saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
+    if (isAuthenticated) {
+      sendIfSocketOpen(ws, createSharedPaneMessage(newPane, paneType), "create_pane")
+    }
   },
 
   spawnWhiteboardPane: () => {
-    const { panes, activePanes } = get()
+    const { panes, activePanes, ws, isAuthenticated } = get()
     const id = `whiteboard-${Date.now()}`
+    const paneType = "whiteboard"
     const newPane: Pane = {
       id,
       pid: 0,
-      shell: "whiteboard",
+      shell: paneType,
       name: "Whiteboard",
       cols: 80,
       rows: 24,
+      paneType,
     }
     const updatedPanes = [...panes, newPane]
     set({
@@ -684,6 +770,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     savePanes(updatedPanes)
     saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
+    if (isAuthenticated) {
+      sendIfSocketOpen(ws, createSharedPaneMessage(newPane, paneType), "create_pane")
+    }
   },
 
   requestDirectoryPicker: (shell) => {
@@ -696,7 +785,6 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   killPane: (paneId) => {
     const { ws, isAuthenticated, panes, sourceControlRepos, selectedSourceControlRepo } = get()
     const pane = panes.find(p => p.id === paneId)
-    const paneCwd = pane?.cwd
     // Frontend-only panes: browser, note, image, whiteboard have no backend process
     const isFrontendOnly = pane?.url != null ||
       pane?.shell === "note" ||
@@ -883,15 +971,19 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   togglePin: (paneId) => {
-    const { panes } = get()
+    const { panes, ws, isAuthenticated } = get()
+    let nextPinned = false
     const updatedPanes = panes.map(p =>
-      p.id === paneId ? { ...p, pinned: !p.pinned } : p
+      p.id === paneId ? { ...p, pinned: (nextPinned = !p.pinned) } : p
     )
     // Save pinned pane IDs to localStorage
     const pinnedPaneIds = updatedPanes.filter(p => p.pinned).map(p => p.id)
     savePinnedPanes(pinnedPaneIds)
     savePanes(updatedPanes)
     set({ panes: updatedPanes })
+    if (ws && isAuthenticated) {
+      ws.send(JSON.stringify({ action: "toggle_pin", pane_id: paneId, pinned: nextPinned }))
+    }
   },
 
   createGroup: (name) => {
@@ -956,6 +1048,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       p.id === paneId ? { ...p, groupId } : p
     )
     set({ panes: updatedPanes })
+    savePanes(updatedPanes)
     // Persist pane-group association to localStorage
     const persisted = loadPersistedState()
     const paneGroupMap = { ...persisted.paneGroupMap }
@@ -978,6 +1071,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Avoid duplicates
     if (!groups.find(g => g.id === group.id)) {
       set({ groups: [...groups, group] })
+      saveGroups([...groups, group])
     }
   },
 
@@ -992,6 +1086,8 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       panes: updatedPanes,
       selectedGroupId: selectedGroupId === groupId ? null : selectedGroupId,
     })
+    saveGroups(updatedGroups)
+    savePanes(updatedPanes)
     // Update localStorage - remove all panes in this group from the map
     const persisted = loadPersistedState()
     const paneGroupMap = { ...persisted.paneGroupMap }
@@ -1009,6 +1105,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       g.id === groupId ? { ...g, name } : g
     )
     set({ groups: updatedGroups })
+    saveGroups(updatedGroups)
   },
 
   handlePaneGroupSet: (paneId, groupId) => {
@@ -1017,6 +1114,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       p.id === paneId ? { ...p, groupId } : p
     )
     set({ panes: updatedPanes })
+    savePanes(updatedPanes)
     // Sync to localStorage
     const persisted = loadPersistedState()
     const paneGroupMap = { ...persisted.paneGroupMap }
@@ -1082,15 +1180,15 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
-  openImagePicker: () => {
+  openImagePicker: (paneId) => {
     const { ws } = get()
     if (sendIfSocketOpen(ws, { action: "list_directory", path: "" }, "list_directory")) {
-      set({ imagePickerOpen: true, explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
+      set({ imagePickerOpen: true, imagePickerPaneId: paneId, explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
     }
   },
 
   closeImagePicker: () => {
-    set({ imagePickerOpen: false, explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+    set({ imagePickerOpen: false, imagePickerPaneId: null, explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
   },
 
   openBrowser: (url) => {
@@ -1101,35 +1199,29 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   closeExplorer: () => {
-    set({ explorerOpen: false, explorerCurrentPath: "", explorerContents: [] })
+    set({ explorerOpen: false, imagePickerOpen: false, imagePickerPaneId: null, explorerCurrentPath: "", explorerContents: [] })
   },
 
   spawnBrowserPane: (url) => {
-    const { panes, activePanes } = get()
+    const { panes, activePanes, ws, isAuthenticated } = get()
     const id = `browser-${Date.now()}`
-    // Build proxy URL using tunnel - path-based format: /proxy/<scheme>/<host><path>
-    let proxyUrl: string | null = null
-    const stored = localStorage.getItem("tunnelUrl")
-    if (stored) {
+    const paneType = "browser"
+    const proxyUrl = buildBrowserProxyUrl(url)
+    const name = (() => {
       try {
-        const wsUrl = new URL(stored)
-        const baseUrl = `${wsUrl.protocol === "wss:" ? "https" : "http"}://${wsUrl.host}`
-        // Parse the target URL and construct path-based proxy URL
-        const target = new URL(url)
-        const scheme = target.protocol === "https:" ? "https" : "http"
-        const proxyPath = `${baseUrl}/proxy/${scheme}/${target.host}${target.pathname}${target.search}`
-        proxyUrl = proxyPath
+        return new URL(url).hostname || "Browser"
       } catch {
-        // fall through - proxyUrl stays null
+        return "Browser"
       }
-    }
+    })()
     const newPane: Pane = {
       id,
       pid: 0,
-      shell: "browser",
-      name: new URL(url).hostname,
+      shell: paneType,
+      name,
       cols: 80,
       rows: 24,
+      paneType,
       url,
       proxyUrl,
     }
@@ -1142,6 +1234,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     savePanes(updatedPanes)
     saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
+    if (isAuthenticated) {
+      sendIfSocketOpen(ws, createSharedPaneMessage(newPane, paneType), "create_pane")
+    }
   },
 
   openBrowserModal: () => {
@@ -1160,12 +1255,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   handleDirectoryContents: (path, items) => {
-    const { imagePickerOpen } = get()
     set({
       explorerCurrentPath: path,
       explorerContents: items,
-      // Close image picker since we're now showing directory contents
-      imagePickerOpen: false,
     })
   },
 
@@ -1196,24 +1288,35 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const state = get()
     const pane = state.panes.find(p => p.id === paneId)
     if (pane) {
-      set({ panes: state.panes.map(p => p.id === paneId ? {
+      const updatedPanes = state.panes.map(p => p.id === paneId ? {
         ...p,
         noteContent: noteContent ?? p.noteContent,
         whiteboardData: whiteboardData ?? p.whiteboardData,
         imageData: imageData ?? p.imageData,
-      } : p) })
+      } : p)
+      savePanes(updatedPanes)
+      set({ panes: updatedPanes })
     }
   },
 
   readImageFile: (absolute_path) => {
-    const { ws, isAuthenticated } = get()
+    const { ws, isAuthenticated, imagePickerPaneId } = get()
     if (ws && isAuthenticated) {
-      ws.send(JSON.stringify({ action: "read_file", absolute_path }))
+      ws.send(JSON.stringify({ action: "read_file", pane_id: imagePickerPaneId, absolute_path }))
     }
   },
 
   handleImageFileRead: (result) => {
     console.log("[Termote] Image file read:", result.success ? "success" : result.error)
+    if (!result.success || !result.data) return
+
+    const paneId = result.pane_id ?? get().imagePickerPaneId
+    if (!paneId) return
+
+    const name = result.absolute_path.split(/[/\\]/).pop() || "Image"
+    const data = JSON.stringify({ dataUrl: result.data, name })
+    get().setPaneContent(paneId, null, null, data)
+    get().updatePaneContent(paneId, undefined, undefined, data)
   },
 
   getGitStatus: (paneId) => {

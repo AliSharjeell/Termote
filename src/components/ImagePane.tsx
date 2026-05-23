@@ -3,7 +3,7 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 
 interface ImagePaneProps {
   pane: Pane
@@ -25,6 +25,25 @@ function loadImageContent(id: string): ImageContent | null {
   }
 }
 
+function parseImageContent(raw: string | null | undefined): ImageContent | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed.dataUrl === "string") {
+      return {
+        dataUrl: parsed.dataUrl,
+        name: typeof parsed.name === "string" ? parsed.name : "Image",
+      }
+    }
+    if (typeof parsed === "string") {
+      return { dataUrl: parsed, name: "Image" }
+    }
+  } catch {
+    return { dataUrl: raw, name: "Image" }
+  }
+  return null
+}
+
 function saveImageContent(id: string, content: ImageContent) {
   try {
     localStorage.setItem(IMAGE_KEY(id), JSON.stringify(content))
@@ -38,42 +57,34 @@ function clearImageContent(id: string) {
 }
 
 export function ImagePane({ pane }: ImagePaneProps) {
-  const { killPane, renamePane, togglePin, openImagePicker, readImageFile, updatePaneContent } = usePaneStore()
+  const { killPane, renamePane, togglePin, openImagePicker, updatePaneContent } = usePaneStore()
+  const lastAppliedImageDataRef = useRef<string | null>(pane.imageData ?? null)
   // Initialize from pane.imageData (backend) first, then localStorage fallback
   const [content, setContent] = useState<ImageContent | null>(() => {
-    if (pane.imageData) {
-      try {
-        return JSON.parse(pane.imageData)
-      } catch {
-        return pane.imageData // plain base64 string
-      }
-    }
-    return loadImageContent(pane.id)
+    return parseImageContent(pane.imageData) ?? loadImageContent(pane.id)
   })
+  const remoteImageData = pane.imageData ?? null
+  const remoteContent = useMemo(() => parseImageContent(remoteImageData), [remoteImageData])
+  const displayedContent = remoteImageData !== null ? remoteContent : content
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
 
-  // Listen for image file read results
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const msg = e.detail
-      if (msg.event === "file_read_result" && msg.success && msg.absolute_path) {
-        const name = msg.absolute_path.split(/[/\\]/).pop() || "Image"
-        const newContent: ImageContent = { dataUrl: msg.data!, name }
-        saveImageContent(pane.id, newContent)
-        setContent(newContent)
-        setIsLoading(false)
-      } else if (msg.event === "file_read_result" && !msg.success) {
-        setError(msg.error || "Failed to read file")
-        setIsLoading(false)
-      }
+    const incoming = pane.imageData ?? null
+    if (incoming === lastAppliedImageDataRef.current) return
+
+    lastAppliedImageDataRef.current = incoming
+    const nextContent = parseImageContent(incoming)
+
+    if (nextContent) {
+      saveImageContent(pane.id, nextContent)
+    } else {
+      clearImageContent(pane.id)
     }
-    window.addEventListener("terminal-output" as any, handler)
-    return () => window.removeEventListener("terminal-output" as any, handler)
-  }, [pane.id])
+  }, [pane.id, pane.imageData])
 
   const handleRename = (newTitle: string) => renamePane(pane.id, newTitle)
 
@@ -89,6 +100,7 @@ export function ImagePane({ pane }: ImagePaneProps) {
       const dataUrl = e.target?.result as string
       const newContent: ImageContent = { dataUrl, name: file.name }
       const data = JSON.stringify(newContent)
+      lastAppliedImageDataRef.current = data
       saveImageContent(pane.id, newContent)
       setContent(newContent)
       setIsLoading(false)
@@ -100,7 +112,7 @@ export function ImagePane({ pane }: ImagePaneProps) {
       setIsLoading(false)
     }
     reader.readAsDataURL(file)
-  }, [pane.id])
+  }, [pane.id, updatePaneContent])
 
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
     const items = e.clipboardData?.items
@@ -150,9 +162,11 @@ export function ImagePane({ pane }: ImagePaneProps) {
   }
 
   const clearImage = () => {
+    lastAppliedImageDataRef.current = ""
     clearImageContent(pane.id)
     setContent(null)
     setError(null)
+    updatePaneContent(pane.id, undefined, undefined, "")
   }
 
   return (
@@ -177,7 +191,7 @@ export function ImagePane({ pane }: ImagePaneProps) {
       {/* Toolbar */}
       <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-[#252525] bg-[#111]">
         <button
-          onClick={() => openImagePicker()}
+          onClick={() => openImagePicker(pane.id)}
           className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs rounded flex items-center gap-1.5"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -204,15 +218,15 @@ export function ImagePane({ pane }: ImagePaneProps) {
 
       {/* Image display area */}
       <div className="flex-1 overflow-hidden relative">
-        {content?.dataUrl ? (
+        {displayedContent?.dataUrl ? (
           <div className="w-full h-full flex flex-col">
             <div className="shrink-0 px-3 py-1.5 border-b border-[#252525] bg-[#111] flex items-center gap-2">
-              <span className="text-[10px] text-[#888] truncate flex-1">{content.name}</span>
+              <span className="text-[10px] text-[#888] truncate flex-1">{displayedContent.name}</span>
               <span className="text-[10px] text-[#555]">Auto-saved</span>
             </div>
             <div className="flex-1 overflow-auto flex items-center justify-center p-4">
               <img
-                src={content.dataUrl}
+                src={displayedContent.dataUrl}
                 alt={pane.name}
                 className="max-w-full max-h-full object-contain"
               />

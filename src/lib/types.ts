@@ -1,4 +1,5 @@
 export type Shell = "powershell" | "cmd" | "wsl" | "note" | "image" | "whiteboard" | "browser"
+export type PaneType = "terminal" | "note" | "image" | "whiteboard" | "browser"
 
 export interface PaneGroup {
   id: string
@@ -16,6 +17,7 @@ export interface Pane {
   pinned?: boolean
   groupId?: string | null
   cwd?: string | null
+  paneType?: PaneType | null
   url?: string | null
   proxyUrl?: string | null
   noteContent?: string | null
@@ -40,11 +42,23 @@ export interface DirectoryItem {
 // Client -> Server messages
 export type SpawnMessage = { action: "spawn"; shell: Shell }
 export type SpawnAtDirMessage = { action: "spawn_at_dir"; shell: Shell; dir: string }
+export type CreatePaneMessage = {
+  action: "create_pane"
+  pane_id: string
+  pane_type: Exclude<PaneType, "terminal">
+  name: string
+  url?: string | null
+  note_content?: string | null
+  whiteboard_data?: string | null
+  image_data?: string | null
+}
+export type ReadFileMessage = { action: "read_file"; pane_id?: string | null; absolute_path: string }
 export type InputMessage = { action: "input"; pane_id: string; data: string }
 export type ResizeMessage = { action: "resize"; pane_id: string; cols: number; rows: number }
 export type KillMessage = { action: "kill"; pane_id: string }
 export type MoveToFloatingMessage = { action: "move_to_floating"; pane_id: string }
 export type MoveToActiveMessage = { action: "move_to_active"; pane_id: string }
+export type TogglePinMessage = { action: "toggle_pin"; pane_id: string; pinned: boolean }
 export type AuthMessage = { action: "auth"; token: string }
 export type RequestDirectoryPickerMessage = { action: "request_directory_picker"; shell: Shell }
 export type ListDirectoryMessage = { action: "list_directory"; path: string | null }
@@ -63,7 +77,7 @@ export type FindGitReposMessage = { action: "find_git_repos"; path: string }
 export type GetPortProcessesMessage = { action: "get_port_processes" }
 export type KillProcessMessage = { action: "kill_process"; pid: number }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | CreatePaneMessage | ReadFileMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | TogglePinMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -86,7 +100,7 @@ export type DeviceKickedEvent = { event: "device_kicked"; device_id: string }
 export type DeviceBannedEvent = { event: "device_banned"; ip: string }
 export type ErrorEvent = { event: "error"; message: string }
 export type FileUploadedEvent = { event: "file_uploaded"; pane_id: string; file_name: string }
-export type FileReadResultEvent = { event: "file_read_result"; success: boolean; absolute_path: string; data?: string; error?: string }
+export type FileReadResultEvent = { event: "file_read_result"; success: boolean; absolute_path: string; pane_id?: string; data?: string; error?: string }
 
 export type GitStatusEvent = {
   event: "git_status"

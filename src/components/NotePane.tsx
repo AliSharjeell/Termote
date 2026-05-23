@@ -3,8 +3,10 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import type { Pane } from "@/lib/types"
+import type { PartialBlock } from "@blocknote/core"
 import { useCreateBlockNote } from "@blocknote/react"
-import { BlockNoteView } from "@blocknote/mantine"
+import { BlockNoteView, type Theme } from "@blocknote/mantine"
+import { useEffect, useRef, useState } from "react"
 import "@blocknote/core/fonts/inter.css"
 import "@blocknote/mantine/style.css"
 
@@ -14,34 +16,96 @@ interface NotePaneProps {
 
 const NOTE_KEY = (id: string) => `note-${id}-bn`
 
+function parseNoteContent(raw: string | null | undefined): PartialBlock[] | undefined {
+  if (!raw) return undefined
+  try {
+    const parsed = JSON.parse(raw)
+    const content = parsed?.content ?? parsed?.document ?? parsed
+    return Array.isArray(content) ? content : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function loadInitialContent(pane: Pane): PartialBlock[] | undefined {
+  const backendContent = parseNoteContent(pane.noteContent)
+  if (backendContent) return backendContent
+
+  try {
+    return parseNoteContent(localStorage.getItem(NOTE_KEY(pane.id)))
+  } catch {
+    return undefined
+  }
+}
+
+const noteTheme: Theme = {
+  colors: {
+    editor: {
+      text: "#CCCCCC",
+      background: "transparent",
+    },
+    menu: {
+      text: "#CCCCCC",
+      background: "#1a1a1a",
+    },
+    tooltip: {
+      text: "#CCCCCC",
+      background: "#1a1a1a",
+    },
+    hovered: {
+      text: "#FFFFFF",
+      background: "#252525",
+    },
+    selected: {
+      text: "#FFFFFF",
+      background: "#333333",
+    },
+    disabled: {
+      text: "#555555",
+      background: "transparent",
+    },
+    shadow: "rgba(0,0,0,0.5)",
+    border: "#252525",
+    sideMenu: "#1a1a1a",
+  },
+}
+
 export function NotePane({ pane }: NotePaneProps) {
   const { killPane, renamePane, togglePin } = usePaneStore()
+  const applyingRemoteRef = useRef(false)
+  const lastAppliedContentRef = useRef<string | null>(pane.noteContent ?? null)
+  const [initialContent] = useState(() => loadInitialContent(pane))
 
   const editor = useCreateBlockNote({
-    initialContent: (() => {
-      // Backend-persisted content takes priority
-      if (pane.noteContent) {
-        try {
-          const parsed = JSON.parse(pane.noteContent)
-          if (parsed.content) return parsed.content
-          if (parsed.document) return parsed.document
-          return parsed
-        } catch {
-          return pane.noteContent
-        }
-      }
-      try {
-        const raw = localStorage.getItem(NOTE_KEY(pane.id))
-        if (raw) {
-          const parsed = JSON.parse(raw)
-          if (parsed.content) return parsed.content
-          if (parsed.document) return parsed.document
-          return parsed
-        }
-      } catch {}
-      return undefined
-    })(),
+    initialContent,
   })
+
+  useEffect(() => {
+    const incoming = pane.noteContent ?? null
+    if (!incoming || incoming === lastAppliedContentRef.current) return
+
+    const parsed = parseNoteContent(incoming)
+    if (!Array.isArray(parsed)) return
+
+    try {
+      const currentSerialized = JSON.stringify({ content: editor.document })
+      if (incoming === currentSerialized) {
+        lastAppliedContentRef.current = incoming
+        return
+      }
+
+      applyingRemoteRef.current = true
+      editor.replaceBlocks(editor.document, parsed)
+      localStorage.setItem(NOTE_KEY(pane.id), incoming)
+      lastAppliedContentRef.current = incoming
+      setTimeout(() => {
+        applyingRemoteRef.current = false
+      }, 0)
+    } catch (e) {
+      applyingRemoteRef.current = false
+      console.error("[NotePane] remote sync error:", e)
+    }
+  }, [editor, pane.id, pane.noteContent])
 
   const handleRename = (newTitle: string) => renamePane(pane.id, newTitle)
 
@@ -59,60 +123,17 @@ export function NotePane({ pane }: NotePaneProps) {
       <div className="flex-1 overflow-hidden [&_.bn-editor]:!bg-transparent">
         <BlockNoteView
           editor={editor}
-          theme={{
-            colors: {
-              background: "transparent",
-              surface: "transparent",
-              border: "#252525",
-              text: "#CCCCCC",
-              textHover: "#FFFFFF",
-              textSelected: "#FFFFFF",
-              placeholder: "#555555",
-              highlightedText: "#2a2a2a",
-              tooltip: "#1a1a1a",
-              tooltipText: "#CCCCCC",
-              inlinePrompt: "#252525",
-              inlinePromptText: "#CCCCCC",
-              shadow: "rgba(0,0,0,0.5)",
-              glow: "transparent",
-            },
-            cursor: {
-              color: "#58A6FF",
-            },
-            selection: {
-              background: "#264f78",
-            },
-            sideMenu: {
-              background: "#1a1a1a",
-              text: "#CCCCCC",
-              border: "#333333",
-              hover: "#252525",
-              active: "#333333",
-            },
-            filePanel: {
-              background: "#0C0C0C",
-              border: "#252525",
-              text: "#CCCCCC",
-            },
-            suggestionMenu: {
-              background: "#1a1a1a",
-              border: "#333333",
-              text: "#CCCCCC",
-              hover: "#252525",
-              hoverText: "#FFFFFF",
-            },
-            table: {
-              background: "transparent",
-              border: "#333333",
-              hover: "#252525",
-            },
-          } as any}
+          theme={noteTheme}
           onChange={() => {
             try {
+              if (applyingRemoteRef.current) return
               const doc = editor.document
-              localStorage.setItem(NOTE_KEY(pane.id), JSON.stringify({ content: doc }))
+              const data = JSON.stringify({ content: doc })
+              if (data === lastAppliedContentRef.current) return
+              lastAppliedContentRef.current = data
+              localStorage.setItem(NOTE_KEY(pane.id), data)
               // Push content to backend for persistence and sync
-              usePaneStore.getState().updatePaneContent(pane.id, JSON.stringify({ content: doc }), undefined, undefined)
+              usePaneStore.getState().updatePaneContent(pane.id, data, undefined, undefined)
             } catch (e) {
               console.error("[NotePane] save error:", e)
             }
