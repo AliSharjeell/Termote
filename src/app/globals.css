@@ -36,6 +36,20 @@ html,
 body {
   height: 100%;
   width: 100%;
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+/* Mobile visual viewport height variable */
+:root {
+  --visual-viewport-height: 100dvh;
+  --visual-viewport-offset: 0px;
+}
+
+/* Mobile web shell - use visual viewport height to account for keyboard */
+.mobile-web-shell {
+  height: var(--visual-viewport-height, 100dvh);
+  overflow: hidden;
 }
 
 /* ============================================
@@ -155,6 +169,23 @@ html.tauri-mica .mica-terminal-container {
    Xterm.js container styles - seamless terminal
    ============================================ */
 
+.terminal-pane-root {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.terminal-container {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
 .xterm {
   height: 100%;
   padding: 0 !important;
@@ -164,6 +195,7 @@ html.tauri-mica .mica-terminal-container {
 .xterm-viewport {
   overflow-y: auto !important;
   background-color: transparent !important;
+  overscroll-behavior: contain;
 }
 
 .xterm-screen {

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react"
 import { usePaneStore } from "./usePaneStore"
 import type { ServerMessage } from "@/lib/types"
-import { setTerminalScrollback, writeOrBufferTerminalOutput } from "@/lib/terminalRegistry"
+import { setTerminalScrollback, writeOrBufferTerminalOutput, fitAllTerminals } from "@/lib/terminalRegistry"
 
 interface UseWebSocketOptions {
   url: string | null
@@ -250,6 +250,11 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         reconnectAttemptRef.current = 0
         setConnected(true)
         setTunnelStatus("connected")
+
+        // Fit all terminals after WebSocket connects
+        setTimeout(() => fitAllTerminals("ws-open"), 100)
+        setTimeout(() => fitAllTerminals("ws-open-delayed"), 300)
+
         ws.send(JSON.stringify({ action: "auth", token }))
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {

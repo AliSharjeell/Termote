@@ -16,8 +16,8 @@ function StatusIndicator({ running, error }: { running: boolean; error: string |
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`w-3 h-3 rounded-full ${running ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
-      <span className={`text-sm font-medium ${running ? 'text-green-400' : 'text-gray-400'}`}>
+      <div className={`w-3 h-3 rounded-full ${running ? 'bg-white animate-pulse' : 'bg-gray-500'}`} />
+      <span className={`text-sm font-medium ${running ? 'text-white' : 'text-gray-400'}`}>
         {running ? 'Running' : 'Stopped'}
       </span>
     </div>
@@ -51,7 +51,7 @@ export default function HostManager() {
           {status.wsUrl && (
             <div className="mt-4 pt-4 border-t border-gray-800">
               <p className="text-sm text-gray-400">
-                WebSocket URL: <code className="text-green-400">{status.wsUrl}</code>
+                WebSocket URL: <code className="text-white">{status.wsUrl}</code>
               </p>
             </div>
           )}
@@ -72,7 +72,7 @@ export default function HostManager() {
               <p className="text-sm text-gray-400">Server controls (Restart, Stop, Mobile Access) are now accessible from the profile sidebar in the main dashboard.</p>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-green-400 text-2xl mb-2 flex items-center gap-2">
+              <div className="text-white text-2xl mb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>

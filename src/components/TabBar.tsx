@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { PanelLeft } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { refitTerminal } from "@/lib/terminalRegistry"
+import { refitTerminal, fitAllTerminals, setupVisualViewport, setupWindowResizeHandler } from "@/lib/terminalRegistry"
 import { XtermPane } from "./XtermPane"
 import { PortManager } from "./PortManager"
 import { BrowserPane } from "./BrowserPane"
@@ -40,6 +40,16 @@ export function TabBar({ searchQuery }: TabBarProps) {
   const isMica = tauriChecked && isTauriApp
 
   console.log('[TabBar] Mica detection:', { tauriChecked, isTauriApp, isMica })
+
+  // Setup global terminal fitting handlers
+  useEffect(() => {
+    const cleanupViewport = setupVisualViewport()
+    const cleanupResize = setupWindowResizeHandler()
+    return () => {
+      cleanupViewport()
+      cleanupResize()
+    }
+  }, [])
 
   // Sidebar resize handlers
   useEffect(() => {
@@ -85,11 +95,20 @@ export function TabBar({ searchQuery }: TabBarProps) {
     ? panes.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : panes
 
+  // Refit terminal when selected tab changes
   useEffect(() => {
     if (selectedTab) {
       refitTerminal(selectedTab)
     }
   }, [selectedTab])
+
+  // Fit all terminals after layout changes
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fitAllTerminals("tabs-layout-change")
+    }, 50)
+    return () => clearTimeout(timeout)
+  }, [tabsSidebarCollapsed, tabsGitSidebarCollapsed])
 
 
   return (

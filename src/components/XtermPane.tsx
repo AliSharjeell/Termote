@@ -11,6 +11,8 @@ import {
   createResizeObserverCallback,
   drainBufferedTerminalOutput,
   scheduleFitAndRefresh,
+  registerGlobalFit,
+  fitAfterFontLoad,
   type TerminalInstance,
 } from "@/lib/terminalRegistry"
 import type { Pane } from "@/lib/types"
@@ -24,12 +26,13 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const terminalInstanceRef = useRef<TerminalInstance | null>(null)
   const resizeObserverCallbackRef = useRef<((element: Element) => void) | null>(null)
   const isMountedRef = useRef(false)
+  const unregisterGlobalFitRef = useRef<(() => void) | null>(null)
+  const visibilityObserverRef = useRef<MutationObserver | null>(null)
 
   // Use refs for handlers to avoid recreating callbacks on every render
   const sendInputRef = useRef(usePaneStore.getState().sendInput)
   const sendResizeRef = useRef(usePaneStore.getState().sendResize)
 
-  // Keep refs in sync with store state
   const { killPane, renamePane, togglePin, uploadFile, aiCommand } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -38,22 +41,17 @@ export function XtermPane({ pane }: XtermPaneProps) {
     (terminal: import("@xterm/xterm").Terminal) => {
       return (arg: unknown) => {
         const keyEvent = arg as { type: string; ctrlKey: boolean; code: string }
-        // Only handle keydown events
         if (keyEvent.type !== "keydown") return true
 
-        // Handle Ctrl+C (Copy vs SIGINT)
         if (keyEvent.ctrlKey && keyEvent.code === "KeyC") {
           const selection = terminal.getSelection()
           if (selection) {
-            // Text is highlighted: Copy to clipboard and prevent SIGINT
             navigator.clipboard.writeText(selection)
             return false
           }
-          // No text highlighted: Let it pass through to send SIGINT to the backend
           return true
         }
 
-        // Let xterm handle Ctrl+V naturally via onData - don't intercept
         return true
       }
     },
@@ -74,31 +72,48 @@ export function XtermPane({ pane }: XtermPaneProps) {
     [pane.id]
   )
 
-  // Initialize or reuse terminal on mount
+  // Register global fit function for this pane
+  const registerFit = useCallback(() => {
+    if (unregisterGlobalFitRef.current) {
+      unregisterGlobalFitRef.current()
+    }
+    unregisterGlobalFitRef.current = registerGlobalFit(pane.id, (reason: string) => {
+      if (terminalInstanceRef.current) {
+        scheduleFitAndRefresh(terminalInstanceRef.current)
+      }
+    })
+  }, [pane.id])
+
+  // Initialize terminal on mount - only once per pane.id
   useEffect(() => {
     if (!terminalRef.current) return
     isMountedRef.current = true
 
-    // Get or create terminal from registry
     const instance = getOrCreateTerminal(pane.id, 80, 24)
-
-    // Store ref for use in event listeners
     terminalInstanceRef.current = instance
 
-    // Set up key handler if not already set
     if (!instance.keyHandler) {
       const keyHandler = getKeyHandler(instance.terminal)
       instance.terminal.attachCustomKeyEventHandler(keyHandler)
       instance.keyHandler = keyHandler
     }
 
-    // Open terminal to DOM element
     openTerminal(pane.id, terminalRef.current, {
       onData: handleData,
       onResize: handleResize,
     })
     drainBufferedTerminalOutput(pane.id)
+
+    // Schedule multiple fits: immediate, 50ms, 250ms
     scheduleFitAndRefresh(instance)
+    setTimeout(() => scheduleFitAndRefresh(instance), 50)
+    setTimeout(() => scheduleFitAndRefresh(instance), 250)
+
+    // Fit after fonts load
+    fitAfterFontLoad()
+
+    // Register global fit function
+    registerFit()
 
     // Create and attach ResizeObserver
     resizeObserverCallbackRef.current = createResizeObserverCallback(pane.id, handleResize)
@@ -106,36 +121,63 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
     return () => {
       isMountedRef.current = false
-      // DO NOT dispose the terminal on unmount!
-      // Just disconnect the resize observer - the terminal stays alive in the registry
+      if (unregisterGlobalFitRef.current) {
+        unregisterGlobalFitRef.current()
+        unregisterGlobalFitRef.current = null
+      }
       disconnectResizeObserver(pane.id)
     }
-  }, [pane.id, handleData, handleResize, getKeyHandler])
+  }, [pane.id, handleData, handleResize, getKeyHandler, registerFit])
 
-  // Re-fit terminal when pane becomes visible (handles TabBar visibility toggle)
+  // Observe visibility changes via MutationObserver
   useEffect(() => {
     if (!terminalRef.current) return
 
-    // Use MutationObserver to detect visibility changes (opacity/class changes)
-    const observer = new MutationObserver(() => {
+    visibilityObserverRef.current = new MutationObserver(() => {
       if (isMountedRef.current && terminalInstanceRef.current) {
-        const instance = terminalInstanceRef.current
-        scheduleFitAndRefresh(instance)
+        // Small delay to let CSS transition complete
+        setTimeout(() => {
+          if (terminalInstanceRef.current) {
+            scheduleFitAndRefresh(terminalInstanceRef.current)
+          }
+        }, 50)
       }
     })
 
-    observer.observe(terminalRef.current, { attributes: true, attributeFilter: ["style", "class"] })
+    visibilityObserverRef.current.observe(terminalRef.current, {
+      attributes: true,
+      attributeFilter: ["style", "class"],
+      subtree: true,
+    })
 
     return () => {
-      observer.disconnect()
+      if (visibilityObserverRef.current) {
+        visibilityObserverRef.current.disconnect()
+      }
     }
   }, [pane.id])
 
-  // Handle pane close - actually dispose and remove the terminal
+  // Re-fit on pane visibility (for TabBar inactive tabs)
+  useEffect(() => {
+    const el = terminalRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry?.isIntersecting && terminalInstanceRef.current) {
+          scheduleFitAndRefresh(terminalInstanceRef.current)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [pane.id])
+
   const handleClose = useCallback(() => {
-    // Remove terminal from registry (this disposes it)
     removeTerminal(pane.id)
-    // Tell backend to kill the pane
     killPane(pane.id)
   }, [pane.id, killPane])
 
@@ -170,7 +212,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    // Only set false if we're leaving the terminal div itself
     if (e.currentTarget === e.target) {
       setIsDragOver(false)
     }
@@ -189,7 +230,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
         const reader = new FileReader()
         reader.onload = (event) => {
           const base64 = event.target?.result as string
-          // Remove the data URL prefix
           const base64Data = base64.split(",")[1] || base64
           uploadFile(pane.id, file.name, base64Data)
         }
@@ -200,7 +240,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   )
 
   return (
-    <div className="relative flex h-full w-full flex-col bg-[#0C0C0C]">
+    <div className="terminal-pane-root relative flex h-full w-full flex-col bg-[#0C0C0C]">
       <PaneTitleBar
         title={pane.name}
         paneId={pane.id}
@@ -213,8 +253,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
       />
       <div
         ref={terminalRef}
-        className={`flex-1 overflow-hidden relative ${isDragOver ? "ring-2 ring-blue-500 ring-inset" : ""}`}
-        style={{ padding: "8px" }}
+        className={`terminal-container flex-1 overflow-hidden relative ${isDragOver ? "ring-2 ring-blue-500 ring-inset" : ""}`}
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}

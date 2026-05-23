@@ -10,6 +10,7 @@ import { WhiteboardPane } from "./WhiteboardPane"
 import { PortManager } from "./PortManager"
 import { useIsTauri } from "@/hooks/useIsTauri"
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { fitAllTerminals, setupVisualViewport, setupWindowResizeHandler } from "@/lib/terminalRegistry"
 
 interface SplitPaneProps {
   searchQuery?: string
@@ -28,6 +29,16 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
 
   // Determine Mica-transparent styling for Tauri
   const isMica = tauriChecked && isTauriApp
+
+  // Setup global terminal fitting handlers
+  useEffect(() => {
+    const cleanupViewport = setupVisualViewport()
+    const cleanupResize = setupWindowResizeHandler()
+    return () => {
+      cleanupViewport()
+      cleanupResize()
+    }
+  }, [])
 
   // Filter by group if a group is selected
   const filteredPanes = searchQuery
@@ -79,6 +90,8 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     }
     const handleMouseUp = () => {
       setIsResizing(false)
+      // Fit all terminals after sidebar resize completes
+      setTimeout(() => fitAllTerminals("sidebar-resize-end"), 50)
     }
     if (isResizing) {
       document.addEventListener("mousemove", handleMouseMove)

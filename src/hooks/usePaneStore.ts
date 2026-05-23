@@ -20,7 +20,7 @@ const SOURCE_CONTROL_SELECTED_KEY = "termote-source-control-selected"
 
 const GROUP_COLORS = [
   "#E44", // red
-  "#4A4", // green
+  "#FFFFFF", // white
   "#44A", // blue
   "#AA4", // yellow
   "#A4A", // purple

@@ -19,6 +19,7 @@ import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { useIsTauri } from "@/hooks/useIsTauri"
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { fitAllTerminals } from "@/lib/terminalRegistry"
 import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2, PanelRight } from "lucide-react"
 
 // Tauri backend check interval
@@ -237,6 +238,20 @@ function DashboardContent() {
     tabsProfileSidebarCollapsed,
   ])
 
+  // Fit all terminals when view mode changes
+  useEffect(() => {
+    setTimeout(() => fitAllTerminals("viewMode-change"), 100)
+  }, [viewMode])
+
+  // Fit all terminals when sidebar states change
+  useEffect(() => {
+    setTimeout(() => fitAllTerminals("layout-change"), 100)
+  }, [
+    profileSidebarCollapsed,
+    tabsSidebarCollapsed,
+    tabsProfileSidebarCollapsed,
+  ])
+
   const showTabs = viewMode === "tabs"
 
   useEffect(() => {
@@ -345,7 +360,7 @@ function DashboardContent() {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-[#080808]">
         <div className="mb-8 flex items-center gap-3">
-          <StatusIcon className="h-6 w-6 animate-pulse text-[#16C60C]" />
+          <StatusIcon className="h-6 w-6 animate-pulse text-white" />
           <span className="text-xl font-medium text-[#CCCCCC]">Termote</span>
         </div>
         <div className="flex items-center gap-2 text-[#A1A1AA]">
@@ -353,9 +368,9 @@ function DashboardContent() {
           <span className="text-sm">{status.text}</span>
         </div>
         <div className="mt-4 flex items-center gap-1">
-          <div className="h-1 w-2 rounded-full bg-[#16C60C] animate-pulse" />
-          <div className="h-1 w-2 rounded-full bg-[#16C60C] animate-pulse [animation-delay:150ms]" />
-          <div className="h-1 w-2 rounded-full bg-[#16C60C] animate-pulse [animation-delay:300ms]" />
+          <div className="h-1 w-2 rounded-full bg-white animate-pulse" />
+          <div className="h-1 w-2 rounded-full bg-white animate-pulse [animation-delay:150ms]" />
+          <div className="h-1 w-2 rounded-full bg-white animate-pulse [animation-delay:300ms]" />
         </div>
       </div>
     )
@@ -375,10 +390,10 @@ function DashboardContent() {
             <div data-tauri-drag-region className="flex items-center gap-2">
               <div
                 className={`h-2 w-2 rounded-full shrink-0 ${
-                  serverRunning ? "bg-[#16C60C]" : "bg-[#E74856]"
+                  serverRunning ? "bg-white" : "bg-[#E74856]"
                 }`}
                 style={{
-                  boxShadow: serverRunning ? "0 0 6px #16C60C" : "0 0 6px #E74856"
+                  boxShadow: serverRunning ? "0 0 6px #FFFFFF" : "0 0 6px #E74856"
                 }}
               />
               <span className="text-sm text-[#CCCCCC]">Termote</span>
@@ -492,7 +507,7 @@ function DashboardContent() {
                   className={`h-2 w-2 rounded-full shrink-0 ${
                     isConnected
                       ? isAuthenticated
-                        ? "bg-[#16C60C]"
+                        ? "bg-white"
                         : "bg-[#DCDCAA]"
                       : tunnelStatus === "connecting"
                         ? "bg-[#DCDCAA] animate-pulse"
@@ -500,7 +515,7 @@ function DashboardContent() {
                   }`}
                   style={{
                     boxShadow: isConnected
-                      ? isAuthenticated ? "0 0 6px #16C60C" : "0 0 6px #DCDCAA"
+                      ? isAuthenticated ? "0 0 6px #FFFFFF" : "0 0 6px #DCDCAA"
                       : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
                   }}
                 />
