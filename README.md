@@ -71,17 +71,6 @@ The installer packages both together. You install one app.
 
 ---
 
-## Why Not SSH?
-
-| SSH | Termote |
-|-----|---------|
-| Needs port forwarding | Works through firewalls |
-| Requires VPN for remote | Just open in browser |
-| Text only | Visual multi-pane UI |
-| Not mobile-friendly | Optimized for phones |
-
----
-
 ## Build From Source
 
 ```powershell
