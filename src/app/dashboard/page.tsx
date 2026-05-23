@@ -279,6 +279,16 @@ function DashboardContent() {
     }
   }, [disconnect])
 
+  // Tauri Mica - toggle class on html element for CSS targeting
+  // Must be after useWebSocket but before any early returns
+  useEffect(() => {
+    if (!tauriChecked) return
+    document.documentElement.classList.toggle("tauri-mica", isTauriApp)
+    return () => {
+      document.documentElement.classList.remove("tauri-mica")
+    }
+  }, [tauriChecked, isTauriApp])
+
   if (!isReady) {
     const statusMessages = {
       init: { text: 'Initializing...', icon: Zap },
@@ -313,15 +323,6 @@ function DashboardContent() {
   const isTauri = isTauriBuild()
 
   const shellClass = tauriChecked && isTauriApp ? "tauri-mica-shell" : "web-shell"
-
-  // Toggle tauri-mica class on html element for CSS targeting
-  useEffect(() => {
-    if (!tauriChecked) return
-    document.documentElement.classList.toggle("tauri-mica", isTauriApp)
-    return () => {
-      document.documentElement.classList.remove("tauri-mica")
-    }
-  }, [tauriChecked, isTauriApp])
 
   return (
     <div className={`flex h-screen w-full flex-col overflow-hidden ${shellClass}`}>
