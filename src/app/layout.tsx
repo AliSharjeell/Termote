@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Poppins } from "next/font/google"
+import { Geist } from "next/font/google"
 import "./globals.css"
 
 const jsonLd = {
@@ -34,9 +34,8 @@ const jsonLd = {
   },
 }
 
-const poppins = Poppins({
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 })
 
@@ -147,7 +146,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${poppins.variable} h-full antialiased font-[family-name:var(--font-poppins)]`}>
+      <body className={`${geistSans.variable} h-full antialiased font-[family-name:var(--font-geist-sans)]`}>
         {children}
       </body>
     </html>
