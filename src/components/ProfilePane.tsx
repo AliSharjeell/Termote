@@ -167,33 +167,109 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl, onDevtunnelAuthSta
     setQrBlurred(true)
     setIsCheckingAuth(true)
     setTunnelReady(false)
+    setDevtunnelStatus(null)
+
+    // Helper to wait for specific auth status
+    const waitForAuthStatus = async (targetStatus: string, timeoutMs = 60000): Promise<DevtunnelAuthStatus | null> => {
+      return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+          console.log('[DevTunnel] Auth wait timeout')
+          resolve(null)
+        }, timeoutMs)
+
+        // Set up listener for auth status changes
+        let unsubscribe: (() => void) | null = null
+
+        const setupListener = async () => {
+          try {
+            unsubscribe = await listen<DevtunnelAuthStatus>('devtunnel-login-status', (event) => {
+              console.log('[DevTunnel] Auth status update:', event.payload)
+              setDevtunnelStatus(event.payload)
+              onDevtunnelAuthStatusChange?.(event.payload)
+
+              if (event.payload.status === targetStatus) {
+                clearTimeout(timeout)
+                if (unsubscribe) unsubscribe()
+                resolve(event.payload)
+              } else if (event.payload.status === 'login_failed' || event.payload.status === 'login_url') {
+                clearTimeout(timeout)
+                if (unsubscribe) unsubscribe()
+                resolve(event.payload)
+              }
+            })
+          } catch (err) {
+            console.error('[DevTunnel] Listener setup failed:', err)
+          }
+        }
+
+        // Check current status immediately
+        invoke<DevtunnelAuthStatus>('get_devtunnel_auth_status').then(status => {
+          console.log('[DevTunnel] Current auth status:', status)
+          setDevtunnelStatus(status)
+          onDevtunnelAuthStatusChange?.(status)
+
+          if (status.status === targetStatus) {
+            clearTimeout(timeout)
+            resolve(status)
+          } else if (status.status === 'login_failed' || status.status === 'login_url') {
+            clearTimeout(timeout)
+            resolve(status)
+          } else {
+            // Start listening for updates
+            setupListener()
+          }
+        }).catch(err => {
+          console.error('[DevTunnel] Failed to get auth status:', err)
+          // Try to set up listener anyway
+          setupListener()
+        })
+
+        return () => {
+          clearTimeout(timeout)
+          if (unsubscribe) unsubscribe()
+        }
+      })
+    }
 
     try {
-      // Check if remote access is running or start it (which triggers auth)
-      const result = await invoke<{ tunnel_url: string | null; tunnel_running: boolean; auth_token: string }>('get_runtime_state')
+      // Step 1: Check current auth status
+      const initialAuthStatus = await waitForAuthStatus('login_success', 5000).catch(() => null)
 
-      if (!result.tunnel_running || !result.tunnel_url) {
-        // Need to start remote access - this will trigger devtunnel auth flow
+      // Step 2: If not authenticated, trigger auth flow
+      if (!initialAuthStatus || initialAuthStatus.status !== 'login_success') {
+        // Start remote access - this will trigger devtunnel auth flow
         await invoke('start_remote_access')
-        // Wait a moment for the tunnel URL to be set
-        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Wait for successful auth
+        const authResult = await waitForAuthStatus('login_success', 60000)
+        if (!authResult || authResult.status !== 'login_success') {
+          setDevtunnelStatus({
+            status: 'login_failed',
+            message: 'Authentication failed or was cancelled',
+            url: null
+          })
+          return
+        }
       }
 
-      // Refresh the runtime state to get the actual tunnel URL
-      const updated = await invoke<{ tunnel_url: string | null; auth_token: string }>('get_runtime_state')
-      if (updated.tunnel_url) {
-        // Update auth token and rebuild mobile URL
-        const newMobileUrl = buildMobileUrl(updated.tunnel_url, updated.auth_token)
+      // Step 3: Generate tunnel URL
+      const result = await invoke<{ tunnel_url: string | null; auth_token: string }>('get_runtime_state')
+      if (result.tunnel_url) {
+        const newMobileUrl = buildMobileUrl(result.tunnel_url, result.auth_token)
         setMobileUrl(newMobileUrl)
         setTunnelReady(true)
       } else {
-        setTunnelReady(false)
+        setDevtunnelStatus({
+          status: 'login_failed',
+          message: 'Failed to generate tunnel URL',
+          url: null
+        })
       }
     } catch (err) {
       console.error('[Mobile Access] Failed:', err)
       setDevtunnelStatus({
         status: 'login_failed',
-        message: `Failed to start remote access: ${String(err)}`,
+        message: `Failed: ${String(err)}`,
         url: null
       })
     } finally {
