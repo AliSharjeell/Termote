@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { PanelLeft, PanelRight, Bot } from "lucide-react"
+import { PanelLeft } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { refitTerminal } from "@/lib/terminalRegistry"
 import { XtermPane } from "./XtermPane"
@@ -27,28 +27,14 @@ export function TabBar({ searchQuery }: TabBarProps) {
     selectedGroupId,
     tabsSidebarCollapsed,
     tabsGitSidebarCollapsed,
-    tabsProfileSidebarCollapsed,
     toggleTabsSidebar,
     toggleTabsGitSidebar,
-    toggleTabsProfileSidebar,
-    aiCommand,
-    setAiCommand,
   } = usePaneStore()
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
   const [isResizing, setIsResizing] = useState(false)
-  const [customSelected, setCustomSelected] = useState(false)
-  const [customCommand, setCustomCommand] = useState("")
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
-
-  const aiOptions = [
-    { value: "claude", label: "Claude" },
-    { value: "codex", label: "Codex" },
-    { value: "agy", label: "Agy" },
-    { value: "opencode", label: "Opencode" },
-  ]
-  const isCustomCommand = customSelected || (!!aiCommand && !aiOptions.some(o => o.value === aiCommand) && aiCommand !== "")
 
   // Determine Mica-transparent styling for Tauri
   const isMica = tauriChecked && isTauriApp
@@ -83,10 +69,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
         e.preventDefault()
         toggleTabsSidebar()
       }
-      if (e.altKey && e.key === "2") {
-        e.preventDefault()
-        toggleTabsProfileSidebar()
-      }
       if (e.ctrlKey && e.key === "w") {
         e.preventDefault()
         if (selectedTab) {
@@ -96,7 +78,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [toggleTabsSidebar, toggleTabsProfileSidebar, selectedTab])
+  }, [toggleTabsSidebar, selectedTab])
 
   // Search filter
   const searchFiltered = searchQuery
@@ -325,108 +307,6 @@ export function TabBar({ searchQuery }: TabBarProps) {
           ))}
         </div>
       </div>
-
-      {/* Right profile sidebar - same styling as left sidebar */}
-      {tabsProfileSidebarCollapsed ? (
-        <div data-mica-surface className={`shrink-0 flex flex-col items-center gap-1 border-l border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-l-transparent" : "bg-[#0d0d0d]"}`}>
-          <button
-            onClick={toggleTabsProfileSidebar}
-            title="Expand profile sidebar (Alt+2)"
-            className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
-          >
-            <PanelRight size={14} />
-          </button>
-        </div>
-      ) : (
-        <div data-mica-surface className={`flex shrink-0 flex-col border-l border-[#252525] ${isMica ? "bg-transparent border-l-transparent" : "bg-[#0d0d0d]"}`} style={{ width: 260 }}>
-          {/* Collapsible header */}
-          <div className="flex items-center justify-end px-2 py-2 border-b border-[#252525]">
-            <button
-              onClick={toggleTabsProfileSidebar}
-              title="Collapse profile sidebar (Alt+2)"
-              className="text-[#CCCCCC] hover:text-white"
-            >
-              <PanelRight size={14} />
-            </button>
-          </div>
-          {/* Default AI CLI */}
-          <div className="px-3 py-3 border-b border-[#252525]">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Bot className="h-3 w-3 text-[#CCCCCC]" />
-              <span className="text-[10px] text-[#CCCCCC]">Default AI CLI</span>
-            </div>
-            <div className="space-y-0.5">
-              {aiOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex items-center gap-1.5 px-1.5 py-2 rounded cursor-pointer transition-colors text-sm ${
-                    aiCommand === option.value ? "text-[#CCCCCC] bg-white/[0.08]" : "text-[#CCCCCC] hover:text-white hover:bg-white/[0.06]"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="ai-cli-profile"
-                    value={option.value}
-                    checked={aiCommand === option.value}
-                    onChange={() => { setAiCommand(option.value); setCustomSelected(false) }}
-                    className="sr-only"
-                  />
-                  <div className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
-                    aiCommand === option.value ? "border-[#CCCCCC] bg-[#CCCCCC]" : "border-[#555]"
-                  }`} />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-              {/* Custom option */}
-              <label
-                onClick={() => {
-                  setCustomSelected(true)
-                  if (customCommand.trim()) {
-                    setAiCommand(customCommand.trim())
-                  } else {
-                    setAiCommand("")
-                  }
-                }}
-                className={`flex items-center gap-1.5 px-1.5 py-2 rounded cursor-pointer transition-colors text-sm ${
-                  isCustomCommand ? "text-[#CCCCCC] bg-white/[0.08]" : "text-[#CCCCCC] hover:text-white hover:bg-white/[0.06]"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="ai-cli-profile"
-                  checked={isCustomCommand}
-                  readOnly
-                  className="sr-only"
-                />
-                <div className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
-                  isCustomCommand ? "border-[#CCCCCC] bg-[#CCCCCC]" : "border-[#555]"
-                }`} />
-                <span>Custom</span>
-              </label>
-              {/* Custom input dropdown */}
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                isCustomCommand ? "max-h-16 opacity-100 mt-1.5 mb-1" : "max-h-0 opacity-0 pointer-events-none"
-              }`}>
-                <div className="pl-[22px] pr-1">
-                  <input
-                    type="text"
-                    value={customCommand}
-                    onChange={(e) => {
-                      setCustomCommand(e.target.value)
-                      setAiCommand(e.target.value)
-                    }}
-                    placeholder="Enter custom CLI command..."
-                    className="w-full bg-[#1a1a1a] px-2.5 py-1.5 text-[11px] text-[#CCCCCC] placeholder-[#555] outline-none border border-[#3B3B3B] rounded-md focus:border-[#58A6FF] focus:ring-1 focus:ring-[#58A6FF]/20"
-                  />
-                </div>
-              </div>
-            </div>
-            <p className="text-[10px] text-[#666] mt-1.5 px-1.5">
-              Sends: {aiCommand || "claude"}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

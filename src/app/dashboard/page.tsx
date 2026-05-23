@@ -566,25 +566,24 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Profile sidebar - on RIGHT (panes mode only, TabBar handles tabs mode) */}
-        {!showTabs && (
-          profileSidebarCollapsed
-            ? (
-              <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-10 h-full">
-                <button
-                  onClick={toggleProfileSidebar}
-                  title="Expand profile sidebar"
-                  className="w-8 h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
-                >
-                  <PanelRight size={14} className="rotate-180" />
-                </button>
-              </div>
-            ) : (
-              <div className="profile-sidebar shrink-0 h-full">
-                <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} shareUrl={shareUrl || undefined} />
-              </div>
-            )
-        )}
+      {/* Profile sidebar - on RIGHT (both panes and tabs mode) */}
+      {profileSidebarCollapsed
+        ? (
+          <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-10 h-full">
+            <button
+              onClick={toggleProfileSidebar}
+              title="Expand profile sidebar"
+              className="w-8 h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
+            >
+              <PanelRight size={14} className="rotate-180" />
+            </button>
+          </div>
+        ) : (
+          <div className="profile-sidebar shrink-0 h-full">
+            <ProfilePane tunnelUrl={tunnelUrl || ""} authToken={authToken || ""} shareUrl={shareUrl || undefined} />
+          </div>
+        )
+      }
       </div>
 
       {/* Modals */}
