@@ -20,14 +20,11 @@ Termote lets you use your terminal from your phone, tablet, or another computer 
 
 ## Quick Install
 
-Download from **[Releases Page](https://github.com/AliSharjeell/TermoteUI/releases)**
+**Download from [TermoteUI Releases](https://github.com/AliSharjeell/TermoteUI/releases)**
 
-The installer sets up:
-- Termote desktop app
-- All required dependencies
-- Quick launch shortcuts
+The installer includes everything — one download, one install, done.
 
-Run the installer, done. Open Termote from your Start Menu.
+After install, open Termote from your Start Menu or type `termote` in any terminal.
 
 ---
 
