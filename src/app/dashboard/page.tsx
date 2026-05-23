@@ -58,7 +58,7 @@ function DashboardContent() {
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed, toggleProfileSidebar, tabsSidebarCollapsed, toggleTabsSidebar, tabsProfileSidebarCollapsed, toggleTabsProfileSidebar } = usePaneStore()
+  const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed, tabsSidebarCollapsed, tabsProfileSidebarCollapsed, hasHydrated, setProfileSidebarCollapsed, setTabsSidebarCollapsed, setTabsProfileSidebarCollapsed, toggleProfileSidebar, toggleTabsSidebar, toggleTabsProfileSidebar } = usePaneStore()
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
 
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
@@ -186,31 +186,55 @@ function DashboardContent() {
     }
   }
 
-  // Set default view and sidebar states on first load based on platform
-  const initialLoadRef = useRef(false)
+  // Set platform-specific UI defaults on startup (runs once after hydration + platform detection)
+  const initializedRef = useRef(false)
   useEffect(() => {
-    if (!initialLoadRef.current && viewMode === "auto") {
-      initialLoadRef.current = true
-      const isTauri = isTauriBuild()
+    // Wait for hydration and platform detection
+    if (!hasHydrated) return
+    if (!tauriChecked) return
+    if (initializedRef.current) return
 
-      if (isTauri) {
-        // Tauri: default to panes mode with right sidebar collapsed
-        setViewMode("panes")
-        toggleProfileSidebar() // Collapse it
-      } else {
-        // Web: default to tabs mode with both sidebars collapsed
-        setViewMode("tabs")
-        // Collapse left sidebar (file explorer) in tabs mode
-        if (!tabsSidebarCollapsed) {
-          toggleTabsSidebar()
-        }
-        // Collapse right sidebar (profile) in tabs mode
-        if (!tabsProfileSidebarCollapsed) {
-          toggleTabsProfileSidebar()
-        }
-      }
+    initializedRef.current = true
+
+    console.log("[STARTUP UI DEFAULTS]", {
+      tauriChecked,
+      isTauri: isTauriApp,
+      selectedMode: isTauriApp ? "panes" : "tabs",
+      profileSidebarCollapsed: isTauriApp ? true : "n/a",
+      tabsSidebarCollapsed: !isTauriApp ? true : "n/a",
+      tabsProfileSidebarCollapsed: !isTauriApp ? true : "n/a",
+    })
+
+    if (isTauriApp) {
+      // Tauri desktop: panes mode + right profile sidebar collapsed
+      setViewMode("panes")
+      setProfileSidebarCollapsed(true)
+    } else {
+      // Web browser: tabs mode + both sidebars collapsed
+      setViewMode("tabs")
+      setTabsSidebarCollapsed(true)
+      setTabsProfileSidebarCollapsed(true)
     }
-  }, [setViewMode, viewMode, toggleProfileSidebar, toggleTabsSidebar, toggleTabsProfileSidebar])
+
+    console.log("[CURRENT UI STATE after init]", {
+      viewMode,
+      profileSidebarCollapsed,
+      tabsSidebarCollapsed,
+      tabsProfileSidebarCollapsed,
+    })
+  }, [
+    hasHydrated,
+    tauriChecked,
+    isTauriApp,
+    setViewMode,
+    setProfileSidebarCollapsed,
+    setTabsSidebarCollapsed,
+    setTabsProfileSidebarCollapsed,
+    viewMode,
+    profileSidebarCollapsed,
+    tabsSidebarCollapsed,
+    tabsProfileSidebarCollapsed,
+  ])
 
   const showTabs = viewMode === "tabs"
 

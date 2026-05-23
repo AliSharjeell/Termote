@@ -233,6 +233,13 @@ interface PaneState {
   toggleTabsSidebar: () => void
   toggleTabsGitSidebar: () => void
   toggleTabsProfileSidebar: () => void
+  // Explicit setters for startup initialization
+  setProfileSidebarCollapsed: (collapsed: boolean) => void
+  setTabsSidebarCollapsed: (collapsed: boolean) => void
+  setTabsProfileSidebarCollapsed: (collapsed: boolean) => void
+  // Hydration state for persist middleware
+  hasHydrated: boolean
+  setHasHydrated: (value: boolean) => void
   fetchPortProcesses: () => void
   killProcess: (pid: number) => void
   renamePane: (paneId: string, name: string) => void
@@ -595,6 +602,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   tabsGitSidebarCollapsed: false,
   tabsProfileSidebarCollapsed: false,
   groups: loadGroups(),
+  hasHydrated: true, // No async persist middleware, sync localStorage reads
   selectedGroupId: null,
   devices: [],
   showSecurityModal: false,
@@ -973,6 +981,30 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       return { tabsProfileSidebarCollapsed: next }
     })
   },
+
+  // Explicit setters for startup initialization (NOT toggles)
+  setProfileSidebarCollapsed: (collapsed) => {
+    set({ profileSidebarCollapsed: collapsed })
+    try {
+      localStorage.setItem("termote_profile_sidebar", String(collapsed))
+    } catch {}
+  },
+
+  setTabsSidebarCollapsed: (collapsed) => {
+    set({ tabsSidebarCollapsed: collapsed })
+    try {
+      localStorage.setItem("termote_tabs_sidebar", String(collapsed))
+    } catch {}
+  },
+
+  setTabsProfileSidebarCollapsed: (collapsed) => {
+    set({ tabsProfileSidebarCollapsed: collapsed })
+    try {
+      localStorage.setItem("termote_tabs_profile_sidebar", String(collapsed))
+    } catch {}
+  },
+
+  setHasHydrated: (value) => set({ hasHydrated: value }),
 
   fetchPortProcesses: () => {
     const { ws } = get()
