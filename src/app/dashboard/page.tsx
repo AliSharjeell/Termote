@@ -461,11 +461,6 @@ function DashboardContent() {
           tunnelUrl={shareUrl}
           authToken={authToken}
           mobileUrl={runtime?.mobileUrl}
-          onSignOut={() => {
-            localStorage.removeItem("tunnelUrl")
-            localStorage.removeItem("authToken")
-            window.location.reload()
-          }}
         />
       )}
 

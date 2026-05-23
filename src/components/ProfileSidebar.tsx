@@ -12,7 +12,6 @@ interface ProfileSidebarProps {
   tunnelUrl: string
   authToken: string
   mobileUrl?: string
-  onSignOut: () => void
 }
 
 function toWebSocketUrl(url: string): string {
@@ -52,7 +51,7 @@ function detectTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI__" in window
 }
 
-export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUrl: providedMobileUrl, onSignOut }: ProfileSidebarProps) {
+export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUrl: providedMobileUrl }: ProfileSidebarProps) {
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
   const [qrBlurred, setQrBlurred] = useState(true)
@@ -82,7 +81,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
   }, [isOpen, qrBlurred])
 
   useEffect(() => {
-    const isCustom = !aiOptions.slice(0, -1).some(o => o.value === aiCommand)
+    const isCustom = !aiOptions.some(o => o.value === aiCommand)
     if (isCustom && aiCommand) {
       setCustomCommand(aiCommand)
     }
@@ -206,50 +205,52 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Server Controls */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
-              <RefreshCw className="h-4 w-4" />
-              Server Controls {isTauri ? "(Tauri)" : "(Browser)"}
-            </label>
-            <div className="grid grid-cols-1 gap-2 rounded-lg bg-[#0C0C0C] p-3">
-              <button
-                onClick={handleRestartServer}
-                disabled={!!serverAction || !serverRunning}
-                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
-                Restart
-              </button>
-              <button
-                onClick={handleStopServer}
-                disabled={!!serverAction || !serverRunning}
-                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
-              >
-                <Square className="h-3.5 w-3.5" />
-                Stop
-              </button>
-              <button
-                onClick={() => {
-                  setShowQRModal(true)
-                  setQrBlurred(true)
-                }}
-                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
-              >
-                <QrCode className="h-3.5 w-3.5" />
-                Mobile Access
-              </button>
-              <button
-                onClick={handleCopyLink}
-                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
-              >
-                {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
-                Copy Link
-              </button>
+          {/* Server Controls - Tauri only */}
+          {isTauri && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
+                <RefreshCw className="h-4 w-4" />
+                Server Controls
+              </label>
+              <div className="grid grid-cols-1 gap-2 rounded-lg bg-[#0C0C0C] p-3">
+                <button
+                  onClick={handleRestartServer}
+                  disabled={!!serverAction || !serverRunning}
+                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
+                  Restart
+                </button>
+                <button
+                  onClick={handleStopServer}
+                  disabled={!!serverAction || !serverRunning}
+                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
+                >
+                  <Square className="h-3.5 w-3.5" />
+                  Stop
+                </button>
+                <button
+                  onClick={() => {
+                    setShowQRModal(true)
+                    setQrBlurred(true)
+                  }}
+                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  Mobile Access
+                </button>
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
+                >
+                  {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
+                  Copy Link
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* AI CLI Settings */}
+          {/* AI CLI Settings - Both versions */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
               <Bot className="h-4 w-4" />
@@ -330,31 +331,22 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="space-y-2 border-t border-[#333333] p-4">
-          <button
-            onClick={() => setShowSecurityModal(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-            Security & Devices
-          </button>
-          <button
-            onClick={onSignOut}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#E74856] px-4 py-3 text-sm font-medium text-white hover:bg-[#ff3b30] transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            Sign Out
-          </button>
-        </div>
+        {/* Footer - Tauri only */}
+        {isTauri && (
+          <div className="border-t border-[#333333] p-4">
+            <button
+              onClick={() => setShowSecurityModal(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#27272A] px-4 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              Security & Devices
+            </button>
+          </div>
+        )}
       </div>
     </>
   )
