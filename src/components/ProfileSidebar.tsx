@@ -57,6 +57,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
   const [showQRModal, setShowQRModal] = useState(false)
   const [qrBlurred, setQrBlurred] = useState(true)
   const [customCommand, setCustomCommand] = useState("")
+  const [customSelected, setCustomSelected] = useState(false)
   const [serverRunning, setServerRunning] = useState(true)
   const [serverAction, setServerAction] = useState<string | null>(null)
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
@@ -69,10 +70,9 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
   const aiOptions = [
     { value: "claude", label: "Claude" },
     { value: "claude-codex", label: "Claude CodeX" },
-    { value: "custom", label: "Custom..." },
   ]
 
-  const isCustomCommand = !!aiCommand && !aiOptions.slice(0, -1).some(o => o.value === aiCommand)
+  const isCustomCommand = customSelected || (!!aiCommand && !aiOptions.some(o => o.value === aiCommand) && aiCommand !== "")
 
   useEffect(() => {
     if (isOpen && qrBlurred) {
@@ -216,7 +216,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
               <button
                 onClick={handleRestartServer}
                 disabled={!!serverAction || !serverRunning}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
                 Restart
@@ -224,7 +224,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
               <button
                 onClick={handleStopServer}
                 disabled={!!serverAction || !serverRunning}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full"
+                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
               >
                 <Square className="h-3.5 w-3.5" />
                 Stop
@@ -234,14 +234,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                   setShowQRModal(true)
                   setQrBlurred(true)
                 }}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full"
+                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
               >
                 <QrCode className="h-3.5 w-3.5" />
                 Mobile Access
               </button>
               <button
                 onClick={handleCopyLink}
-                className="flex items-center justify-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full"
+                className="flex items-center gap-2 rounded bg-[#27272A] px-3 py-3 text-sm font-medium text-white hover:bg-[#333333] transition-colors w-full text-left"
               >
                 {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
                 Copy Link
@@ -260,7 +260,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                 <label
                   key={option.value}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                    aiCommand === option.value || (option.value === "custom" && isCustomCommand)
+                    aiCommand === option.value
                       ? "bg-[#27272A] text-white"
                       : "hover:bg-[#27272A]/50 text-[#808080]"
                   }`}
@@ -269,22 +269,17 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                     type="radio"
                     name="ai-cli"
                     value={option.value}
-                    checked={aiCommand === option.value || (option.value === "custom" && isCustomCommand)}
+                    checked={aiCommand === option.value}
                     onChange={() => {
-                      if (option.value === "custom") {
-                        if (customCommand) {
-                          setAiCommand(customCommand)
-                        }
-                      } else {
-                        setAiCommand(option.value)
-                        setCustomCommand("")
-                      }
+                      setAiCommand(option.value)
+                      setCustomCommand("")
+                      setCustomSelected(false)
                     }}
                     className="sr-only"
                   />
                   <div
-                    className={`h-3 w-3 rounded-full border ${
-                      aiCommand === option.value || (option.value === "custom" && isCustomCommand)
+                    className={`h-3 w-3 rounded-full border shrink-0 ${
+                      aiCommand === option.value
                         ? "border-white bg-white"
                         : "border-[#808080]"
                     }`}
@@ -292,25 +287,42 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                   <span className="text-sm">{option.label}</span>
                 </label>
               ))}
-              {isCustomCommand && (
-                <div className="mt-1 pl-6">
-                  <input
-                    type="text"
-                    value={customCommand}
-                    onChange={(e) => {
-                      setCustomCommand(e.target.value)
-                      setAiCommand(e.target.value)
-                    }}
-                    onBlur={() => {
-                      if (customCommand) {
-                        setAiCommand(customCommand)
-                      }
-                    }}
-                    placeholder="Enter custom CLI command..."
-                    className="w-full bg-[#1a1a1a] px-2 py-1.5 text-xs text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-white"
-                  />
-                </div>
-              )}
+              {/* Custom option */}
+              <label
+                className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
+                  isCustomCommand
+                    ? "bg-[#27272A] text-white"
+                    : "hover:bg-[#27272A]/50 text-[#808080]"
+                }`}
+              >
+                <div
+                  className={`h-3 w-3 rounded-full border shrink-0 ${
+                    isCustomCommand
+                      ? "border-white bg-white"
+                      : "border-[#808080]"
+                  }`}
+                  onClick={() => {
+                    setCustomSelected(true)
+                  }}
+                />
+                <span className="text-sm">Custom</span>
+              </label>
+              {/* Custom input field */}
+              <div className={`mt-1 pl-5 ${isCustomCommand ? "block" : "hidden"}`}>
+                <input
+                  type="text"
+                  value={customCommand}
+                  onChange={(e) => {
+                    setCustomCommand(e.target.value)
+                    if (e.target.value.trim()) {
+                      setAiCommand(e.target.value.trim())
+                      setCustomSelected(true)
+                    }
+                  }}
+                  placeholder="Enter custom CLI command..."
+                  className="w-full bg-[#1a1a1a] px-3 py-2 text-sm text-[#CCCCCC] outline-none border border-[#3B3B3B] rounded focus:border-[#58A6FF]"
+                />
+              </div>
             </div>
             <p className="text-[10px] text-[#808080]">
               Quick-launch button in terminal header sends: {aiCommand || "claude"}
