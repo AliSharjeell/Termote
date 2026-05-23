@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Copy, Check, X, QrCode, Bot, RefreshCw, Square, Link2 } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { usePaneStore } from "@/hooks/usePaneStore"
+import { useIsTauri } from "@/hooks/useIsTauri"
 import { invoke } from "@tauri-apps/api/core"
 
 interface ProfileSidebarProps {
@@ -47,10 +48,6 @@ function buildMobileUrl(tunnelUrl: string, authToken: string): string {
   }
 }
 
-function detectTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI__" in window
-}
-
 export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUrl: providedMobileUrl }: ProfileSidebarProps) {
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
@@ -61,8 +58,8 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
   const [serverAction, setServerAction] = useState<string | null>(null)
   const setShowSecurityModal = usePaneStore((state) => state.setShowSecurityModal)
 
-  // Synchronous detection - runs immediately
-  const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
+  // Use the robust Tauri detection hook
+  const { isTauri, checked } = useIsTauri()
 
   const mobileUrl = providedMobileUrl || buildMobileUrl(tunnelUrl, authToken)
   const aiCommand = usePaneStore((state) => state.aiCommand)
@@ -196,7 +193,9 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
       <div className="fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-[#161616] shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-4">
-          <span className="text-sm font-medium text-white">Profile</span>
+          <span className="text-sm font-medium text-white">
+            Profile {checked ? (isTauri ? "(Tauri)" : "(Browser)") : "(Loading...)"}
+          </span>
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
@@ -208,7 +207,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Server Controls - Tauri only */}
-          {isTauri && (
+          {checked && isTauri && (
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-xs font-medium text-[#808080]">
                 <RefreshCw className="h-4 w-4" />
@@ -334,7 +333,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
         </div>
 
         {/* Footer - Tauri only */}
-        {isTauri && (
+        {checked && isTauri && (
           <div className="border-t border-[#333333] p-4">
             <button
               onClick={() => setShowSecurityModal(true)}
