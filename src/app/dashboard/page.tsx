@@ -471,6 +471,13 @@ function DashboardContent() {
                 }}
               />
               <span className="text-sm text-[#CCCCCC]">Termote</span>
+              <button
+                onClick={focusThisDevice}
+                title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
+                className="flex h-6 w-6 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+              >
+                <Crosshair className="h-3.5 w-3.5" />
+              </button>
               {serverError && (
                 <div data-tauri-no-drag className="flex min-w-0 max-w-80 items-center gap-2 rounded-full bg-[#3b1117] px-3 py-1 text-xs text-[#FCA5A5]" title={serverError}>
                   <AlertTriangle className="h-3 w-3 shrink-0" />
@@ -531,13 +538,6 @@ function DashboardContent() {
                 }`}
               >
                 Panes
-              </button>
-              <button
-                onClick={focusThisDevice}
-                title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
-                className="flex h-6 w-6 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
-              >
-                <Crosshair className="h-3.5 w-3.5" />
               </button>
             </div>
           }
@@ -601,6 +601,13 @@ function DashboardContent() {
                   }}
                 />
                  <span className="text-base font-normal text-[#CCCCCC] tracking-wide">Termote</span>
+                <button
+                  onClick={focusThisDevice}
+                  title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                >
+                  <Crosshair className="h-4 w-4" />
+                </button>
               </div>
 
               {/* View mode toggle - centered */}
@@ -624,13 +631,6 @@ function DashboardContent() {
                   }`}
                 >
                   Panes
-                </button>
-                <button
-                  onClick={focusThisDevice}
-                  title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
-                >
-                  <Crosshair className="h-4 w-4" />
                 </button>
               </div>
 
