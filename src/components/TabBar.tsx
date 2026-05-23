@@ -11,6 +11,7 @@ import { NotePane } from "./NotePane"
 import { ImagePane } from "./ImagePane"
 import { WhiteboardPane } from "./WhiteboardPane"
 import { ProfilePane } from "./ProfilePane"
+import { useIsTauri } from "@/hooks/useIsTauri"
 
 interface TabBarProps {
   searchQuery?: string
@@ -36,6 +37,10 @@ export function TabBar({ searchQuery }: TabBarProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
   const [isResizing, setIsResizing] = useState(false)
+  const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
+
+  // Determine Mica-transparent styling for Tauri
+  const isMica = tauriChecked && isTauriApp
 
   // Sidebar resize handlers
   useEffect(() => {
@@ -96,7 +101,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
     <div className="flex h-full w-full flex-row bg-[#0C0C0C]">
       {/* Left sidebar */}
       {tabsSidebarCollapsed ? (
-        <div className="shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] bg-[#0d0d0d] p-1 w-10">
+        <div className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
           <button
             onClick={toggleTabsSidebar}
             title="Expand sidebar (Alt+1)"
@@ -106,7 +111,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
           </button>
         </div>
       ) : (
-        <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2 relative" style={{ width: sidebarWidth }}>
+        <div className={`flex shrink-0 flex-col gap-1 border-r border-[#252525] p-2 relative ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
           {/* Resize handle */}
           <div
             className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors"
@@ -310,7 +315,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
 
       {/* Profile sidebar */}
       {tabsProfileSidebarCollapsed ? (
-        <div className="shrink-0 flex flex-col items-center border-l border-[#252525] bg-[#0d0d0d] w-10 py-2 gap-2">
+        <div className={`shrink-0 flex flex-col items-center border-l border-[#252525] w-10 py-2 gap-2 ${isMica ? "bg-transparent border-l-transparent" : "bg-[#0d0d0d]"}`}>
           <button
             onClick={toggleTabsProfileSidebar}
             title="Expand profile sidebar (Alt+2)"

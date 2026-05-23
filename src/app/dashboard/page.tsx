@@ -15,6 +15,7 @@ const BrowserPickerModal = dynamic(() => import('@/components/BrowserPickerModal
 import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
+import { useIsTauri } from "@/hooks/useIsTauri"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2 } from "lucide-react"
 
@@ -56,6 +57,7 @@ function DashboardContent() {
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const { isConnected, isAuthenticated, viewMode, setViewMode } = usePaneStore()
+  const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
 
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
     setRuntime(snapshot)
@@ -308,10 +310,12 @@ function DashboardContent() {
   // Tauri mode - show connection status (connected to local backend)
   const isTauri = isTauriBuild()
 
+  const shellClass = tauriChecked && isTauriApp ? "tauri-mica-shell" : "web-shell"
+
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#080808]">
+    <div className={`flex h-screen w-full flex-col overflow-hidden ${shellClass}`}>
       {/* Connection status bar */}
-      <div className="relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2">
+      <div className={`relative flex shrink-0 items-center border-b border-[#252525] bg-[#0d0d0d] px-4 py-2 ${tauriChecked && isTauriApp ? "bg-transparent border-transparent" : ""}`}>
         {/* Status + Server Controls - left side */}
         <div className="flex items-center gap-4">
           {isTauri ? (

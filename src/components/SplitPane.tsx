@@ -9,6 +9,7 @@ import { ImagePane } from "./ImagePane"
 import { WhiteboardPane } from "./WhiteboardPane"
 import { PortManager } from "./PortManager"
 import { ProfilePane } from "./ProfilePane"
+import { useIsTauri } from "@/hooks/useIsTauri"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface SplitPaneProps {
@@ -24,6 +25,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
   const [isResizing, setIsResizing] = useState(false)
+  const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
+
+  // Determine Mica-transparent styling for Tauri
+  const isMica = tauriChecked && isTauriApp
 
   // Filter by group if a group is selected
   const filteredPanes = searchQuery
@@ -115,7 +120,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     <div ref={containerRef} className="flex h-full w-full flex-row">
       {/* Vertical sidebar with group tabs */}
       {sidebarCollapsed ? (
-        <div className="shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] bg-[#0d0d0d] p-1 w-10">
+        <div className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
@@ -125,7 +130,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           </button>
         </div>
       ) : (
-      <div className="flex shrink-0 flex-col gap-1 border-r border-[#252525] bg-[#0d0d0d] p-2" style={{ width: sidebarWidth }}>
+      <div className={`flex shrink-0 flex-col gap-1 border-r border-[#252525] p-2 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
         {/* Resize handle */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors"
@@ -483,7 +488,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
 
         {/* Profile sidebar */}
         {profileSidebarCollapsed ? (
-          <div className="shrink-0 flex flex-col items-center border-l border-[#252525] bg-[#0d0d0d] w-10 py-2 gap-2">
+          <div className={`shrink-0 flex flex-col items-center border-l border-[#252525] w-10 py-2 gap-2 ${isMica ? "bg-transparent border-l-transparent" : "bg-[#0d0d0d]"}`}>
             <button
               onClick={toggleProfileSidebar}
               title="Expand profile sidebar"

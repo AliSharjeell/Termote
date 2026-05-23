@@ -72,3 +72,31 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #555555;
 }
+
+/* Tauri Mica styling */
+.tauri-mica-shell {
+  background: transparent;
+}
+
+.tauri-mica-shell aside,
+.tauri-mica-shell header,
+.tauri-mica-shell .sidebar,
+.tauri-mica-shell .topbar,
+.tauri-mica-shell [data-sidebar],
+.tauri-mica-shell [data-topbar] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove borders between sidebar and topbar in Mica mode */
+.tauri-mica-shell .border-r,
+.tauri-mica-shell .border-b,
+.tauri-mica-shell .border-l {
+  border-color: transparent !important;
+}
+
+/* Web shell - normal solid background */
+.web-shell {
+  background: var(--background);
+}
