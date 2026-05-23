@@ -41,7 +41,6 @@ After install, open Termote from your Start Menu or type `termote` in any termin
 - Drag-and-drop files
 
 **Anywhere:**
-- Encrypted connection through firewalls (no port forwarding needed)
 - Connect via QR code from mobile devices
 
 ---
