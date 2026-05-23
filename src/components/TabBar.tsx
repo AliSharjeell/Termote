@@ -314,7 +314,35 @@ export function TabBar({ searchQuery }: TabBarProps) {
         </div>
       </div>
 
-      {/* Spacer where profile sidebar used to be - removed for dashboard placement */}
+      {/* Right profile sidebar - same styling as left sidebar */}
+      {tabsProfileSidebarCollapsed ? (
+        <div data-mica-surface className={`shrink-0 flex flex-col items-center gap-1 border-l border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-l-transparent" : "bg-[#0d0d0d]"}`}>
+          <button
+            onClick={toggleTabsProfileSidebar}
+            title="Expand profile sidebar (Alt+2)"
+            className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
+          >
+            <PanelRight size={14} />
+          </button>
+        </div>
+      ) : (
+        <div data-mica-surface className={`flex shrink-0 flex-col border-l border-[#252525] ${isMica ? "bg-transparent border-l-transparent" : "bg-[#0d0d0d]"}`} style={{ width: 260 }}>
+          {/* Collapsible header */}
+          <div className="flex items-center justify-end px-2 py-2 border-b border-[#252525]">
+            <button
+              onClick={toggleTabsProfileSidebar}
+              title="Collapse profile sidebar (Alt+2)"
+              className="text-[#CCCCCC] hover:text-white"
+            >
+              <PanelRight size={14} />
+            </button>
+          </div>
+          {/* Profile content placeholder */}
+          <div className="flex-1 p-3 text-xs text-[#666]">
+            Profile settings
+          </div>
+        </div>
+      )}
     </div>
   )
 }
