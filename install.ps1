@@ -179,20 +179,39 @@ function Add-CommandLineShortcut {
     Write-Host "  Adding 'termote' command to PATH..." -ForegroundColor Yellow
 
     $appPath = "$env:LOCALAPPDATA\Termote\Termote.exe"
-    $shortcutPath = "$env:LOCALAPPDATA\Termote\termote.cmd"
+    $binPath = "$env:LOCALAPPDATA\Termote\bin"
+    if (-not (Test-Path $binPath)) { New-Item -ItemType Directory -Path $binPath -Force | Out-Null }
+    $shortcutPath = "$binPath\termote.cmd"
 
     # Create a batch file that launches the app with current directory
     $batchContent = "@echo off`n"
-    $batchContent += "cd /d %CD%`n"
-    $batchContent += "start `"`" `"$appPath`" --cwd %CD%`n"
+    $batchContent += "cd /d `"%CD%`"`n"
+    $batchContent += "start `"`" `"$appPath`" --cwd `"%CD%`"`n"
     Set-Content -Path $shortcutPath -Value $batchContent -Encoding ASCII
+
+    # Remove old command line shortcut from root
+    "$env:LOCALAPPDATA\Termote\termote.cmd" | Remove-Item -Force -ErrorAction SilentlyContinue
 
     # Add to PATH via registry (user-level)
     $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    $changed = $false
+    
+    # Remove old Termote root path if it exists to avoid running Termote.exe without args
     $termotePath = "$env:LOCALAPPDATA\Termote"
-    if ($userPath -notlike "*$termotePath*") {
-        [Environment]::SetEnvironmentVariable("PATH", "$userPath;$termotePath", "User")
+    if ($userPath -match ";?[\/]?$([regex]::Escape($termotePath))[\/]?(;|$)") {
+        $userPath = $userPath -replace ";?[\/]?$([regex]::Escape($termotePath))[\/]?(;|$)", ";"
+        $userPath = $userPath.Trim(';')
+        $changed = $true
+    }
+
+    if ($userPath -notlike "*$binPath*") {
+        $userPath = "$userPath;$binPath"
+        $changed = $true
         Write-Host "    Added to PATH. Restart terminals to use 'termote' command." -ForegroundColor Yellow
+    }
+
+    if ($changed) {
+        [Environment]::SetEnvironmentVariable("PATH", $userPath, "User")
     }
 
     Write-Host "    'termote' command shortcut created!" -ForegroundColor Green
