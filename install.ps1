@@ -1,4 +1,4 @@
-# Termote Desktop Installer
+﻿# Termote Desktop Installer
 # Installs Termote desktop app with all prerequisites
 
 param(
@@ -152,16 +152,6 @@ function Add-ContextMenu {
     Write-Host "  Adding Windows Explorer context menu..." -ForegroundColor Yellow
 
     $appPath = "$env:LOCALAPPDATA\Termote\Termote.exe"
-    $handlerScript = "$env:LOCALAPPDATA\Termote\open-with-termote.ps1"
-
-    # Create handler script that tries existing instance first, then launches new
-    $handlerContent = @'
-param([string]$Path)
-$dir = if (Test-Path $Path -PathType Leaf) { Split-Path -Parent $Path } else { $Path }
-$dir = $dir -replace '^"|"$', ''
-& "$env:LOCALAPPDATA\Termote\Termote.exe" --cwd $dir
-'@
-    Set-Content -Path $handlerScript -Value $handlerContent -Encoding UTF8
 
     # Directory background (right-click in empty space)
     $regPath = "HKCU:\Software\Classes\Directory\Background\shell\Termote"
@@ -170,7 +160,7 @@ $dir = $dir -replace '^"|"$', ''
     Set-ItemProperty -Path $regPath -Name "(Default)" -Value "Open with Termote"
     Set-ItemProperty -Path $regPath -Name "Icon" -Value "`"$appPath`",0"
     if (-not (Test-Path $cmdPath)) { New-Item -Path $cmdPath -Force | Out-Null }
-    Set-ItemProperty -Path $cmdPath -Name "(Default)" -Value "powershell -WindowStyle Hidden -File `"$handlerScript`" `"%V`""
+    Set-ItemProperty -Path $cmdPath -Name "(Default)" -Value ('"{0}" --cwd "%V"' -f $appPath)
 
     # Folder icon (right-click on folder)
     $regPath2 = "HKCU:\Software\Classes\Directory\shell\Termote"
@@ -179,7 +169,7 @@ $dir = $dir -replace '^"|"$', ''
     Set-ItemProperty -Path $regPath2 -Name "(Default)" -Value "Open with Termote"
     Set-ItemProperty -Path $regPath2 -Name "Icon" -Value "`"$appPath`",0"
     if (-not (Test-Path $cmdPath2)) { New-Item -Path $cmdPath2 -Force | Out-Null }
-    Set-ItemProperty -Path $cmdPath2 -Name "(Default)" -Value "powershell -WindowStyle Hidden -File `"$handlerScript`" `"%1`""
+    Set-ItemProperty -Path $cmdPath2 -Name "(Default)" -Value ('"{0}" --cwd "%1"' -f $appPath)
 
     Write-Host "    Context menu installed!" -ForegroundColor Green
     return $true
@@ -194,7 +184,7 @@ function Add-CommandLineShortcut {
     # Create a batch file that launches the app with current directory
     $batchContent = "@echo off`n"
     $batchContent += "cd /d %CD%`n"
-    $batchContent += "start \"\" `"$appPath`" --cwd %CD%`n"
+    $batchContent += "start `"`" `"$appPath`" --cwd %CD%`n"
     Set-Content -Path $shortcutPath -Value $batchContent -Encoding ASCII
 
     # Add to PATH via registry (user-level)
@@ -252,6 +242,14 @@ $webview2Installed = Test-Prerequisite "WebView2 Runtime" {
 $devtunnelInstalled = Test-Prerequisite "Dev Tunnels CLI" {
     $path = "$env:LOCALAPPDATA\Termote\bin\devtunnel.exe"
     Test-Path $path
+}
+
+Write-Host "Cleaning up old Termote installations..." -ForegroundColor Gray
+# Clean up old termote-bin shim if it exists to prevent conflicts
+$oldShimDir = "$env:USERPROFILE\.termote-bin"
+if (Test-Path $oldShimDir) {
+    Remove-Item -Path $oldShimDir -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "  Removed old .termote-bin scripts." -ForegroundColor Green
 }
 
 Write-Host ""
