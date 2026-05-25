@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Pencil, Pin, PinOff, FolderInput, X, Plus, Bot, Monitor } from "lucide-react"
+import { Pencil, Pin, PinOff, FolderInput, X, Plus, Bot, Copy } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface PaneTitleBarProps {
@@ -12,11 +12,12 @@ interface PaneTitleBarProps {
   onRename: (newTitle: string) => void
   onClose: () => void
   onPin?: () => void
+  onDuplicate?: () => void
   onLaunchAI?: () => void
   actions?: React.ReactNode
 }
 
-export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose, onPin, onLaunchAI, actions }: PaneTitleBarProps) {
+export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose, onPin, onDuplicate, onLaunchAI, actions }: PaneTitleBarProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
   const [showGroupMenu, setShowGroupMenu] = useState(false)
@@ -99,6 +100,17 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
         >
           <Pencil className="h-4 w-4 text-white" />
         </button>
+
+        {/* Duplicate button */}
+        {onDuplicate && (
+          <button
+            onClick={onDuplicate}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0"
+            title="Duplicate terminal"
+          >
+            <Copy className="h-3.5 w-3.5 text-white" />
+          </button>
+        )}
 
         {/* Pin button */}
         {onPin && (

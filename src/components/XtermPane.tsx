@@ -33,7 +33,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const sendInputRef = useRef(usePaneStore.getState().sendInput)
   const sendResizeRef = useRef(usePaneStore.getState().sendResize)
 
-  const { killPane, renamePane, togglePin, uploadFile, aiCommand } = usePaneStore()
+  const { killPane, renamePane, togglePin, uploadFile, aiCommand, spawnAtDirectory, spawnPane } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
 
   // Smart Clipboard: Ctrl+C = Copy if text selected, SIGINT if not
@@ -196,6 +196,14 @@ export function XtermPane({ pane }: XtermPaneProps) {
     sendInputRef.current(pane.id, `${aiCommand}\r`)
   }, [pane.id, aiCommand])
 
+  const handleDuplicate = useCallback(() => {
+    if (pane.cwd) {
+      spawnAtDirectory(pane.cwd)
+    } else {
+      spawnPane(pane.shell)
+    }
+  }, [pane.cwd, pane.shell, spawnAtDirectory, spawnPane])
+
   // Drag and drop handlers for file transfer
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -249,6 +257,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
         onRename={handleRename}
         onClose={handleClose}
         onPin={handlePin}
+        onDuplicate={handleDuplicate}
         onLaunchAI={handleLaunchAI}
       />
       <div
