@@ -445,6 +445,7 @@ function DashboardContent() {
           <div className="h-1 w-2 rounded-full bg-white animate-pulse" />
           <div className="h-1 w-2 rounded-full bg-white animate-pulse [animation-delay:150ms]" />
           <div className="h-1 w-2 rounded-full bg-white animate-pulse [animation-delay:300ms]" />
+        </div>
       </div>
     )
   }
