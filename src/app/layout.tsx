@@ -140,6 +140,23 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              function setViewportVars() {
+                if (window.visualViewport) {
+                  document.documentElement.style.setProperty('--visual-viewport-height', window.visualViewport.height + 'px');
+                  document.documentElement.style.setProperty('--visual-viewport-offset', window.visualViewport.offsetTop + 'px');
+                }
+              }
+              if (typeof window !== 'undefined' && window.visualViewport) {
+                window.visualViewport.addEventListener('resize', setViewportVars);
+                window.visualViewport.addEventListener('scroll', setViewportVars);
+                setViewportVars();
+              }
+            `
+          }}
+        />
       </head>
       <body className="h-full antialiased">
         {children}

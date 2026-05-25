@@ -432,7 +432,7 @@ function DashboardContent() {
     const StatusIcon = status.icon
 
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-[#080808]">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-[#080808]">
         <div className="mb-8 flex items-center gap-3">
           <StatusIcon className="h-6 w-6 animate-pulse text-white" />
           <span className="text-xl font-medium text-[#CCCCCC]">Termote</span>
@@ -456,7 +456,7 @@ function DashboardContent() {
   const shellClass = tauriChecked && isTauriApp ? "tauri-mica-shell" : "web-shell"
 
   return (
-    <div className={`flex h-screen w-full flex-col overflow-hidden ${shellClass}`}>
+    <div className={`flex h-full w-full flex-col overflow-hidden ${shellClass}`}>
       {/* Tauri custom titlebar */}
       <div data-mica-surface>
         <TauriTitlebar
@@ -701,7 +701,7 @@ function DashboardContent() {
 export default function Dashboard() {
   return (
     <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center bg-[#080808]">
+      <div className="flex h-full w-full items-center justify-center bg-[#080808]">
         <div className="text-[#CCCCCC]">Loading...</div>
       </div>
     }>
