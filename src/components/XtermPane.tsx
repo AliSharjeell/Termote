@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
+import { MobileKeyboardBar } from "./MobileKeyboardBar"
 import {
   getOrCreateTerminal,
   openTerminal,
@@ -35,6 +36,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
   const { killPane, renamePane, togglePin, uploadFile, aiCommand, spawnAtDirectory, spawnPane } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isCtrlActive, setIsCtrlActive] = useState(false)
 
   // Smart Clipboard: Ctrl+C = Copy if text selected, SIGINT if not
   const getKeyHandler = useCallback(
@@ -60,9 +62,18 @@ export function XtermPane({ pane }: XtermPaneProps) {
 
   const handleData = useCallback(
     (data: string) => {
-      sendInputRef.current(pane.id, data)
+      let finalData = data
+      if (isCtrlActive && data.length === 1) {
+        const upperChar = data.toUpperCase().charCodeAt(0)
+        // Convert letter to control character (e.g. 'C' -> \x03)
+        if (upperChar >= 64 && upperChar <= 95) {
+          finalData = String.fromCharCode(upperChar - 64)
+        }
+        setIsCtrlActive(false)
+      }
+      sendInputRef.current(pane.id, finalData)
     },
-    [pane.id]
+    [pane.id, isCtrlActive]
   )
 
   const handleResize = useCallback(
@@ -276,6 +287,11 @@ export function XtermPane({ pane }: XtermPaneProps) {
           </div>
         )}
       </div>
+      <MobileKeyboardBar 
+        onInput={handleData} 
+        onCtrlToggle={setIsCtrlActive} 
+        isCtrlActive={isCtrlActive} 
+      />
     </div>
   )
 }
