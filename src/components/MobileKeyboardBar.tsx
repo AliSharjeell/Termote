@@ -18,10 +18,11 @@ export function MobileKeyboardBar({ onInput, onCtrlToggle, isCtrlActive }: Props
 
   useEffect(() => {
     const checkMobile = () => {
-      // Basic check for touch device or small screen
+      // Check for touch device or mobile user agent
       const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-      const isSmall = window.innerWidth <= 768
-      setIsVisible(isTouch && isSmall)
+      const isMobileAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      const isSmall = window.innerWidth <= 1024 // Allow up to small tablets
+      setIsVisible((isTouch || isMobileAgent) && isSmall)
     }
     checkMobile()
     window.addEventListener('resize', checkMobile)

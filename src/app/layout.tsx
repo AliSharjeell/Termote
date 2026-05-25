@@ -134,7 +134,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} h-full`}>
+    <html lang="en" className={`${GeistSans.variable}`} style={{ height: 'var(--visual-viewport-height, 100dvh)' }}>
       <head>
         <script
           type="application/ld+json"
@@ -158,7 +158,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="h-full antialiased">
+      <body className="antialiased" style={{ height: 'var(--visual-viewport-height, 100dvh)' }}>
         {children}
       </body>
     </html>
