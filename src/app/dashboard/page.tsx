@@ -445,18 +445,16 @@ function DashboardContent() {
           <div className="h-1 w-2 rounded-full bg-white animate-pulse" />
           <div className="h-1 w-2 rounded-full bg-white animate-pulse [animation-delay:150ms]" />
           <div className="h-1 w-2 rounded-full bg-white animate-pulse [animation-delay:300ms]" />
-        </div>
       </div>
     )
   }
 
   // Tauri mode - show connection status (connected to local backend)
   const isTauri = isTauriBuild()
-
   const shellClass = tauriChecked && isTauriApp ? "tauri-mica-shell" : "web-shell"
 
   return (
-    <div className={`flex h-full w-full flex-col overflow-hidden ${shellClass}`}>
+    <div className={`flex w-full flex-col overflow-hidden h-[var(--visual-viewport-height,100dvh)] ${shellClass}`}>
       {/* Tauri custom titlebar */}
       <div data-mica-surface>
         <TauriTitlebar
@@ -701,7 +699,7 @@ function DashboardContent() {
 export default function Dashboard() {
   return (
     <Suspense fallback={
-      <div className="flex h-full w-full items-center justify-center bg-[#080808]">
+      <div className="flex h-[var(--visual-viewport-height,100dvh)] w-full items-center justify-center bg-[#080808]">
         <div className="text-[#CCCCCC]">Loading...</div>
       </div>
     }>
