@@ -508,99 +508,109 @@ function DashboardContent() {
         />
       </div>
 
+      {/* Connection status bar / Topbar (Only rendered in web version) */}
+      {!isTauri && (
+        <div
+          data-mica-surface
+          className="app-topbar relative flex flex-col shrink-0 border-b border-[#252525] bg-[#0d0d0d]"
+        >
+          {/* Row 1 */}
+          <div className="flex items-center justify-between px-4 py-2">
+            {/* Status + Server Controls */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`h-2 w-2 rounded-full shrink-0 ${
+                  isConnected
+                    ? isAuthenticated
+                      ? "bg-[#16C60C]"
+                      : "bg-[#DCDCAA]"
+                    : tunnelStatus === "connecting"
+                      ? "bg-[#DCDCAA] animate-pulse"
+                      : "bg-[#E74856]"
+                }`}
+                style={{
+                  boxShadow: isConnected
+                    ? isAuthenticated ? "0 0 6px #16C60C" : "0 0 6px #DCDCAA"
+                    : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
+                }}
+              />
+               <span className="text-base font-normal text-[#CCCCCC] tracking-wide">Termote</span>
+            </div>
+
+            {/* Search */}
+            <div className="flex items-center">
+              {searchOpen ? (
+                <div className="relative flex items-center">
+                  <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                    className="h-7 w-36 sm:w-48 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
+                    onBlur={() => {
+                      if (!searchQuery) setSearchOpen(false)
+                    }}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                  title="Search"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2 */}
+          <div className="flex items-center justify-between px-4 pb-2">
+            {/* View mode toggle */}
+            <div className="flex items-center gap-2 p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
+              <button
+                onClick={() => setViewMode("tabs")}
+                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
+                  viewMode === "tabs"
+                    ? "bg-white/10 text-white"
+                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                Tabs
+              </button>
+              <button
+                onClick={() => setViewMode("panes")}
+                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
+                  viewMode === "panes"
+                    ? "bg-white/10 text-white"
+                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                Panes
+              </button>
+            </div>
+
+            {/* Focus button */}
+            <div className="flex items-center">
+              <button
+                onClick={focusThisDevice}
+                title="Focus"
+                className="flex items-center justify-center rounded p-1.5 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-1.5"
+              >
+                <Crosshair className="h-4 w-4" />
+                <span className="text-xs font-medium">Focus</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main content with sidebar + content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Main content area with left sidebar + topbar + panes */}
+        {/* Main content area with left sidebar + panes */}
         <div className="main-column flex flex-1 flex-col overflow-hidden">
-          {/* Connection status bar / Topbar (Only rendered in web version) */}
-          {!isTauri && (
-            <div
-              data-mica-surface
-              className="app-topbar relative flex shrink-0 items-center px-4 py-2 border-b border-[#252525] bg-[#0d0d0d]"
-            >
-              {/* Status + Server Controls - left side */}
-              <div className="flex items-center gap-2">
-                <div
-                  className={`h-2 w-2 rounded-full shrink-0 ${
-                    isConnected
-                      ? isAuthenticated
-                        ? "bg-[#16C60C]"
-                        : "bg-[#DCDCAA]"
-                      : tunnelStatus === "connecting"
-                        ? "bg-[#DCDCAA] animate-pulse"
-                        : "bg-[#E74856]"
-                  }`}
-                  style={{
-                    boxShadow: isConnected
-                      ? isAuthenticated ? "0 0 6px #16C60C" : "0 0 6px #DCDCAA"
-                      : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
-                  }}
-                />
-                 <span className="text-base font-normal text-[#CCCCCC] tracking-wide">Termote</span>
-              </div>
-
-              {/* View mode toggle - centered */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
-                <button
-                  onClick={() => setViewMode("tabs")}
-                  className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
-                    viewMode === "tabs"
-                      ? "bg-white/10 text-white"
-                      : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  Tabs
-                </button>
-                <button
-                  onClick={() => setViewMode("panes")}
-                  className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
-                    viewMode === "panes"
-                      ? "bg-white/10 text-white"
-                      : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  Panes
-                </button>
-              </div>
-
-              {/* Focus button + Search - right side */}
-              <div className="ml-auto mr-2 flex items-center gap-2">
-                <button
-                  onClick={focusThisDevice}
-                  title="Focus"
-                  className="flex items-center justify-center rounded p-1.5 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-1.5"
-                >
-                  <Crosshair className="h-4 w-4" />
-                  <span className="text-xs font-medium">Focus</span>
-                </button>
-                {searchOpen ? (
-                  <div className="relative flex items-center">
-                    <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                      className="h-7 w-36 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
-                      onBlur={() => {
-                        if (!searchQuery) setSearchOpen(false)
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setSearchOpen(true)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
-                    title="Search"
-                  >
-                    <Search className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Main panes area */}
           <div className="flex-1 overflow-hidden">
             {showTabs ? <TabBar searchQuery={searchQuery} /> : <SplitPane searchQuery={searchQuery} />}
