@@ -144,8 +144,8 @@ export function TabBar({ searchQuery }: TabBarProps) {
             style={{ left: sidebarWidth - 4 }}
             onMouseDown={() => setIsResizing(true)}
           />
-          {/* Header */}
-          <div className="flex flex-col gap-1 mb-2">
+          {/* Header buttons - fixed at top */}
+          <div className="flex flex-col gap-1 mb-2 shrink-0">
             <div className="flex items-center justify-start px-1 mb-1">
               <button
                 onClick={toggleTabsSidebar}
@@ -218,92 +218,95 @@ export function TabBar({ searchQuery }: TabBarProps) {
             </button>
           </div>
 
-          <div className="h-px bg-[#252525] mb-1" />
+          <div className="h-px bg-[#252525] mb-1 shrink-0" />
 
-          {/* Group rows */}
-          {groups.map((group) => {
-            const groupPanes = panes.filter(p => p.groupId === group.id && activePanes.includes(p.id))
-            const isExpanded = expandedGroups.has(group.id)
-            const groupStatus = getHighestActivityStatus(groupPanes.map(p => paneActivities[p.id]))
-            return (
-              <div key={group.id} className="group/row">
-                <div className={`flex items-center gap-2 px-3 cursor-pointer ${isTauriApp ? 'py-1.5' : 'py-3'}`} onClick={() => {
-                  const newSet = new Set(expandedGroups)
-                  if (isExpanded) newSet.delete(group.id)
-                  else newSet.add(group.id)
-                  setExpandedGroups(newSet)
-                }}>
-                  <span className="text-xs text-[#CCCCCC] shrink-0 w-5 h-5 flex items-center justify-center rounded border border-[#444]">{isExpanded ? "▾" : "▸"}</span>
-                  <span className="truncate text-sm text-[#CCCCCC]">{group.name}</span>
-                  <div className="ml-auto flex items-center gap-1.5 shrink-0">
-                    <ActivityIndicator status={groupStatus} />
-                    <span className="text-xs text-[#CCCCCC]">{groupPanes.length}</span>
-                  </div>
-                </div>
-                {isExpanded && groupPanes.map((pane) => (
-                  <div
-                    key={pane.id}
-                    className={`flex items-center gap-2 px-3 text-sm cursor-pointer rounded ml-2 ${isTauriApp ? 'py-1.5' : 'py-3'} ${
-                      selectedTab === pane.id
-                        ? "text-[#CCCCCC] bg-white/[0.08]"
-                        : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
-                    }`}
-                    onClick={() => selectTab(pane.id)}
-                  >
-                    {pane.paneType === "browser" || pane.url ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    ) : pane.shell === "note" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    ) : pane.shell === "image" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    ) : pane.shell === "whiteboard" ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                    ) : (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                    )}
-                    <span className="truncate text-[#CCCCCC]">{pane.name}</span>
+          {/* Scrollable pane list */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {/* Group rows */}
+            {groups.map((group) => {
+              const groupPanes = panes.filter(p => p.groupId === group.id && activePanes.includes(p.id))
+              const isExpanded = expandedGroups.has(group.id)
+              const groupStatus = getHighestActivityStatus(groupPanes.map(p => paneActivities[p.id]))
+              return (
+                <div key={group.id} className="group/row">
+                  <div className={`flex items-center gap-2 px-3 cursor-pointer ${isTauriApp ? 'py-1.5' : 'py-3'}`} onClick={() => {
+                    const newSet = new Set(expandedGroups)
+                    if (isExpanded) newSet.delete(group.id)
+                    else newSet.add(group.id)
+                    setExpandedGroups(newSet)
+                  }}>
+                    <span className="text-xs text-[#CCCCCC] shrink-0 w-5 h-5 flex items-center justify-center rounded border border-[#444]">{isExpanded ? "▾" : "▸"}</span>
+                    <span className="truncate text-sm text-[#CCCCCC]">{group.name}</span>
                     <div className="ml-auto flex items-center gap-1.5 shrink-0">
-                      <ActivityIndicator status={paneActivities[pane.id]} />
-                      {pane.pinned && <span className="text-[#CCCCCC]">★</span>}
+                      <ActivityIndicator status={groupStatus} />
+                      <span className="text-xs text-[#CCCCCC]">{groupPanes.length}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )
-          })}
+                  {isExpanded && groupPanes.map((pane) => (
+                    <div
+                      key={pane.id}
+                      className={`flex items-center gap-2 px-3 text-sm cursor-pointer rounded ml-2 ${isTauriApp ? 'py-1.5' : 'py-3'} ${
+                        selectedTab === pane.id
+                          ? "text-[#CCCCCC] bg-white/[0.08]"
+                          : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
+                      }`}
+                      onClick={() => selectTab(pane.id)}
+                    >
+                      {pane.paneType === "browser" || pane.url ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                      ) : pane.shell === "note" ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      ) : pane.shell === "image" ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      ) : pane.shell === "whiteboard" ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                      )}
+                      <span className="truncate text-[#CCCCCC]">{pane.name}</span>
+                      <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                        <ActivityIndicator status={paneActivities[pane.id]} />
+                        {pane.pinned && <span className="text-[#CCCCCC]">★</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
 
-          {/* Ungrouped panes */}
-          {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
-            <div
-              key={pane.id}
-              className={`flex items-center gap-2 px-3 text-sm cursor-pointer rounded ${isTauriApp ? 'py-1.5' : 'py-3'} ${
-                selectedTab === pane.id
-                  ? "text-[#CCCCCC] bg-white/[0.08]"
-                  : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
-              }`}
-              onClick={() => selectTab(pane.id)}
-            >
-              {pane.paneType === "browser" || pane.url ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              ) : pane.shell === "note" ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              ) : pane.shell === "image" ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              ) : pane.shell === "whiteboard" ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-              ) : (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-              )}
-              <span className="truncate text-[#CCCCCC]">{pane.name}</span>
-              <div className="ml-auto flex items-center gap-1.5 shrink-0">
-                <ActivityIndicator status={paneActivities[pane.id]} />
-                {pane.pinned && <span className="text-[#CCCCCC]">★</span>}
+            {/* Ungrouped panes */}
+            {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
+              <div
+                key={pane.id}
+                className={`flex items-center gap-2 px-3 text-sm cursor-pointer rounded ${isTauriApp ? 'py-1.5' : 'py-3'} ${
+                  selectedTab === pane.id
+                    ? "text-[#CCCCCC] bg-white/[0.08]"
+                    : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
+                }`}
+                onClick={() => selectTab(pane.id)}
+              >
+                {pane.paneType === "browser" || pane.url ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                ) : pane.shell === "note" ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                ) : pane.shell === "image" ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                ) : pane.shell === "whiteboard" ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                )}
+                <span className="truncate text-[#CCCCCC]">{pane.name}</span>
+                <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                  <ActivityIndicator status={paneActivities[pane.id]} />
+                  {pane.pinned && <span className="text-[#CCCCCC]">★</span>}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
-          {/* Spacer + Port manager */}
-          <div className="mt-auto pt-2 border-t border-[#252525]">
+          {/* PortManager - sticky at bottom */}
+          <div className="shrink-0 pt-2 border-t border-[#252525]">
             <PortManager />
           </div>
         </div>

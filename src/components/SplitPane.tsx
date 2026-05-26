@@ -153,14 +153,15 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           </button>
         </div>
       ) : (
-      <div data-mica-surface className={`flex shrink-0 flex-col gap-1 border-r border-[#252525] p-2 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
+      <div data-mica-surface className={`flex shrink-0 flex-col border-r border-[#252525] ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`} style={{ width: sidebarWidth }}>
         {/* Resize handle */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-[#CCCCCC] transition-colors"
           style={{ left: sidebarWidth - 4 }}
           onMouseDown={() => setIsResizing(true)}
         />
-        <div className="flex flex-col gap-1 mb-2">
+        {/* Header buttons - fixed at top */}
+        <div className="flex flex-col gap-1 p-2 shrink-0">
           <div className="flex items-center justify-start px-1 mb-1">
             <button
               onClick={toggleSidebar}
@@ -239,7 +240,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           </button>
         </div>
         {/* Separator */}
-        <div className="h-px bg-[#252525] mb-1" />
+        <div className="h-px bg-[#252525] mb-1 shrink-0" />
+
+        {/* Scrollable pane list */}
+        <div className="flex-1 overflow-y-auto min-h-0 px-2">
 
         {/* All Panes */}
         <div
@@ -481,9 +485,12 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             </div>
           )
         })}
-        {/* Spacer */}
-        <div className="flex-1" />
-        <PortManager />
+        </div>
+
+        {/* PortManager - sticky at bottom */}
+        <div className="shrink-0 p-2 border-t border-[#252525]">
+          <PortManager />
+        </div>
       </div>
       )}
 
