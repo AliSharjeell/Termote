@@ -88,15 +88,33 @@ export async function ensureNativeBrowserWebview(
   }
 
   console.log(`[NativeBrowserWebview] Repositioning existing webview: ${label}`)
-  console.log(`[NativeBrowserWebview] Webview object valid: ${!!existing.webview} type: ${typeof existing.webview}`)
+  const { Webview } = await import("@tauri-apps/api/webview")
   const { LogicalPosition, LogicalSize } = await import("@tauri-apps/api/dpi")
+
+  // Get fresh webview reference from Tauri instead of using cached one
+  let webviewObj
+  try {
+    webviewObj = await Webview.getByLabel(label)
+    console.log(`[NativeBrowserWebview] Got fresh webview reference: ${!!webviewObj}`)
+  } catch (err) {
+    console.error(`[NativeBrowserWebview] Failed to get webview by label: ${err}`)
+    webviews.delete(label)
+    throw err
+  }
+
+  if (!webviewObj) {
+    console.error(`[NativeBrowserWebview] Webview not found by label: ${label}`)
+    webviews.delete(label)
+    throw new Error("webview not found")
+  }
+
   try {
     console.log(`[NativeBrowserWebview] Calling setPosition on webview...`)
-    await existing.webview.setPosition(new LogicalPosition(Math.round(rect.x), Math.round(rect.y)))
+    await webviewObj.setPosition(new LogicalPosition(Math.round(rect.x), Math.round(rect.y)))
     console.log(`[NativeBrowserWebview] Position set for: ${label}`)
-    await existing.webview.setSize(new LogicalSize(Math.max(1, Math.round(rect.width)), Math.max(1, Math.round(rect.height))))
+    await webviewObj.setSize(new LogicalSize(Math.max(1, Math.round(rect.width)), Math.max(1, Math.round(rect.height))))
     console.log(`[NativeBrowserWebview] Size set for: ${label}`)
-    await existing.webview.show()
+    await webviewObj.show()
     console.log(`[NativeBrowserWebview] Webview shown: ${label}`)
   } catch (err) {
     console.error(`[NativeBrowserWebview] Failed to reposition webview: ${label}`, err)
@@ -104,7 +122,9 @@ export async function ensureNativeBrowserWebview(
     throw err
   }
 
-  return existing.webview
+  // Update the map with fresh reference
+  webviews.set(label, { webview: webviewObj, url: existing.url })
+  return webviewObj
 }
 
 export async function closeNativeBrowserWebview(paneId: string) {
