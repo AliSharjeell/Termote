@@ -24,7 +24,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(selectedGroupId ? [selectedGroupId] : ["__all__"]))
   const [sidebarWidth, setSidebarWidth] = useState(224)
   const [isResizing, setIsResizing] = useState(false)
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
@@ -41,6 +41,15 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
       cleanupResize()
     }
   }, [])
+
+  // Auto-expand the selected group when it changes
+  useEffect(() => {
+    const groupToExpand = selectedGroupId ?? "__all__"
+    setExpandedGroups((prev) => {
+      if (prev.has(groupToExpand)) return prev
+      return new Set([...prev, groupToExpand])
+    })
+  }, [selectedGroupId])
 
   // Filter by group if a group is selected
   const filteredPanes = searchQuery
