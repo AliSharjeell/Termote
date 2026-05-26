@@ -636,7 +636,7 @@ function DashboardContent() {
       {/* Profile sidebar - on RIGHT (both panes and tabs mode) */}
       {profileSidebarCollapsed
         ? (
-          <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-12 sm:w-10 h-full">
+          <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-10 h-full">
             <button
               onClick={toggleProfileSidebar}
               title="Expand profile sidebar"
