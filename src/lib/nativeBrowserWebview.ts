@@ -81,17 +81,28 @@ export async function ensureNativeBrowserWebview(
 
     console.log(`[NativeBrowserWebview] Creating new webview: ${label}`)
     const handle = await createNativeWebview(label, url, rect)
+    console.log(`[NativeBrowserWebview] Storing webview in map: ${label} handle=${!!handle} webview=${!!handle.webview}`)
     webviews.set(label, handle)
+    console.log(`[NativeBrowserWebview] Webview stored, map has: ${webviews.has(label)}`)
     return handle.webview
   }
 
   console.log(`[NativeBrowserWebview] Repositioning existing webview: ${label}`)
+  console.log(`[NativeBrowserWebview] Webview object valid: ${!!existing.webview} type: ${typeof existing.webview}`)
   const { LogicalPosition, LogicalSize } = await import("@tauri-apps/api/dpi")
-  await Promise.all([
-    existing.webview.setPosition(new LogicalPosition(Math.round(rect.x), Math.round(rect.y))),
-    existing.webview.setSize(new LogicalSize(Math.max(1, Math.round(rect.width)), Math.max(1, Math.round(rect.height)))),
-    existing.webview.show(),
-  ])
+  try {
+    console.log(`[NativeBrowserWebview] Calling setPosition on webview...`)
+    await existing.webview.setPosition(new LogicalPosition(Math.round(rect.x), Math.round(rect.y)))
+    console.log(`[NativeBrowserWebview] Position set for: ${label}`)
+    await existing.webview.setSize(new LogicalSize(Math.max(1, Math.round(rect.width)), Math.max(1, Math.round(rect.height))))
+    console.log(`[NativeBrowserWebview] Size set for: ${label}`)
+    await existing.webview.show()
+    console.log(`[NativeBrowserWebview] Webview shown: ${label}`)
+  } catch (err) {
+    console.error(`[NativeBrowserWebview] Failed to reposition webview: ${label}`, err)
+    webviews.delete(label)
+    throw err
+  }
 
   return existing.webview
 }
