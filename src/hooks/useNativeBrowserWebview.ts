@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, type RefObject } from "react"
+import { useCallback, useEffect, useRef, type RefObject } from "react"
 import {
   closeNativeBrowserWebview,
   ensureNativeBrowserWebview,
@@ -8,6 +8,7 @@ import {
   measureNativeBrowserRects,
   type BrowserPhysicalRect,
 } from "@/lib/nativeBrowserWebview"
+import { isTauriBuild } from "@/lib/tauriDetect"
 
 interface UseNativeBrowserWebviewOptions {
   paneId: string
@@ -26,59 +27,121 @@ export function useNativeBrowserWebview({
   refreshKey,
   onPhysicalRect,
 }: UseNativeBrowserWebviewOptions) {
+  const createdRef = useRef(false)
+  const creatingRef = useRef<Promise<void> | null>(null)
+  const missingLoggedRef = useRef(false)
+
   useEffect(() => {
-    if (!enabled || !url) {
+    if (!isTauriBuild()) return
+    if (!enabled || !url || !paneId) {
       onPhysicalRect(null)
       void hideNativeBrowserWebview(paneId)
+      void closeNativeBrowserWebview(paneId)
+      createdRef.current = false
+      creatingRef.current = null
+      missingLoggedRef.current = false
       return
     }
 
     let cancelled = false
     let resizeObserver: ResizeObserver | null = null
-    let intervalId: ReturnType<typeof setInterval> | null = null
     let rafId = 0
 
-    const sync = () => {
+    async function ensureThenSync() {
       if (cancelled) return
-      cancelAnimationFrame(rafId)
-      rafId = requestAnimationFrame(() => {
-        const element = viewportRef.current
-        if (!element || cancelled) return
+      const element = viewportRef.current
+      if (!element) return
 
-        void measureNativeBrowserRects(element)
-          .then(({ viewport, physical }) => {
-            if (cancelled || viewport.width < 2 || viewport.height < 2) return
-            onPhysicalRect(physical)
-            return ensureNativeBrowserWebview(paneId, url, viewport)
-          })
-          .catch((error) => {
-            console.error("[NativeBrowserWebview] sync failed", error)
-            onPhysicalRect(null)
-          })
-      })
+      const { viewport, physical } = await measureNativeBrowserRects(element)
+      if (cancelled) return
+
+      if (viewport.width < 2 || viewport.height < 2) {
+        onPhysicalRect(null)
+        return
+      }
+
+      onPhysicalRect(physical)
+
+      try {
+        // Only create if not already created
+        if (!createdRef.current) {
+          // If creation is already in progress, wait for it
+          if (!creatingRef.current) {
+            creatingRef.current = ensureNativeBrowserWebview(paneId, url!, viewport)
+              .then(() => {
+                createdRef.current = true
+              })
+              .catch((err) => {
+                // If creation fails, reset so we can retry
+                console.warn("[NativeBrowserWebview] create failed, will retry:", err)
+                createdRef.current = false
+                creatingRef.current = null
+                throw err
+              })
+          }
+          await creatingRef.current
+        }
+
+        if (cancelled) return
+
+        // Now sync - this repositions and sets visibility
+        await ensureNativeBrowserWebview(paneId, url!, viewport)
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        // Throttle error spam - only log missing webview once
+        if (msg.includes("webview not found") || msg.includes("not found")) {
+          if (!missingLoggedRef.current) {
+            console.warn("[NativeBrowserWebview] webview missing, will recreate:", msg)
+            missingLoggedRef.current = true
+            // Reset so next sync will create fresh
+            createdRef.current = false
+            creatingRef.current = null
+          }
+        } else {
+          console.error("[NativeBrowserWebview] sync failed", error)
+        }
+        onPhysicalRect(null)
+      }
     }
 
-    sync()
+    const scheduleSync = () => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(ensureThenSync)
+    }
+
+    scheduleSync()
 
     const element = viewportRef.current
     if (element) {
-      resizeObserver = new ResizeObserver(sync)
+      resizeObserver = new ResizeObserver(scheduleSync)
       resizeObserver.observe(element)
     }
 
-    window.addEventListener("resize", sync)
-    window.addEventListener("scroll", sync, true)
-    intervalId = setInterval(sync, 600)
+    window.addEventListener("resize", scheduleSync)
+    window.addEventListener("scroll", scheduleSync, true)
 
     return () => {
       cancelled = true
       cancelAnimationFrame(rafId)
       resizeObserver?.disconnect()
-      window.removeEventListener("resize", sync)
-      window.removeEventListener("scroll", sync, true)
-      if (intervalId) clearInterval(intervalId)
-      onPhysicalRect(null)
-      void closeNativeBrowserWebview(paneId)
+      window.removeEventListener("resize", scheduleSync)
+      window.removeEventListener("scroll", scheduleSync, true)
+      missingLoggedRef.current = false
+      // Note: we don't close the webview on cleanup here
+      // because the pane might remount with the same paneId
+      // and we want to reuse the webview. The parent component
+      // should call closeNativeBrowserWebview explicitly on pane close.
     }
-  }, [enabled, onPhysicalRect, paneId, refreshKey, url, viewportRef])
+  }, [enabled, paneId, url, refreshKey])
+
+  // Cleanup on pane close - called separately when pane is destroyed
+  const cleanupOnClose = useCallback(() => {
+    createdRef.current = false
+    creatingRef.current = null
+    missingLoggedRef.current = false
+    void closeNativeBrowserWebview(paneId)
+  }, [paneId])
+
+  // Expose cleanup for parent to call on pane close
+  ;(useNativeBrowserWebview as unknown as { cleanup: typeof cleanupOnClose }).cleanup = cleanupOnClose
 }
