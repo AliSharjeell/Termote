@@ -110,6 +110,18 @@ export function TabBar({ searchQuery }: TabBarProps) {
     return () => clearTimeout(timeout)
   }, [tabsSidebarCollapsed, tabsGitSidebarCollapsed])
 
+  // Auto-expand parent group when selected tab belongs to a group
+  useEffect(() => {
+    if (!selectedTab) return
+    const pane = panes.find(p => p.id === selectedTab)
+    if (pane?.groupId) {
+      setExpandedGroups(prev => {
+        if (prev.has(pane.groupId!)) return prev
+        return new Set([...prev, pane.groupId!])
+      })
+    }
+  }, [selectedTab, panes])
+
 
   return (
     <div className={`flex h-full w-full flex-row ${isMica ? "bg-transparent" : "bg-[#0C0C0C]"}`}>
