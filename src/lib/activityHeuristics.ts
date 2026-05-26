@@ -11,6 +11,7 @@ interface PaneRuntime {
   lastOutputAt: number
   startedAt: number
   agentAwaitingInput: boolean
+  sawOutputSinceStart: boolean
 }
 
 type AudioContextWindow = Window &
@@ -20,6 +21,9 @@ type AudioContextWindow = Window &
 
 const paneRuntimes = new Map<string, PaneRuntime>()
 const debounceTimers = new Map<string, number>()
+const OUTPUT_ANALYSIS_DELAY_MS = 600
+const AGENT_STREAM_IDLE_MS = 3000
+const AGENT_SILENT_IDLE_MS = 15000
 
 const AI_COMMANDS = new Set([
   "claude",
@@ -81,6 +85,8 @@ const promptRequestPatterns = [
   /\bdo you want\b/i,
   /\bwould you like\b/i,
   /\bneeds? input\b/i,
+  /\b(?:ask|message|tell|send)\s+(?:codex|claude|gemini|aider)\b/i,
+  /\bpress\s+enter\s+to\s+send\b/i,
 ]
 
 function getRuntime(paneId: string): PaneRuntime {
@@ -94,9 +100,30 @@ function getRuntime(paneId: string): PaneRuntime {
     lastOutputAt: 0,
     startedAt: 0,
     agentAwaitingInput: false,
+    sawOutputSinceStart: false,
   }
   paneRuntimes.set(paneId, runtime)
   return runtime
+}
+
+function clearAnalysisTimer(paneId: string) {
+  const previousTimer = debounceTimers.get(paneId)
+  if (previousTimer != null) {
+    window.clearTimeout(previousTimer)
+    debounceTimers.delete(paneId)
+  }
+}
+
+function scheduleAnalysis(paneId: string, delayMs: number) {
+  if (typeof window === "undefined") return
+
+  clearAnalysisTimer(paneId)
+  const timer = window.setTimeout(() => {
+    debounceTimers.delete(paneId)
+    analyzeTerminalBuffer(paneId)
+  }, delayMs)
+
+  debounceTimers.set(paneId, timer)
 }
 
 function playBeep(type: "input" | "done" | "crashed") {
@@ -209,19 +236,28 @@ function beginCommand(paneId: string, command: string) {
 
   if (!kind && runtime.kind === "agent") {
     runtime.startedAt = Date.now()
+    runtime.lastOutputAt = runtime.startedAt
     runtime.buffer = ""
     runtime.agentAwaitingInput = false
+    runtime.sawOutputSinceStart = false
     setPaneActivity(paneId, "running")
+    scheduleAnalysis(paneId, AGENT_SILENT_IDLE_MS)
     return
   }
 
+  clearAnalysisTimer(paneId)
   runtime.kind = kind
   runtime.startedAt = kind ? Date.now() : 0
+  runtime.lastOutputAt = kind ? runtime.startedAt : runtime.lastOutputAt
   runtime.buffer = ""
 
   if (kind) {
     runtime.agentAwaitingInput = false
+    runtime.sawOutputSinceStart = false
     setPaneActivity(paneId, "running")
+    if (kind === "agent") {
+      scheduleAnalysis(paneId, AGENT_SILENT_IDLE_MS)
+    }
   }
 }
 
@@ -237,6 +273,8 @@ function appendInput(paneId: string, data: string) {
       runtime.kind = null
       runtime.inputBuffer = ""
       runtime.agentAwaitingInput = false
+      runtime.sawOutputSinceStart = false
+      clearAnalysisTimer(paneId)
       setPaneActivity(paneId, wasServer ? "crashed" : "idle")
       continue
     }
@@ -366,6 +404,7 @@ function clearRuntimeCommand(runtime: PaneRuntime) {
   runtime.kind = null
   runtime.startedAt = 0
   runtime.agentAwaitingInput = false
+  runtime.sawOutputSinceStart = false
 }
 
 function analyzeTerminalBuffer(paneId: string) {
@@ -410,7 +449,22 @@ function analyzeTerminalBuffer(paneId: string) {
     return
   }
 
-  if (runtime.kind === "agent" || runtime.kind === "build" || runtime.kind === "server") {
+  if (runtime.kind === "agent") {
+    const timeSinceOutput = Date.now() - runtime.lastOutputAt
+    const idleAfterMs = runtime.sawOutputSinceStart ? AGENT_STREAM_IDLE_MS : AGENT_SILENT_IDLE_MS
+
+    if (timeSinceOutput >= idleAfterMs) {
+      runtime.agentAwaitingInput = true
+      setPaneActivity(paneId, "needs_input")
+      return
+    }
+
+    setPaneActivity(paneId, "running")
+    scheduleAnalysis(paneId, idleAfterMs - timeSinceOutput)
+    return
+  }
+
+  if (runtime.kind === "build" || runtime.kind === "server") {
     setPaneActivity(paneId, "running")
     return
   }
@@ -421,12 +475,7 @@ function analyzeTerminalBuffer(paneId: string) {
     return
   }
 
-  const timer = window.setTimeout(() => {
-    debounceTimers.delete(paneId)
-    analyzeTerminalBuffer(paneId)
-  }, 5000 - timeSinceOutput)
-
-  debounceTimers.set(paneId, timer)
+  scheduleAnalysis(paneId, 5000 - timeSinceOutput)
 }
 
 export function handleTerminalInput(paneId: string, data: string) {
@@ -447,22 +496,16 @@ export function handleTerminalOutput(paneId: string, data: string) {
     return
   }
 
+  if (runtime.kind === "agent") {
+    runtime.sawOutputSinceStart = true
+  }
+
   const currentStatus = usePaneStore.getState().paneActivities[paneId] ?? "idle"
   if (currentStatus !== "crashed") {
     setPaneActivity(paneId, "running")
   }
 
-  const previousTimer = debounceTimers.get(paneId)
-  if (previousTimer != null) {
-    window.clearTimeout(previousTimer)
-  }
-
-  const timer = window.setTimeout(() => {
-    debounceTimers.delete(paneId)
-    analyzeTerminalBuffer(paneId)
-  }, 600)
-
-  debounceTimers.set(paneId, timer)
+  scheduleAnalysis(paneId, OUTPUT_ANALYSIS_DELAY_MS)
 }
 
 export function clearPaneActivity(paneId: string) {
