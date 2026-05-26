@@ -86,6 +86,15 @@ export type CreatePaneMessage = {
   whiteboard_data?: string | null
   image_data?: string | null
 }
+export type UpdateBrowserUrlMessage = { action: "update_browser_url"; pane_id: string; url: string; name?: string | null }
+export type BrowserMirrorSignalMessage = {
+  action: "browser_mirror_signal"
+  pane_id: string
+  from_peer_id: string
+  to_peer_id?: string | null
+  kind: string
+  data: unknown
+}
 export type ReadFileMessage = { action: "read_file"; pane_id?: string | null; absolute_path: string }
 export type InputMessage = { action: "input"; pane_id: string; data: string }
 export type ResizeMessage = { action: "resize"; pane_id: string; cols: number; rows: number }
@@ -113,7 +122,7 @@ export type KillProcessMessage = { action: "kill_process"; pid: number }
 export type NotificationUpdateMessage = { action: "notification_update"; notification: NotificationSyncItem }
 export type ClearNotificationHistoryMessage = { action: "clear_notification_history" }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | CreatePaneMessage | ReadFileMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | TogglePinMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage | NotificationUpdateMessage | ClearNotificationHistoryMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | CreatePaneMessage | UpdateBrowserUrlMessage | BrowserMirrorSignalMessage | ReadFileMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | TogglePinMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage | NotificationUpdateMessage | ClearNotificationHistoryMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -240,5 +249,13 @@ export type PaneContentUpdatedEvent = {
 
 export type NotificationUpdateEvent = { event: "notification_update"; notification: NotificationSyncItem }
 export type NotificationHistoryClearedEvent = { event: "notification_history_cleared" }
+export type BrowserMirrorSignalEvent = {
+  event: "browser_mirror_signal"
+  pane_id: string
+  from_peer_id: string
+  to_peer_id?: string | null
+  kind: string
+  data: unknown
+}
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent | FullStateSyncEvent | PaneContentUpdatedEvent | NotificationUpdateEvent | NotificationHistoryClearedEvent
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent | FullStateSyncEvent | PaneContentUpdatedEvent | NotificationUpdateEvent | NotificationHistoryClearedEvent | BrowserMirrorSignalEvent

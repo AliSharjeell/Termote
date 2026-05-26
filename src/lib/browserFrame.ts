@@ -16,7 +16,8 @@ export interface RuntimeSnapshot {
 
 /**
  * Normalize a raw URL input to a full URL string.
- * Adds http:// prefix if missing.
+ * Adds a protocol if missing. Public hosts default to HTTPS; localhost,
+ * private IPs, and dev-server style host:port inputs default to HTTP.
  */
 export function normalizeUrl(input: string): string {
   let url = input.trim()
@@ -24,10 +25,26 @@ export function normalizeUrl(input: string): string {
   if (!url) throw new Error("Missing URL")
 
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = `http://${url}`
+    url = `${shouldDefaultToHttp(url) ? "http" : "https"}://${url}`
   }
 
   return new URL(url).toString()
+}
+
+function shouldDefaultToHttp(input: string): boolean {
+  const host = input.split(/[/?#]/, 1)[0].toLowerCase()
+
+  return (
+    host === "localhost" ||
+    host.startsWith("localhost:") ||
+    host === "[::1]" ||
+    host.startsWith("[::1]:") ||
+    /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(host) ||
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+    /^[\w.-]+:\d+$/.test(host)
+  )
 }
 
 /**

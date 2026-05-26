@@ -1,26 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { X, Monitor, Smartphone, Tablet, Laptop, RefreshCw } from "lucide-react"
-import { buildBrowserFrameSrc } from "@/lib/browserFrame"
+import { useCallback, useRef, useState } from "react"
+import { Laptop, Monitor, RefreshCw, Smartphone, Tablet, X } from "lucide-react"
+import { useNativeBrowserWebview } from "@/hooks/useNativeBrowserWebview"
+import { BrowserMirrorView } from "./BrowserMirrorView"
 
 export interface DevicePreset {
   name: string
   label: string
-  width: number
-  height: number
+  aspectRatio: string
+  ratio: number
+  hint: string
   icon: "desktop" | "mobile" | "tablet" | "laptop"
 }
 
 export const DEVICE_PRESETS: DevicePreset[] = [
-  { name: "desktop", label: "Desktop", width: 1920, height: 1080, icon: "desktop" },
-  { name: "laptop", label: "Laptop", width: 1366, height: 768, icon: "laptop" },
-  { name: "tablet-landscape", label: "Tablet (L)", width: 1024, height: 768, icon: "tablet" },
-  { name: "tablet-portrait", label: "Tablet (P)", width: 768, height: 1024, icon: "tablet" },
-  { name: "mobile", label: "Mobile", width: 390, height: 844, icon: "mobile" },
-  { name: "mobile-small", label: "Small Phone", width: 320, height: 568, icon: "mobile" },
-  { name: "wide", label: "Ultrawide", width: 2560, height: 1080, icon: "desktop" },
-  { name: "hd", label: "720p", width: 1280, height: 720, icon: "desktop" },
+  { name: "desktop", label: "Desktop", aspectRatio: "16 / 9", ratio: 16 / 9, hint: "16:9", icon: "desktop" },
+  { name: "laptop", label: "Laptop", aspectRatio: "16 / 10", ratio: 16 / 10, hint: "16:10", icon: "laptop" },
+  { name: "tablet-landscape", label: "Tablet L", aspectRatio: "4 / 3", ratio: 4 / 3, hint: "4:3", icon: "tablet" },
+  { name: "tablet-portrait", label: "Tablet P", aspectRatio: "3 / 4", ratio: 3 / 4, hint: "3:4", icon: "tablet" },
+  { name: "mobile", label: "Mobile", aspectRatio: "9 / 16", ratio: 9 / 16, hint: "9:16", icon: "mobile" },
+  { name: "mobile-tall", label: "Tall Phone", aspectRatio: "9 / 19.5", ratio: 9 / 19.5, hint: "9:19.5", icon: "mobile" },
+  { name: "wide", label: "Ultrawide", aspectRatio: "21 / 9", ratio: 21 / 9, hint: "21:9", icon: "desktop" },
 ]
 
 const iconMap = {
@@ -31,106 +32,94 @@ const iconMap = {
 }
 
 interface DevicePreviewModalProps {
+  paneId: string
+  title: string
   url: string
-  proxyUrl: string | null
+  isTauri: boolean
   onClose: () => void
 }
 
-export function DevicePreviewModal({ url, proxyUrl, onClose }: DevicePreviewModalProps) {
+export function DevicePreviewModal({ paneId, title, url, isTauri, onClose }: DevicePreviewModalProps) {
   const [selected, setSelected] = useState<DevicePreset>(DEVICE_PRESETS[0])
-  const [iframeKey, setIframeKey] = useState(0)
-  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null)
+  const [previewKey, setPreviewKey] = useState(0)
+  const previewRef = useRef<HTMLDivElement | null>(null)
+  const ignorePhysicalRect = useCallback(() => {}, [])
 
-  // Resolve the frame src using the same runtime-aware logic
-  // This ensures Tauri uses direct localhost, web uses proxy
-  useEffect(() => {
-    if (!url) {
-      setResolvedSrc(null)
-      return
-    }
-
-    buildBrowserFrameSrc(url).then(src => {
-      setResolvedSrc(src)
-    }).catch(() => {
-      // Fallback to proxyUrl if resolution fails
-      setResolvedSrc(proxyUrl ?? url)
-    })
-  }, [url, proxyUrl])
-
-  const src = resolvedSrc ?? proxyUrl ?? url
-
-  const handleRefresh = () => {
-    setIframeKey(prev => prev + 1)
-  }
+  useNativeBrowserWebview({
+    paneId: `${paneId}-preview`,
+    url,
+    enabled: isTauri,
+    viewportRef: previewRef,
+    refreshKey: previewKey,
+    onPhysicalRect: ignorePhysicalRect,
+  })
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80">
-      {/* Preview container */}
-      <div className="flex flex-col items-center gap-4 max-w-full max-h-full overflow-auto p-4">
-        {/* Device selector */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex flex-wrap justify-center gap-2 max-w-lg">
-            {DEVICE_PRESETS.map((preset) => {
-              const Icon = iconMap[preset.icon]
-              const isActive = selected.name === preset.name
-              return (
-                <button
-                  key={preset.name}
-                  onClick={() => setSelected(preset)}
-                  className={`flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs transition-colors ${
-                    isActive
-                      ? "bg-white text-black"
-                      : "bg-[#27272A] text-[#CCCCCC] hover:bg-[#333333]"
-                  }`}
-                  title={`${preset.width}×${preset.height}`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{preset.label}</span>
-                  <span className="text-[10px] opacity-60">{preset.width}×{preset.height}</span>
-                </button>
-              )
-            })}
-          </div>
+      <div className="flex max-h-full max-w-full flex-col items-center gap-4 overflow-auto p-4">
+        <div className="flex flex-wrap justify-center gap-2">
+          {DEVICE_PRESETS.map((preset) => {
+            const Icon = iconMap[preset.icon]
+            const isActive = selected.name === preset.name
+            return (
+              <button
+                key={preset.name}
+                onClick={() => setSelected(preset)}
+                className={`flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs transition-colors ${
+                  isActive
+                    ? "bg-white text-black"
+                    : "bg-[#27272A] text-[#CCCCCC] hover:bg-[#333333]"
+                }`}
+                title={preset.hint}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{preset.label}</span>
+                <span className="text-[10px] opacity-60">{preset.hint}</span>
+              </button>
+            )
+          })}
         </div>
 
-        {/* Device frame */}
         <div
-          className="relative bg-white rounded-xl shadow-2xl overflow-hidden"
+          className="relative max-h-[calc(100vh-160px)] overflow-hidden rounded-xl bg-black shadow-2xl"
           style={{
-            width: selected.width,
-            height: selected.height,
-            maxWidth: "calc(100vw - 32px)",
-            maxHeight: "calc(100vh - 160px)",
+            aspectRatio: selected.aspectRatio,
+            width: `min(calc(100vw - 32px), calc((100vh - 160px) * ${selected.ratio}), 1200px)`,
           }}
         >
-          <iframe
-            key={iframeKey}
-            src={src}
-            className="w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-            title={`Device preview: ${selected.label}`}
-          />
+          {isTauri ? (
+            <div ref={previewRef} className="relative h-full w-full overflow-hidden bg-white">
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-black/35">
+                Native responsive browser preview
+              </div>
+            </div>
+          ) : (
+            <BrowserMirrorView
+              key={`${selected.name}-${previewKey}`}
+              paneId={paneId}
+              title={`${title} preview: ${selected.label}`}
+              aspectRatio={selected.aspectRatio}
+            />
+          )}
         </div>
 
-        {/* Label */}
         <div className="text-xs text-[#808080]">
-          {selected.label} — {selected.width} × {selected.height}
+          {selected.label} - aspect {selected.hint}; scales to available space
         </div>
       </div>
 
-      {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] text-[#808080] hover:text-white transition-colors"
+        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#808080] transition-colors hover:bg-[#333333] hover:text-white"
+        aria-label="Close preview"
       >
         <X className="h-5 w-5" />
       </button>
 
-      {/* Refresh button */}
       <button
-        onClick={handleRefresh}
-        className="absolute top-4 right-16 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] text-[#808080] hover:text-white transition-colors"
-        title="Refresh"
+        onClick={() => setPreviewKey(prev => prev + 1)}
+        className="absolute right-16 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#27272A] text-[#808080] transition-colors hover:bg-[#333333] hover:text-white"
+        title="Reconnect preview"
       >
         <RefreshCw className="h-5 w-5" />
       </button>

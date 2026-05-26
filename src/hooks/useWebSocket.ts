@@ -235,6 +235,11 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
         case "notification_history_cleared":
           clearNotificationHistoryFromSync()
           break
+        case "browser_mirror_signal":
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("termote-browser-mirror-signal", { detail: message }))
+          }
+          break
       }
     },
     [setLayout, setConnected, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleSourceControlState, handleGitReposFound, handlePortProcesses, handleProcessKilled, applyNotificationSync, applyNotificationSnapshot, clearNotificationHistoryFromSync]

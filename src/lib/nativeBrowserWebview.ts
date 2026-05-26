@@ -1,0 +1,124 @@
+import { normalizeUrl } from "./browserFrame"
+
+export interface BrowserViewportRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export interface BrowserPhysicalRect {
+  x: number
+  y: number
+  width: number
+  height: number
+  scaleFactor: number
+}
+
+type NativeWebviewHandle = {
+  webview: import("@tauri-apps/api/webview").Webview
+  url: string
+}
+
+const webviews = new Map<string, NativeWebviewHandle>()
+
+export function getNativeBrowserWebviewLabel(paneId: string) {
+  return `browser_${paneId.replace(/[^a-zA-Z0-9_/:.-]/g, "_")}`
+}
+
+async function createNativeWebview(
+  label: string,
+  url: string,
+  rect: BrowserViewportRect
+): Promise<NativeWebviewHandle> {
+  const [{ Webview }, { getCurrentWindow }] = await Promise.all([
+    import("@tauri-apps/api/webview"),
+    import("@tauri-apps/api/window"),
+  ])
+
+  const existing = await Webview.getByLabel(label)
+  if (existing) {
+    await existing.close().catch(() => undefined)
+  }
+
+  const appWindow = getCurrentWindow()
+  const webview = new Webview(appWindow, label, {
+    url,
+    x: Math.round(rect.x),
+    y: Math.round(rect.y),
+    width: Math.max(1, Math.round(rect.width)),
+    height: Math.max(1, Math.round(rect.height)),
+    focus: false,
+    backgroundColor: "#ffffff",
+  })
+
+  return { webview, url }
+}
+
+export async function ensureNativeBrowserWebview(
+  paneId: string,
+  rawUrl: string,
+  rect: BrowserViewportRect
+) {
+  const label = getNativeBrowserWebviewLabel(paneId)
+  const url = normalizeUrl(rawUrl)
+  const existing = webviews.get(label)
+
+  if (!existing || existing.url !== url) {
+    if (existing) {
+      await existing.webview.close().catch(() => undefined)
+      webviews.delete(label)
+    }
+
+    const handle = await createNativeWebview(label, url, rect)
+    webviews.set(label, handle)
+    return handle.webview
+  }
+
+  const { LogicalPosition, LogicalSize } = await import("@tauri-apps/api/dpi")
+  await Promise.all([
+    existing.webview.setPosition(new LogicalPosition(Math.round(rect.x), Math.round(rect.y))),
+    existing.webview.setSize(new LogicalSize(Math.max(1, Math.round(rect.width)), Math.max(1, Math.round(rect.height)))),
+    existing.webview.show(),
+  ])
+
+  return existing.webview
+}
+
+export async function closeNativeBrowserWebview(paneId: string) {
+  const label = getNativeBrowserWebviewLabel(paneId)
+  const existing = webviews.get(label)
+  webviews.delete(label)
+  await existing?.webview.close().catch(() => undefined)
+}
+
+export async function hideNativeBrowserWebview(paneId: string) {
+  const label = getNativeBrowserWebviewLabel(paneId)
+  await webviews.get(label)?.webview.hide().catch(() => undefined)
+}
+
+export async function measureNativeBrowserRects(element: HTMLElement) {
+  const { getCurrentWindow } = await import("@tauri-apps/api/window")
+  const appWindow = getCurrentWindow()
+  const [innerPosition, scaleFactor] = await Promise.all([
+    appWindow.innerPosition(),
+    appWindow.scaleFactor(),
+  ])
+
+  const bounds = element.getBoundingClientRect()
+  const viewport: BrowserViewportRect = {
+    x: bounds.left,
+    y: bounds.top,
+    width: bounds.width,
+    height: bounds.height,
+  }
+  const physical: BrowserPhysicalRect = {
+    x: Math.round(innerPosition.x + bounds.left * scaleFactor),
+    y: Math.round(innerPosition.y + bounds.top * scaleFactor),
+    width: Math.max(1, Math.round(bounds.width * scaleFactor)),
+    height: Math.max(1, Math.round(bounds.height * scaleFactor)),
+    scaleFactor,
+  }
+
+  return { viewport, physical }
+}

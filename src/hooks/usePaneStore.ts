@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { isNotificationActivityStatus } from "@/lib/activityStatus"
+import { normalizeUrl } from "@/lib/browserFrame"
 import { notificationSoundTypeForStatus, playNotificationSound } from "@/lib/notificationSound"
 import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType, PaneActivityState, SystemActivity, NotificationHistoryItem, NotificationSnapshot, NotificationSyncItem } from "@/lib/types"
 
@@ -181,6 +182,14 @@ function createSharedPaneMessage(pane: Pane, paneType: SharedPaneType) {
     note_content: pane.noteContent ?? null,
     whiteboard_data: pane.whiteboardData ?? null,
     image_data: pane.imageData ?? null,
+  }
+}
+
+function browserNameFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname || "Browser"
+  } catch {
+    return "Browser"
   }
 }
 
@@ -369,6 +378,7 @@ interface PaneState {
   openBrowserModal: () => void
   closeBrowserModal: () => void
   spawnBrowserPane: (url: string) => void
+  updateBrowserPaneUrl: (paneId: string, url: string) => void
   closeExplorer: () => void
   openImagePicker: (paneId: string) => void
   closeImagePicker: () => void
@@ -1572,16 +1582,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     // Check if there's an existing browser pane without a URL to update
     const browserPane = panes.find(p => p.paneType === "browser" && !p.url)
     if (browserPane) {
-      // Update existing browser pane with URL
-      const name = (() => { try { return new URL(url).hostname } catch { return "Browser" } })()
-      const proxyUrl = buildBrowserProxyUrl(url)
-      const updatedPanes = panes.map(p =>
-        p.id === browserPane.id
-          ? { ...p, url, name, proxyUrl }
-          : p
-      )
-      set({ panes: updatedPanes })
-      savePanes(updatedPanes)
+      get().updateBrowserPaneUrl(browserPane.id, url)
+    } else {
+      get().spawnBrowserPane(url)
     }
   },
 
@@ -1593,14 +1596,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const { panes, activePanes, ws, isAuthenticated } = get()
     const id = `browser-${Date.now()}`
     const paneType = "browser"
-    const proxyUrl = buildBrowserProxyUrl(url)
-    const name = (() => {
-      try {
-        return new URL(url).hostname || "Browser"
-      } catch {
-        return "Browser"
-      }
-    })()
+    const normalizedUrl = url.trim() ? normalizeUrl(url) : null
+    const proxyUrl = buildBrowserProxyUrl(normalizedUrl)
+    const name = normalizedUrl ? browserNameFromUrl(normalizedUrl) : "Browser"
     const newPane: Pane = {
       id,
       pid: 0,
@@ -1609,7 +1607,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       cols: 80,
       rows: 24,
       paneType,
-      url,
+      url: normalizedUrl,
       proxyUrl,
     }
     const updatedPanes = [...panes, newPane]
@@ -1621,8 +1619,37 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     savePanes(updatedPanes)
     saveActivePanes([...activePanes, id])
     saveSelectedTab(id)
-    if (isAuthenticated) {
+    if (isAuthenticated && normalizedUrl) {
       sendIfSocketOpen(ws, createSharedPaneMessage(newPane, paneType), "create_pane")
+    }
+  },
+
+  updateBrowserPaneUrl: (paneId, url) => {
+    const { panes, ws, isAuthenticated } = get()
+    const normalizedUrl = normalizeUrl(url)
+    const name = browserNameFromUrl(normalizedUrl)
+    const proxyUrl = buildBrowserProxyUrl(normalizedUrl)
+    const existingPane = panes.find(p => p.id === paneId)
+    const updatedPanes = panes.map(p =>
+      p.id === paneId
+        ? { ...p, url: normalizedUrl, name, proxyUrl, paneType: "browser" as const, shell: "browser" as const }
+        : p
+    )
+
+    set({ panes: updatedPanes })
+    savePanes(updatedPanes)
+    if (isAuthenticated) {
+      const updatedPane = updatedPanes.find(p => p.id === paneId)
+      if (!existingPane?.url && updatedPane) {
+        sendIfSocketOpen(ws, createSharedPaneMessage(updatedPane, "browser"), "create_pane")
+        return
+      }
+
+      sendIfSocketOpen(
+        ws,
+        { action: "update_browser_url", pane_id: paneId, url: normalizedUrl, name },
+        "update_browser_url"
+      )
     }
   },
 

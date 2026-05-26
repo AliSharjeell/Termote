@@ -1,4 +1,7 @@
-use serde::Serialize;
+use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
+use enigo::{Axis, Button, Coordinate, Direction, Enigo, Key, Keyboard, Mouse, Settings};
+use image::{codecs::jpeg::JpegEncoder, imageops::FilterType, DynamicImage};
+use serde::{Deserialize, Serialize};
 use std::{
     env,
     net::{Shutdown, TcpStream},
@@ -92,6 +95,72 @@ struct DevtunnelLoginEvent {
     status: String,      // "checking", "login_required", "login_url", "login_success", "login_failed"
     message: String,
     url: Option<String>, // login URL when status is "login_url"
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BrowserCaptureRect {
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    max_width: Option<u32>,
+    quality: Option<u8>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BrowserCaptureFrame {
+    data_url: String,
+    width: u32,
+    height: u32,
+    source_width: u32,
+    source_height: u32,
+    timestamp: u64,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+enum BrowserRemoteInput {
+    Click { x: i32, y: i32, button: Option<String> },
+    Scroll { x: i32, y: i32, delta_x: i32, delta_y: i32 },
+    Text { text: String },
+    Key { key: String },
+}
+
+fn now_millis() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
+
+fn mouse_button_from_name(button: Option<&str>) -> Button {
+    match button.unwrap_or("left").to_ascii_lowercase().as_str() {
+        "right" | "2" => Button::Right,
+        "middle" | "1" => Button::Middle,
+        _ => Button::Left,
+    }
+}
+
+fn key_from_name(key: &str) -> Option<Key> {
+    match key {
+        "Enter" => Some(Key::Return),
+        "Backspace" => Some(Key::Backspace),
+        "Tab" => Some(Key::Tab),
+        "Escape" => Some(Key::Escape),
+        "ArrowLeft" => Some(Key::LeftArrow),
+        "ArrowRight" => Some(Key::RightArrow),
+        "ArrowUp" => Some(Key::UpArrow),
+        "ArrowDown" => Some(Key::DownArrow),
+        "Home" => Some(Key::Home),
+        "End" => Some(Key::End),
+        "PageUp" => Some(Key::PageUp),
+        "PageDown" => Some(Key::PageDown),
+        "Delete" => Some(Key::Delete),
+        " " => Some(Key::Space),
+        _ => None,
+    }
 }
 
 fn generate_token() -> String {
@@ -774,6 +843,137 @@ async fn check_for_updates() -> Result<String, String> {
     Ok("Updates are handled by the installed desktop app release.".to_string())
 }
 
+#[tauri::command]
+async fn capture_browser_region(rect: BrowserCaptureRect) -> Result<BrowserCaptureFrame, String> {
+    tokio::task::spawn_blocking(move || {
+        if rect.width < 2 || rect.height < 2 {
+            return Err("Capture region is too small".to_string());
+        }
+
+        let monitor = xcap::Monitor::from_point(rect.x, rect.y)
+            .map_err(|error| format!("Failed to resolve capture monitor: {}", error))?;
+
+        let monitor_x = monitor
+            .x()
+            .map_err(|error| format!("Failed to read monitor x position: {}", error))?;
+        let monitor_y = monitor
+            .y()
+            .map_err(|error| format!("Failed to read monitor y position: {}", error))?;
+        let monitor_width = monitor
+            .width()
+            .map_err(|error| format!("Failed to read monitor width: {}", error))?;
+        let monitor_height = monitor
+            .height()
+            .map_err(|error| format!("Failed to read monitor height: {}", error))?;
+        let local_x = (rect.x - monitor_x).max(0) as u32;
+        let local_y = (rect.y - monitor_y).max(0) as u32;
+        let available_width = monitor_width.saturating_sub(local_x);
+        let available_height = monitor_height.saturating_sub(local_y);
+        let capture_width = rect.width.min(available_width).max(1);
+        let capture_height = rect.height.min(available_height).max(1);
+
+        let image = monitor
+            .capture_region(local_x, local_y, capture_width, capture_height)
+            .map_err(|error| format!("Failed to capture browser region: {}", error))?;
+
+        let mut dynamic_image = DynamicImage::ImageRgba8(image);
+        let source_width = dynamic_image.width();
+        let source_height = dynamic_image.height();
+        let max_width = rect.max_width.unwrap_or(1280).clamp(320, 1920);
+
+        if source_width > max_width {
+            let target_height = ((source_height as f32) * (max_width as f32 / source_width as f32))
+                .round()
+                .max(1.0) as u32;
+            dynamic_image = dynamic_image.resize_exact(max_width, target_height, FilterType::Triangle);
+        }
+
+        let quality = rect.quality.unwrap_or(62).clamp(30, 88);
+        let mut jpeg = Vec::new();
+        {
+            let mut encoder = JpegEncoder::new_with_quality(&mut jpeg, quality);
+            encoder
+                .encode_image(&dynamic_image)
+                .map_err(|error| format!("Failed to encode browser frame: {}", error))?;
+        }
+
+        Ok(BrowserCaptureFrame {
+            data_url: format!("data:image/jpeg;base64,{}", BASE64_STANDARD.encode(jpeg)),
+            width: dynamic_image.width(),
+            height: dynamic_image.height(),
+            source_width,
+            source_height,
+            timestamp: now_millis(),
+        })
+    })
+    .await
+    .map_err(|error| format!("Capture task failed: {}", error))?
+}
+
+#[tauri::command]
+async fn apply_browser_remote_input(input: BrowserRemoteInput) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        let mut enigo = Enigo::new(&Settings::default())
+            .map_err(|error| format!("Failed to initialize input controller: {}", error))?;
+
+        match input {
+            BrowserRemoteInput::Click { x, y, button } => {
+                enigo
+                    .move_mouse(x, y, Coordinate::Abs)
+                    .map_err(|error| format!("Failed to move mouse: {}", error))?;
+                enigo
+                    .button(mouse_button_from_name(button.as_deref()), Direction::Click)
+                    .map_err(|error| format!("Failed to click mouse: {}", error))?;
+            }
+            BrowserRemoteInput::Scroll {
+                x,
+                y,
+                delta_x,
+                delta_y,
+            } => {
+                enigo
+                    .move_mouse(x, y, Coordinate::Abs)
+                    .map_err(|error| format!("Failed to move mouse: {}", error))?;
+
+                let vertical_steps = (delta_y / 80).clamp(-12, 12);
+                let horizontal_steps = (delta_x / 80).clamp(-12, 12);
+                if vertical_steps != 0 {
+                    enigo
+                        .scroll(vertical_steps, Axis::Vertical)
+                        .map_err(|error| format!("Failed to scroll vertically: {}", error))?;
+                }
+                if horizontal_steps != 0 {
+                    enigo
+                        .scroll(horizontal_steps, Axis::Horizontal)
+                        .map_err(|error| format!("Failed to scroll horizontally: {}", error))?;
+                }
+            }
+            BrowserRemoteInput::Text { text } => {
+                if !text.is_empty() {
+                    enigo
+                        .text(&text)
+                        .map_err(|error| format!("Failed to type text: {}", error))?;
+                }
+            }
+            BrowserRemoteInput::Key { key } => {
+                if let Some(mapped_key) = key_from_name(&key) {
+                    enigo
+                        .key(mapped_key, Direction::Click)
+                        .map_err(|error| format!("Failed to press key: {}", error))?;
+                } else if key.chars().count() == 1 {
+                    enigo
+                        .text(&key)
+                        .map_err(|error| format!("Failed to type key: {}", error))?;
+                }
+            }
+        }
+
+        Ok(())
+    })
+    .await
+    .map_err(|error| format!("Input task failed: {}", error))?
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Handle --cwd argument: send to existing instance or pass to new one
@@ -801,6 +1001,8 @@ pub fn run() {
             restart_server,
             start_remote_access,
             stop_remote_access,
+            capture_browser_region,
+            apply_browser_remote_input,
             check_for_updates
         ])
         .build(tauri::generate_context!())
