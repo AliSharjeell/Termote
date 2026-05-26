@@ -993,13 +993,20 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   selectTab: (tabId) => {
     saveSelectedTab(tabId)
-    set((state) => ({
-      selectedTab: tabId,
-      paneActivities: {
-        ...state.paneActivities,
-        [tabId]: "idle"
+    set((state) => {
+      const currentActivity = state.paneActivities[tabId]
+      if (currentActivity !== "needs_input" && currentActivity !== "done" && currentActivity !== "crashed") {
+        return { selectedTab: tabId }
       }
-    }))
+
+      return {
+        selectedTab: tabId,
+        paneActivities: {
+          ...state.paneActivities,
+          [tabId]: "idle",
+        },
+      }
+    })
   },
   setViewMode: (mode) => {
     saveViewMode(mode)

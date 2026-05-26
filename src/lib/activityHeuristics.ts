@@ -10,6 +10,7 @@ interface PaneRuntime {
   kind: ActivityKind | null
   lastOutputAt: number
   startedAt: number
+  agentAwaitingInput: boolean
 }
 
 type AudioContextWindow = Window &
@@ -92,6 +93,7 @@ function getRuntime(paneId: string): PaneRuntime {
     kind: null,
     lastOutputAt: 0,
     startedAt: 0,
+    agentAwaitingInput: false,
   }
   paneRuntimes.set(paneId, runtime)
   return runtime
@@ -205,11 +207,20 @@ function beginCommand(paneId: string, command: string) {
   const runtime = getRuntime(paneId)
   const kind = classifyCommand(trimmedCommand)
 
+  if (!kind && runtime.kind === "agent") {
+    runtime.startedAt = Date.now()
+    runtime.buffer = ""
+    runtime.agentAwaitingInput = false
+    setPaneActivity(paneId, "running")
+    return
+  }
+
   runtime.kind = kind
   runtime.startedAt = kind ? Date.now() : 0
   runtime.buffer = ""
 
   if (kind) {
+    runtime.agentAwaitingInput = false
     setPaneActivity(paneId, "running")
   }
 }
@@ -225,6 +236,7 @@ function appendInput(paneId: string, data: string) {
       const wasServer = runtime.kind === "server"
       runtime.kind = null
       runtime.inputBuffer = ""
+      runtime.agentAwaitingInput = false
       setPaneActivity(paneId, wasServer ? "crashed" : "idle")
       continue
     }
@@ -238,6 +250,7 @@ function appendInput(paneId: string, data: string) {
     }
 
     if (char === "\b" || char === "\x7f") {
+      clearPaneNotification(paneId)
       runtime.inputBuffer = runtime.inputBuffer.slice(0, -1)
       continue
     }
@@ -307,15 +320,15 @@ function looksLikeAiInputPrompt(runtime: PaneRuntime, line: string, cleanBuffer:
   if (runtime.kind !== "agent") return false
 
   const recentLines = getRecentMeaningfulLines(cleanBuffer)
-  const recentText = recentLines.join("\n")
+  const recentText = recentLines.slice(-8).join("\n")
   const normalizedLines = recentLines.map(normalizePromptLine)
   const normalizedLastLine = normalizePromptLine(line)
 
-  if (normalizedLines.some((candidate) => /^(?:>|\u203a|\u276F)(?:\s|$)/u.test(candidate))) {
+  if (normalizedLines.slice(-3).some((candidate) => /^(?:>|\u203a|\u276F)\s*$/u.test(candidate))) {
     return true
   }
 
-  if (/^(?:>|\u203a|\u276F)(?:\s|$)/u.test(normalizedLastLine)) return true
+  if (/^(?:>|\u203a|\u276F)\s*$/u.test(normalizedLastLine)) return true
   if (normalizedLastLine.endsWith("?")) return true
 
   return promptRequestPatterns.some((pattern) => pattern.test(recentText))
@@ -352,6 +365,7 @@ function shouldNotifyDone(runtime: PaneRuntime, cleanBuffer: string): boolean {
 function clearRuntimeCommand(runtime: PaneRuntime) {
   runtime.kind = null
   runtime.startedAt = 0
+  runtime.agentAwaitingInput = false
 }
 
 function analyzeTerminalBuffer(paneId: string) {
@@ -373,6 +387,7 @@ function analyzeTerminalBuffer(paneId: string) {
   }
 
   if (looksLikeAiInputPrompt(runtime, lastLine, cleanBuffer)) {
+    runtime.agentAwaitingInput = true
     setPaneActivity(paneId, "needs_input")
     return
   }
@@ -427,6 +442,10 @@ export function handleTerminalOutput(paneId: string, data: string) {
   const lastLine = getLastMeaningfulLine(cleanBuffer)
   const isTrackedOutput = looksLikeTrackedOutput(runtime, cleanBuffer, lastLine)
   if (!isTrackedOutput) return
+
+  if (runtime.kind === "agent" && runtime.agentAwaitingInput) {
+    return
+  }
 
   const currentStatus = usePaneStore.getState().paneActivities[paneId] ?? "idle"
   if (currentStatus !== "crashed") {
