@@ -1,5 +1,6 @@
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { isNotificationActivityStatus } from "@/lib/activityStatus"
+import { notificationSoundTypeForStatus, playNotificationSound } from "@/lib/notificationSound"
 import type { PaneActivityState } from "@/lib/types"
 
 type ActivityKind = "agent" | "server" | "build"
@@ -13,11 +14,6 @@ interface PaneRuntime {
   agentAwaitingInput: boolean
   sawOutputSinceStart: boolean
 }
-
-type AudioContextWindow = Window &
-  typeof globalThis & {
-    webkitAudioContext?: typeof AudioContext
-  }
 
 const paneRuntimes = new Map<string, PaneRuntime>()
 const debounceTimers = new Map<string, number>()
@@ -126,56 +122,9 @@ function scheduleAnalysis(paneId: string, delayMs: number) {
   debounceTimers.set(paneId, timer)
 }
 
-function playBeep(type: "input" | "done" | "crashed") {
-  const store = usePaneStore.getState()
-  if (!store.soundEnabled) return
-  if (typeof window === "undefined") return
-
-  const audioWindow = window as AudioContextWindow
-  const AudioContextCtor = audioWindow.AudioContext ?? audioWindow.webkitAudioContext
-  if (!AudioContextCtor) return
-
-  try {
-    const ctx = new AudioContextCtor()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-
-    if (type === "crashed") {
-      osc.type = "sawtooth"
-      osc.frequency.setValueAtTime(150, ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.3)
-      gain.gain.setValueAtTime(0.3, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3)
-      osc.start(ctx.currentTime)
-      osc.stop(ctx.currentTime + 0.3)
-      return
-    }
-
-    osc.type = "sine"
-    osc.frequency.setValueAtTime(type === "done" ? 600 : 800, ctx.currentTime)
-    if (type === "done") {
-      osc.frequency.setValueAtTime(800, ctx.currentTime + 0.1)
-    }
-    gain.gain.setValueAtTime(0.1, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.2)
-  } catch (error) {
-    console.error("[Termote] Audio playback failed:", error)
-  }
-}
-
 function notifyForStatus(status: PaneActivityState) {
-  if (status === "needs_input") {
-    playBeep("input")
-  } else if (status === "done") {
-    playBeep("done")
-  } else if (status === "crashed") {
-    playBeep("crashed")
-  }
+  const type = notificationSoundTypeForStatus(status)
+  if (type) playNotificationSound(type, usePaneStore.getState().soundEnabled)
 }
 
 function setPaneActivity(paneId: string, status: PaneActivityState) {

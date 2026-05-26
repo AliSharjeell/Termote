@@ -20,6 +20,21 @@ export interface NotificationHistoryItem {
   timestamp: number
 }
 
+export interface NotificationSyncItem {
+  event_id: string
+  source_type: "pane" | "system"
+  source_id: string
+  name: string
+  status: PaneActivityState
+  detail?: string | null
+  timestamp: number
+}
+
+export interface NotificationSnapshot {
+  current: NotificationSyncItem[]
+  history: NotificationSyncItem[]
+}
+
 export interface PaneGroup {
   id: string
   name: string
@@ -95,8 +110,10 @@ export type GetSourceControlStateMessage = { action: "get_source_control_state";
 export type FindGitReposMessage = { action: "find_git_repos"; path: string }
 export type GetPortProcessesMessage = { action: "get_port_processes" }
 export type KillProcessMessage = { action: "kill_process"; pid: number }
+export type NotificationUpdateMessage = { action: "notification_update"; notification: NotificationSyncItem }
+export type ClearNotificationHistoryMessage = { action: "clear_notification_history" }
 
-export type ClientMessage = SpawnMessage | SpawnAtDirMessage | CreatePaneMessage | ReadFileMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | TogglePinMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage
+export type ClientMessage = SpawnMessage | SpawnAtDirMessage | CreatePaneMessage | ReadFileMessage | InputMessage | ResizeMessage | KillMessage | MoveToFloatingMessage | MoveToActiveMessage | TogglePinMessage | AuthMessage | RequestDirectoryPickerMessage | ListDirectoryMessage | GetDeviceListMessage | KickDeviceMessage | BanDeviceMessage | UploadFileMessage | GetGitStatusMessage | GitCommitMessage | GitStageMessage | GitPushMessage | GitPullMessage | GitLogMessage | GetSourceControlStateMessage | FindGitReposMessage | GetPortProcessesMessage | KillProcessMessage | NotificationUpdateMessage | ClearNotificationHistoryMessage
 
 // Server -> Client messages
 export type StateUpdate = {
@@ -210,6 +227,7 @@ export type FullStateSyncEvent = {
   floating_panes: string[]
   groups: PaneGroup[]
   scrollback_buffers: Record<string, string>
+  notifications?: NotificationSnapshot
 }
 
 export type PaneContentUpdatedEvent = {
@@ -220,4 +238,7 @@ export type PaneContentUpdatedEvent = {
   image_data?: string
 }
 
-export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent | FullStateSyncEvent | PaneContentUpdatedEvent
+export type NotificationUpdateEvent = { event: "notification_update"; notification: NotificationSyncItem }
+export type NotificationHistoryClearedEvent = { event: "notification_history_cleared" }
+
+export type ServerMessage = StateUpdate | OutputEvent | AuthResult | GroupCreated | GroupDeleted | GroupRenamed | PaneGroupSet | DirectoryPickerCancelled | DirectoryContentsEvent | DeviceListEvent | DeviceKickedEvent | DeviceBannedEvent | ErrorEvent | FileUploadedEvent | FileReadResultEvent | GitStatusEvent | GitCommitResultEvent | GitLogEvent | SourceControlStateEvent | GitReposFoundEvent | PortProcessesEvent | ProcessKilledEvent | FullStateSyncEvent | PaneContentUpdatedEvent | NotificationUpdateEvent | NotificationHistoryClearedEvent

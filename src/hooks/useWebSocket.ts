@@ -106,6 +106,9 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
     handleGitReposFound,
     handlePortProcesses,
     handleProcessKilled,
+    applyNotificationSync,
+    applyNotificationSnapshot,
+    clearNotificationHistoryFromSync,
   } = usePaneStore()
 
   const handleMessage = useCallback(
@@ -129,6 +132,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           setConnected(true)
           setAuthenticated(true)
           setLayout(message.panes, message.active_panes, message.floating_panes, message.groups ?? [])
+          applyNotificationSnapshot(message.notifications)
           // Replay scrollback buffers to populate terminal history
           if (message.scrollback_buffers) {
             Object.entries(message.scrollback_buffers).forEach(([paneId, data]) => {
@@ -225,9 +229,15 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
             message.image_data ?? null
           )
           break
+        case "notification_update":
+          applyNotificationSync(message.notification)
+          break
+        case "notification_history_cleared":
+          clearNotificationHistoryFromSync()
+          break
       }
     },
-    [setLayout, setConnected, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleSourceControlState, handleGitReposFound, handlePortProcesses, handleProcessKilled]
+    [setLayout, setConnected, setAuthenticated, handleDirectoryContents, handleDeviceList, handleDeviceKicked, handleDeviceBanned, handleFileUploaded, handleImageFileRead, handleGroupCreated, handleGroupDeleted, handleGroupRenamed, handlePaneGroupSet, handleGitStatus, handleGitLog, handleSourceControlState, handleGitReposFound, handlePortProcesses, handleProcessKilled, applyNotificationSync, applyNotificationSnapshot, clearNotificationHistoryFromSync]
   )
 
   const connect = useCallback(async () => {

@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { isNotificationActivityStatus } from "@/lib/activityStatus"
-import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType, PaneActivityState, SystemActivity, NotificationHistoryItem } from "@/lib/types"
+import { notificationSoundTypeForStatus, playNotificationSound } from "@/lib/notificationSound"
+import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType, PaneActivityState, SystemActivity, NotificationHistoryItem, NotificationSnapshot, NotificationSyncItem } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -20,6 +21,8 @@ const SOURCE_CONTROL_REPOS_KEY = "termote-source-control-repos"
 const SOURCE_CONTROL_SELECTED_KEY = "termote-source-control-selected"
 const SOUND_ENABLED_KEY = "termote-sound-enabled"
 const MAX_NOTIFICATION_HISTORY = 50
+const NOTIFICATION_CLIENT_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+const seenNotificationEventIds = new Set<string>()
 
 const GROUP_COLORS = [
   "#E44", // red
@@ -53,10 +56,11 @@ function createNotificationHistoryItem(
   name: string,
   status: NotificationHistoryItem["status"],
   detail?: string,
-  timestamp: number = Date.now()
+  timestamp: number = Date.now(),
+  id: string = `${sourceType}:${sourceId}:${status}:${timestamp}`
 ): NotificationHistoryItem {
   return {
-    id: `${sourceType}:${sourceId}:${status}:${timestamp}`,
+    id,
     sourceId,
     sourceType,
     name,
@@ -66,10 +70,63 @@ function createNotificationHistoryItem(
   }
 }
 
+function createNotificationSyncItem(
+  sourceType: NotificationSyncItem["source_type"],
+  sourceId: string,
+  name: string,
+  status: PaneActivityState,
+  detail?: string | null,
+  timestamp: number = Date.now()
+): NotificationSyncItem {
+  return {
+    event_id: `${NOTIFICATION_CLIENT_ID}:${sourceType}:${sourceId}:${status}:${timestamp}`,
+    source_type: sourceType,
+    source_id: sourceId,
+    name,
+    status,
+    detail: detail ?? null,
+    timestamp,
+  }
+}
+
+function rememberNotificationEvent(eventId: string) {
+  seenNotificationEventIds.add(eventId)
+  if (seenNotificationEventIds.size > 500) {
+    const firstEventId = seenNotificationEventIds.values().next().value
+    if (firstEventId) seenNotificationEventIds.delete(firstEventId)
+  }
+}
+
+function notificationSyncToHistoryItem(notification: NotificationSyncItem): NotificationHistoryItem | null {
+  if (!isNotificationActivityStatus(notification.status)) return null
+
+  return createNotificationHistoryItem(
+    notification.source_type,
+    notification.source_id,
+    notification.name,
+    notification.status,
+    notification.detail ?? undefined,
+    notification.timestamp,
+    notification.event_id
+  )
+}
+
 function prependNotificationHistory(
   history: NotificationHistoryItem[],
   item: NotificationHistoryItem
 ): NotificationHistoryItem[] {
+  const isDuplicate = history.some((existing) => {
+    if (existing.id === item.id) return true
+    return (
+      existing.sourceId === item.sourceId &&
+      existing.sourceType === item.sourceType &&
+      existing.status === item.status &&
+      Math.abs(existing.timestamp - item.timestamp) < 5000
+    )
+  })
+
+  if (isDuplicate) return history
+
   return [item, ...history].slice(0, MAX_NOTIFICATION_HISTORY)
 }
 
@@ -245,6 +302,9 @@ interface PaneState {
   setSystemActivity: (activity: SystemActivity) => void
   clearSystemActivity: (activityId: string) => void
   clearNotificationHistory: () => void
+  applyNotificationSync: (notification: NotificationSyncItem) => void
+  applyNotificationSnapshot: (snapshot?: NotificationSnapshot) => void
+  clearNotificationHistoryFromSync: () => void
   setSoundEnabled: (enabled: boolean) => void
 
   // Actions
@@ -685,15 +745,19 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   soundEnabled: loadSoundEnabled(),
   
   setPaneActivity: (paneId: string, activity: PaneActivityState) => {
-    set((state) => {
-      // Only update if it changed
-      if (state.paneActivities[paneId] === activity) return state
+    const state = get()
+    if (state.paneActivities[paneId] === activity) return
 
-      const pane = state.panes.find((item) => item.id === paneId)
-      const notificationHistory = isNotificationActivityStatus(activity)
+    const pane = state.panes.find((item) => item.id === paneId)
+    const notification = createNotificationSyncItem("pane", paneId, pane?.name ?? "Terminal", activity)
+    rememberNotificationEvent(notification.event_id)
+
+    set((state) => {
+      const historyItem = notificationSyncToHistoryItem(notification)
+      const notificationHistory = historyItem
         ? prependNotificationHistory(
             state.notificationHistory,
-            createNotificationHistoryItem("pane", paneId, pane?.name ?? "Terminal", activity)
+            historyItem
           )
         : state.notificationHistory
 
@@ -705,9 +769,27 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         notificationHistory,
       }
     })
+
+    if (state.isAuthenticated) {
+      sendIfSocketOpen(state.ws, { action: "notification_update", notification }, "notification update")
+    }
   },
 
   setSystemActivity: (activity: SystemActivity) => {
+    const state = get()
+    const previousActivity = state.systemActivities[activity.id]
+    if (previousActivity?.state === activity.state && previousActivity?.detail === activity.detail) return
+
+    const notification = createNotificationSyncItem(
+      "system",
+      activity.id,
+      activity.name,
+      activity.state,
+      activity.detail,
+      activity.updatedAt
+    )
+    rememberNotificationEvent(notification.event_id)
+
     set((state) => {
       if (activity.state === "idle") {
         const nextActivities = { ...state.systemActivities }
@@ -715,21 +797,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         return { systemActivities: nextActivities }
       }
 
-      const previousActivity = state.systemActivities[activity.id]
-      const notificationHistory =
-        previousActivity?.state !== activity.state && isNotificationActivityStatus(activity.state)
-          ? prependNotificationHistory(
-              state.notificationHistory,
-              createNotificationHistoryItem(
-                "system",
-                activity.id,
-                activity.name,
-                activity.state,
-                activity.detail,
-                activity.updatedAt
-              )
-            )
-          : state.notificationHistory
+      const historyItem = notificationSyncToHistoryItem(notification)
+      const notificationHistory = historyItem
+        ? prependNotificationHistory(state.notificationHistory, historyItem)
+        : state.notificationHistory
 
       return {
         systemActivities: {
@@ -739,18 +810,122 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         notificationHistory,
       }
     })
+
+    if (state.isAuthenticated) {
+      sendIfSocketOpen(state.ws, { action: "notification_update", notification }, "notification update")
+    }
   },
 
   clearSystemActivity: (activityId: string) => {
+    const state = get()
+    const activity = state.systemActivities[activityId]
+    if (!activity) return
+
+    const notification = createNotificationSyncItem("system", activityId, activity.name, "idle", activity.detail)
+    rememberNotificationEvent(notification.event_id)
+
     set((state) => {
       if (!state.systemActivities[activityId]) return state
       const nextActivities = { ...state.systemActivities }
       delete nextActivities[activityId]
       return { systemActivities: nextActivities }
     })
+
+    if (state.isAuthenticated) {
+      sendIfSocketOpen(state.ws, { action: "notification_update", notification }, "notification update")
+    }
   },
 
   clearNotificationHistory: () => {
+    const state = get()
+    set({ notificationHistory: [] })
+    if (state.isAuthenticated) {
+      sendIfSocketOpen(state.ws, { action: "clear_notification_history" }, "clear notification history")
+    }
+  },
+
+  applyNotificationSync: (notification: NotificationSyncItem) => {
+    if (seenNotificationEventIds.has(notification.event_id)) return
+    rememberNotificationEvent(notification.event_id)
+    const soundType = notificationSoundTypeForStatus(notification.status)
+    if (soundType) {
+      playNotificationSound(soundType, get().soundEnabled)
+    }
+
+    set((state) => {
+      const historyItem = notificationSyncToHistoryItem(notification)
+      const notificationHistory = historyItem
+        ? prependNotificationHistory(state.notificationHistory, historyItem)
+        : state.notificationHistory
+
+      if (notification.source_type === "pane") {
+        return {
+          paneActivities: {
+            ...state.paneActivities,
+            [notification.source_id]: notification.status,
+          },
+          notificationHistory,
+        }
+      }
+
+      if (notification.status === "idle") {
+        const nextActivities = { ...state.systemActivities }
+        delete nextActivities[notification.source_id]
+        return {
+          systemActivities: nextActivities,
+          notificationHistory,
+        }
+      }
+
+      return {
+        systemActivities: {
+          ...state.systemActivities,
+          [notification.source_id]: {
+            id: notification.source_id,
+            name: notification.name,
+            state: notification.status,
+            detail: notification.detail ?? undefined,
+            updatedAt: notification.timestamp,
+          },
+        },
+        notificationHistory,
+      }
+    })
+  },
+
+  applyNotificationSnapshot: (snapshot?: NotificationSnapshot) => {
+    if (!snapshot) return
+
+    const paneActivities: Record<string, PaneActivityState> = {}
+    const systemActivities: Record<string, SystemActivity> = {}
+
+    for (const notification of snapshot.current) {
+      rememberNotificationEvent(notification.event_id)
+      if (notification.status === "idle") continue
+
+      if (notification.source_type === "pane") {
+        paneActivities[notification.source_id] = notification.status
+      } else {
+        systemActivities[notification.source_id] = {
+          id: notification.source_id,
+          name: notification.name,
+          state: notification.status,
+          detail: notification.detail ?? undefined,
+          updatedAt: notification.timestamp,
+        }
+      }
+    }
+
+    const notificationHistory = snapshot.history.reduce<NotificationHistoryItem[]>((history, notification) => {
+      rememberNotificationEvent(notification.event_id)
+      const historyItem = notificationSyncToHistoryItem(notification)
+      return historyItem ? prependNotificationHistory(history, historyItem) : history
+    }, [])
+
+    set({ paneActivities, systemActivities, notificationHistory })
+  },
+
+  clearNotificationHistoryFromSync: () => {
     set({ notificationHistory: [] })
   },
   
@@ -1054,20 +1229,11 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   selectTab: (tabId) => {
     saveSelectedTab(tabId)
-    set((state) => {
-      const currentActivity = state.paneActivities[tabId]
-      if (currentActivity !== "needs_input" && currentActivity !== "done" && currentActivity !== "crashed") {
-        return { selectedTab: tabId }
-      }
-
-      return {
-        selectedTab: tabId,
-        paneActivities: {
-          ...state.paneActivities,
-          [tabId]: "idle",
-        },
-      }
-    })
+    const currentActivity = get().paneActivities[tabId]
+    set({ selectedTab: tabId })
+    if (isNotificationActivityStatus(currentActivity)) {
+      get().setPaneActivity(tabId, "idle")
+    }
   },
   setViewMode: (mode) => {
     saveViewMode(mode)
