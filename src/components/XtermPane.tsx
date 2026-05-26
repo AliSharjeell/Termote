@@ -288,7 +288,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleFocus}
-        onFocus={handleFocus}
       >
         {isDragOver && (
           <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 z-50 pointer-events-none">

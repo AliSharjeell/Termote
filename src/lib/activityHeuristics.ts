@@ -2,12 +2,12 @@ import { usePaneStore } from "@/hooks/usePaneStore"
 import { isNotificationActivityStatus } from "@/lib/activityStatus"
 import type { PaneActivityState } from "@/lib/types"
 
-type ActivityKind = "unknown" | "agent" | "server" | "build" | "command"
+type ActivityKind = "agent" | "server" | "build"
 
 interface PaneRuntime {
   buffer: string
   inputBuffer: string
-  kind: ActivityKind
+  kind: ActivityKind | null
   lastOutputAt: number
   startedAt: number
 }
@@ -26,6 +26,8 @@ const AI_COMMANDS = new Set([
   "codex",
   "antigravity",
   "antigravity-cli",
+  "antigravity-agent",
+  "ag",
   "agy",
   "opencode",
   "aider",
@@ -87,7 +89,7 @@ function getRuntime(paneId: string): PaneRuntime {
   const runtime: PaneRuntime = {
     buffer: "",
     inputBuffer: "",
-    kind: "unknown",
+    kind: null,
     lastOutputAt: 0,
     startedAt: 0,
   }
@@ -158,15 +160,30 @@ function setPaneActivity(paneId: string, status: PaneActivityState) {
   }
 }
 
-function classifyCommand(command: string): ActivityKind {
+function clearPaneNotification(paneId: string) {
+  const store = usePaneStore.getState()
+  const currentStatus = store.paneActivities[paneId] ?? "idle"
+  if (isNotificationActivityStatus(currentStatus)) {
+    store.setPaneActivity(paneId, "idle")
+  }
+}
+
+function normalizeCommandToken(token: string): string {
+  return token
+    .replace(/^["']|["']$/g, "")
+    .toLowerCase()
+    .split(/[\\/]/)
+    .at(-1)!
+    .replace(/\.(cmd|exe)$/i, "")
+}
+
+function classifyCommand(command: string): ActivityKind | null {
   const normalized = command.trim().replace(/^\s*[&.]\s+/, "")
-  if (!normalized) return "unknown"
+  if (!normalized) return null
 
-  const tokens = normalized
-    .split(/\s+/)
-    .map((token) => token.replace(/^["']|["']$/g, "").toLowerCase())
+  const tokens = normalized.split(/\s+/).map(normalizeCommandToken)
 
-  if (tokens.some((token) => AI_COMMANDS.has(token.replace(/\.(cmd|exe)$/i, "")))) {
+  if (tokens.some((token) => AI_COMMANDS.has(token))) {
     return "agent"
   }
 
@@ -178,7 +195,7 @@ function classifyCommand(command: string): ActivityKind {
     return "build"
   }
 
-  return "command"
+  return null
 }
 
 function beginCommand(paneId: string, command: string) {
@@ -186,24 +203,36 @@ function beginCommand(paneId: string, command: string) {
   if (!trimmedCommand) return
 
   const runtime = getRuntime(paneId)
-  runtime.kind = classifyCommand(trimmedCommand)
-  runtime.startedAt = Date.now()
-  setPaneActivity(paneId, "running")
+  const kind = classifyCommand(trimmedCommand)
+
+  runtime.kind = kind
+  runtime.startedAt = kind ? Date.now() : 0
+  runtime.buffer = ""
+
+  if (kind) {
+    setPaneActivity(paneId, "running")
+  }
 }
 
 function appendInput(paneId: string, data: string) {
   const runtime = getRuntime(paneId)
+  if (/^\x1b(?:\[[0-9;?]*[A-Za-z~]|O[A-Za-z])$/.test(data)) {
+    return
+  }
 
   for (const char of data) {
     if (char === "\x03") {
-      runtime.kind = "unknown"
+      const wasServer = runtime.kind === "server"
+      runtime.kind = null
       runtime.inputBuffer = ""
-      setPaneActivity(paneId, "idle")
+      setPaneActivity(paneId, wasServer ? "crashed" : "idle")
       continue
     }
 
     if (char === "\r" || char === "\n") {
-      beginCommand(paneId, runtime.inputBuffer)
+      clearPaneNotification(paneId)
+      const inferredCommand = runtime.inputBuffer.trim() || inferCommandFromPromptLine(stripAnsi(runtime.buffer))
+      beginCommand(paneId, inferredCommand)
       runtime.inputBuffer = ""
       continue
     }
@@ -214,6 +243,7 @@ function appendInput(paneId: string, data: string) {
     }
 
     if (char >= " " && char !== "\x1b") {
+      clearPaneNotification(paneId)
       runtime.inputBuffer += char
     }
   }
@@ -234,6 +264,23 @@ function getLastMeaningfulLine(cleanBuffer: string): string {
   return lines.at(-1) ?? ""
 }
 
+function getRecentMeaningfulLines(cleanBuffer: string, count = 16): string[] {
+  return cleanBuffer
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0)
+    .slice(-count)
+}
+
+function normalizePromptLine(line: string): string {
+  return line
+    .replace(/[\u2500-\u257F]/gu, " ")
+    .replace(/[\u2580-\u259F]/gu, " ")
+    .replace(/[\uE000-\uF8FF]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 function looksLikeShellPrompt(line: string): boolean {
   const trimmed = line.trim()
   if (!trimmed) return false
@@ -246,14 +293,32 @@ function looksLikeShellPrompt(line: string): boolean {
   )
 }
 
+function inferCommandFromPromptLine(cleanBuffer: string): string {
+  const line = getLastMeaningfulLine(cleanBuffer)
+  return line
+    .replace(/^PS\s+[A-Z]:\\.*>\s*/i, "")
+    .replace(/^[A-Z]:\\.*>\s*/i, "")
+    .replace(/^[^@\s]+@[^:\s]+:.*[$#%]\s*/i, "")
+    .replace(/^[$#%]\s*/, "")
+    .trim()
+}
+
 function looksLikeAiInputPrompt(runtime: PaneRuntime, line: string, cleanBuffer: string): boolean {
   if (runtime.kind !== "agent") return false
 
-  const trimmed = line.trim()
-  if (/^(?:>|\u203a|\u276f)\s*$/u.test(trimmed)) return true
-  if (trimmed.endsWith("?")) return true
+  const recentLines = getRecentMeaningfulLines(cleanBuffer)
+  const recentText = recentLines.join("\n")
+  const normalizedLines = recentLines.map(normalizePromptLine)
+  const normalizedLastLine = normalizePromptLine(line)
 
-  return promptRequestPatterns.some((pattern) => pattern.test(trimmed) || pattern.test(cleanBuffer))
+  if (normalizedLines.some((candidate) => /^(?:>|\u203a|\u276F)(?:\s|$)/u.test(candidate))) {
+    return true
+  }
+
+  if (/^(?:>|\u203a|\u276F)(?:\s|$)/u.test(normalizedLastLine)) return true
+  if (normalizedLastLine.endsWith("?")) return true
+
+  return promptRequestPatterns.some((pattern) => pattern.test(recentText))
 }
 
 function hasCrashSignal(cleanBuffer: string): boolean {
@@ -264,6 +329,19 @@ function looksLikeServerStillRunning(cleanBuffer: string): boolean {
   return /(?:localhost|127\.0\.0\.1|listening|server running|ready in|compiled successfully|started server|webpack compiled|vite v)/i.test(cleanBuffer)
 }
 
+function looksLikeTrackedOutput(runtime: PaneRuntime, cleanBuffer: string, lastLine: string): boolean {
+  if (runtime.kind) return true
+  if (looksLikeShellPrompt(lastLine)) return false
+
+  if (looksLikeServerStillRunning(cleanBuffer)) {
+    runtime.kind = "server"
+    runtime.startedAt = Date.now()
+    return true
+  }
+
+  return false
+}
+
 function shouldNotifyDone(runtime: PaneRuntime, cleanBuffer: string): boolean {
   const elapsed = Date.now() - runtime.startedAt
   if (runtime.kind === "agent" || runtime.kind === "build") return true
@@ -272,7 +350,7 @@ function shouldNotifyDone(runtime: PaneRuntime, cleanBuffer: string): boolean {
 }
 
 function clearRuntimeCommand(runtime: PaneRuntime) {
-  runtime.kind = "unknown"
+  runtime.kind = null
   runtime.startedAt = 0
 }
 
@@ -282,6 +360,9 @@ function analyzeTerminalBuffer(paneId: string) {
 
   const cleanBuffer = stripAnsi(runtime.buffer)
   const lastLine = getLastMeaningfulLine(cleanBuffer)
+  const isTrackedOutput = looksLikeTrackedOutput(runtime, cleanBuffer, lastLine)
+  if (!isTrackedOutput) return
+
   const hasPrompt = looksLikeShellPrompt(lastLine)
   const hasCrash = hasCrashSignal(cleanBuffer)
 
@@ -314,7 +395,7 @@ function analyzeTerminalBuffer(paneId: string) {
     return
   }
 
-  if (runtime.kind === "agent" || runtime.kind === "build" || runtime.kind === "server" || looksLikeServerStillRunning(cleanBuffer)) {
+  if (runtime.kind === "agent" || runtime.kind === "build" || runtime.kind === "server") {
     setPaneActivity(paneId, "running")
     return
   }
@@ -342,6 +423,11 @@ export function handleTerminalOutput(paneId: string, data: string) {
   runtime.buffer = `${runtime.buffer}${data}`.slice(-4000)
   runtime.lastOutputAt = Date.now()
 
+  const cleanBuffer = stripAnsi(runtime.buffer)
+  const lastLine = getLastMeaningfulLine(cleanBuffer)
+  const isTrackedOutput = looksLikeTrackedOutput(runtime, cleanBuffer, lastLine)
+  if (!isTrackedOutput) return
+
   const currentStatus = usePaneStore.getState().paneActivities[paneId] ?? "idle"
   if (currentStatus !== "crashed") {
     setPaneActivity(paneId, "running")
@@ -355,16 +441,13 @@ export function handleTerminalOutput(paneId: string, data: string) {
   const timer = window.setTimeout(() => {
     debounceTimers.delete(paneId)
     analyzeTerminalBuffer(paneId)
-  }, 1200)
+  }, 600)
 
   debounceTimers.set(paneId, timer)
 }
 
 export function clearPaneActivity(paneId: string) {
-  const store = usePaneStore.getState()
-  if ((store.paneActivities[paneId] ?? "idle") !== "idle") {
-    store.setPaneActivity(paneId, "idle")
-  }
+  clearPaneNotification(paneId)
 }
 
 export function notifySystemActivity(
