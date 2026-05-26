@@ -40,12 +40,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const [isCtrlActive, setIsCtrlActive] = useState(false)
   const focusThisDevice = useFocusDevice()
 
-  const handleContainerClick = useCallback(() => {
-    if (devices.length > 1) {
-      focusThisDevice()
-    }
-  }, [devices.length, focusThisDevice])
-
   // Smart Clipboard: Ctrl+C = Copy if text selected, SIGINT if not
   const getKeyHandler = useCallback(
     (terminal: import("@xterm/xterm").Terminal) => {
@@ -269,7 +263,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
   return (
     <div 
       className="terminal-pane-root relative flex h-full w-full flex-col bg-[#0C0C0C]"
-      onClickCapture={handleContainerClick}
     >
       <PaneTitleBar
         title={pane.name}
