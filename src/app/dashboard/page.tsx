@@ -492,7 +492,7 @@ function DashboardContent() {
           }
           right={
             <div data-tauri-no-drag className="flex items-center mr-2 gap-1">
-              <NotificationDropdown />
+              <NotificationDropdown compact />
               {searchOpen ? (
                 <div className="relative flex items-center">
                   <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
@@ -605,19 +605,20 @@ function DashboardContent() {
           </div>
 
           {/* Row 2 */}
-          <div className="flex items-center justify-end px-4 pb-3 gap-2">
-            <NotificationDropdown />
-            {/* Focus button */}
-            <div className="flex items-center">
-              <button
-                onClick={focusThisDevice}
-                title="Focus"
-                className="flex items-center justify-center rounded-md p-2.5 px-4 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-2"
-              >
-                <Crosshair className="h-5 w-5" />
-                <span className="text-sm font-medium">Focus</span>
-              </button>
+          <div className="relative flex items-center justify-center px-4 pb-3 gap-2">
+            {/* Left side: Notification */}
+            <div className="absolute left-4">
+              <NotificationDropdown />
             </div>
+            {/* Center: Focus button */}
+            <button
+              onClick={focusThisDevice}
+              title="Focus"
+              className="flex items-center justify-center rounded-md p-2.5 px-4 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-2"
+            >
+              <Crosshair className="h-5 w-5" />
+              <span className="text-sm font-medium">Focus</span>
+            </button>
           </div>
         </div>
       )}

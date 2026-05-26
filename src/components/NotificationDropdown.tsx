@@ -14,7 +14,11 @@ interface NotificationItem {
   sourceType: "pane" | "system"
 }
 
-export function NotificationDropdown() {
+interface NotificationDropdownProps {
+  compact?: boolean
+}
+
+export function NotificationDropdown({ compact }: NotificationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [now, setNow] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -184,22 +188,22 @@ export function NotificationDropdown() {
           if (nextOpen) setNow(Date.now())
           setIsOpen(nextOpen)
         }}
-        className="relative p-1.5 hover:bg-[#333333] rounded-md text-gray-400 hover:text-white transition-colors"
+        className={`relative hover:bg-[#333333] rounded-md text-gray-400 hover:text-white transition-colors ${compact ? "p-1" : "p-1.5"}`}
         title="Notifications"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
         {badgeColor && (
-          <span className={`absolute top-1 right-1 h-2.5 w-2.5 rounded-full ${badgeColor} border border-[#0C0C0C]`} />
+          <span className={`absolute top-0.5 right-0.5 h-2 w-2 rounded-full ${badgeColor} border border-[#0C0C0C]`} />
         )}
         {!badgeColor && hasRunning && (
-          <span className="absolute top-1 right-1">
-            <Loader2 className="h-2.5 w-2.5 animate-spin rounded-full bg-[#0C0C0C] text-gray-400" />
+          <span className="absolute top-0.5 right-0.5">
+            <Loader2 className="h-2 w-2 animate-spin rounded-full bg-[#0C0C0C] text-gray-400" />
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-md border border-[#333333] bg-[#1E1E1E] py-1 shadow-lg">
+        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-md border border-[#333333] bg-[#1E1E1E] py-1 shadow-lg" style={{ minWidth: '16rem' }}>
           <div className="flex items-center justify-between border-b border-[#333333] px-3 py-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Activity</span>
             {pastItems.length > 0 && (

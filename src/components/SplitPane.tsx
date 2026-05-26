@@ -138,7 +138,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
-            className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
+            className="w-10 h-10 sm:w-8 sm:h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
           >
             <PanelLeft size={18} />
           </button>
