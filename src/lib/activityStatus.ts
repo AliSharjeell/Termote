@@ -19,7 +19,8 @@ export function isVisibleActivityStatus(status: PaneActivityState | undefined): 
   return status != null && status !== "idle"
 }
 
-export function isNotificationActivityStatus(status: PaneActivityState | undefined): boolean {
+export function isNotificationActivityStatus(
+  status: PaneActivityState | undefined
+): status is Exclude<PaneActivityState, "idle" | "running"> {
   return status === "crashed" || status === "needs_input" || status === "done"
 }
-

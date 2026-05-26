@@ -1,5 +1,6 @@
 import { create } from "zustand"
-import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType, PaneActivityState, SystemActivity } from "@/lib/types"
+import { isNotificationActivityStatus } from "@/lib/activityStatus"
+import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType, PaneActivityState, SystemActivity, NotificationHistoryItem } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -18,6 +19,7 @@ const GROUPS_KEY = "termote-groups"
 const SOURCE_CONTROL_REPOS_KEY = "termote-source-control-repos"
 const SOURCE_CONTROL_SELECTED_KEY = "termote-source-control-selected"
 const SOUND_ENABLED_KEY = "termote-sound-enabled"
+const MAX_NOTIFICATION_HISTORY = 50
 
 const GROUP_COLORS = [
   "#E44", // red
@@ -43,6 +45,32 @@ function sendIfSocketOpen(ws: WebSocket | null, message: unknown, label: string)
 
   ws.send(JSON.stringify(message))
   return true
+}
+
+function createNotificationHistoryItem(
+  sourceType: NotificationHistoryItem["sourceType"],
+  sourceId: string,
+  name: string,
+  status: NotificationHistoryItem["status"],
+  detail?: string,
+  timestamp: number = Date.now()
+): NotificationHistoryItem {
+  return {
+    id: `${sourceType}:${sourceId}:${status}:${timestamp}`,
+    sourceId,
+    sourceType,
+    name,
+    status,
+    detail,
+    timestamp,
+  }
+}
+
+function prependNotificationHistory(
+  history: NotificationHistoryItem[],
+  item: NotificationHistoryItem
+): NotificationHistoryItem[] {
+  return [item, ...history].slice(0, MAX_NOTIFICATION_HISTORY)
 }
 
 type SharedPaneType = Exclude<PaneType, "terminal">
@@ -211,10 +239,12 @@ interface PaneState {
   // CLI Activity and Notifications
   paneActivities: Record<string, PaneActivityState>
   systemActivities: Record<string, SystemActivity>
+  notificationHistory: NotificationHistoryItem[]
   soundEnabled: boolean
   setPaneActivity: (paneId: string, activity: PaneActivityState) => void
   setSystemActivity: (activity: SystemActivity) => void
   clearSystemActivity: (activityId: string) => void
+  clearNotificationHistory: () => void
   setSoundEnabled: (enabled: boolean) => void
 
   // Actions
@@ -651,18 +681,28 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   // CLI Activity and Notifications
   paneActivities: {},
   systemActivities: {},
+  notificationHistory: [],
   soundEnabled: loadSoundEnabled(),
   
   setPaneActivity: (paneId: string, activity: PaneActivityState) => {
     set((state) => {
       // Only update if it changed
       if (state.paneActivities[paneId] === activity) return state
-      
+
+      const pane = state.panes.find((item) => item.id === paneId)
+      const notificationHistory = isNotificationActivityStatus(activity)
+        ? prependNotificationHistory(
+            state.notificationHistory,
+            createNotificationHistoryItem("pane", paneId, pane?.name ?? "Terminal", activity)
+          )
+        : state.notificationHistory
+
       return {
         paneActivities: {
           ...state.paneActivities,
-          [paneId]: activity
-        }
+          [paneId]: activity,
+        },
+        notificationHistory,
       }
     })
   },
@@ -675,11 +715,28 @@ export const usePaneStore = create<PaneState>((set, get) => ({
         return { systemActivities: nextActivities }
       }
 
+      const previousActivity = state.systemActivities[activity.id]
+      const notificationHistory =
+        previousActivity?.state !== activity.state && isNotificationActivityStatus(activity.state)
+          ? prependNotificationHistory(
+              state.notificationHistory,
+              createNotificationHistoryItem(
+                "system",
+                activity.id,
+                activity.name,
+                activity.state,
+                activity.detail,
+                activity.updatedAt
+              )
+            )
+          : state.notificationHistory
+
       return {
         systemActivities: {
           ...state.systemActivities,
           [activity.id]: activity,
         },
+        notificationHistory,
       }
     })
   },
@@ -691,6 +748,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
       delete nextActivities[activityId]
       return { systemActivities: nextActivities }
     })
+  },
+
+  clearNotificationHistory: () => {
+    set({ notificationHistory: [] })
   },
   
   setSoundEnabled: (enabled: boolean) => {

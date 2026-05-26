@@ -10,6 +10,16 @@ export interface SystemActivity {
   updatedAt: number
 }
 
+export interface NotificationHistoryItem {
+  id: string
+  sourceId: string
+  sourceType: "pane" | "system"
+  name: string
+  status: Exclude<PaneActivityState, "idle" | "running">
+  detail?: string
+  timestamp: number
+}
+
 export interface PaneGroup {
   id: string
   name: string
