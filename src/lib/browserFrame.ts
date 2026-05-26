@@ -12,7 +12,6 @@ export interface RuntimeSnapshot {
   wsUrl: string
   authToken: string
   tunnelUrl: string | null
-  local_server_url: string | null
 }
 
 /**
@@ -67,13 +66,24 @@ export async function isRunningInTauri(): Promise<boolean> {
   }
 }
 
+function buildProxyUrl(proxyOrigin: string, targetUrl: string): string {
+  const target = new URL(targetUrl)
+  const scheme = target.protocol === "https:" ? "https" : "http"
+  const proxyPath = `/proxy/${scheme}/${target.host}${target.pathname}${target.search}${target.hash}`
+  return new URL(proxyPath, proxyOrigin).toString()
+}
+
 /**
  * Register a preview session for a browser pane.
  * This tells the backend to proxy requests for /preview/<paneId>/* to the target URL.
  */
-export async function registerPreviewSession(paneId: string, targetUrl: string): Promise<string | null> {
+export async function registerPreviewSession(
+  paneId: string,
+  targetUrl: string,
+  backendOrigin = typeof window !== "undefined" ? window.location.origin : "",
+): Promise<string | null> {
   try {
-    const response = await fetch('/preview-register', {
+    const response = await fetch(new URL('/preview-register', backendOrigin), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pane_id: paneId, target_url: targetUrl }),
@@ -86,7 +96,7 @@ export async function registerPreviewSession(paneId: string, targetUrl: string):
 
     const data = await response.json()
     console.log('[BROWSER FRAME SRC] Preview registered:', data)
-    return data.preview_base as string
+    return new URL(data.preview_base as string, backendOrigin).toString()
   } catch (error) {
     console.error('[BROWSER FRAME SRC] Error registering preview:', error)
     return null
@@ -141,19 +151,18 @@ export async function buildBrowserFrameSrc(targetUrl: string, paneId?: string): 
     return proxy.toString()
   }
 
-  // Tauri but non-local URL: use Rust backend proxy
-  console.log('[BROWSER FRAME SRC] Tauri + non-local URL → backend proxy')
-  const runtime = await invoke<{
-    backend_running: boolean
-    tunnel_running: boolean
-    backend_url: string
-    ws_url: string
-    auth_token: string
-    tunnel_url: string | null
-    local_server_url: string | null
-  }>('get_runtime_state').catch(() => null)
-  const proxyOrigin = runtime?.local_server_url ?? runtime?.backend_url ?? 'http://127.0.0.1:9090'
-  const proxy = new URL('/proxy', proxyOrigin)
-  proxy.searchParams.set('url', normalizedTarget)
-  return proxy.toString()
+  // Tauri but non-local URL: use the backend preview proxy. Avoid /proxy?url=...
+  // because older sidecars/static fallbacks can serve the Termote app at that exact path.
+  console.log('[BROWSER FRAME SRC] Tauri + non-local URL → backend preview proxy')
+  const runtime = await invoke<RuntimeSnapshot>('get_runtime_state').catch(() => null)
+  const proxyOrigin = runtime?.backendUrl ?? 'http://127.0.0.1:9090'
+  const previewId = paneId ?? `browser_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  const previewBase = await registerPreviewSession(previewId, normalizedTarget, proxyOrigin)
+
+  if (previewBase) {
+    return previewBase
+  }
+
+  console.warn('[BROWSER FRAME SRC] Preview registration failed, falling back to path proxy')
+  return buildProxyUrl(proxyOrigin, normalizedTarget)
 }
