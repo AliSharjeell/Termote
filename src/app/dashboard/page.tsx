@@ -640,7 +640,7 @@ function DashboardContent() {
             <button
               onClick={toggleProfileSidebar}
               title="Expand profile sidebar"
-              className="w-10 h-10 sm:w-8 sm:h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
+              className="w-8 h-8 sm:w-8 sm:h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
             >
               <PanelRight size={18} className="rotate-180" />
             </button>
