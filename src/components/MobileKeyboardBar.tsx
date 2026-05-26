@@ -41,10 +41,17 @@ export function MobileKeyboardBar({ onInput, onCtrlToggle, isCtrlActive }: Props
   ]
 
   return (
-    <div className="flex items-center bg-[#1a1a1a] border-t border-[#333] p-1 gap-1 overflow-x-auto touch-manipulation z-50 w-full flex-shrink-0">
+    <div 
+      className="flex items-center bg-[#1a1a1a] border-t border-[#333] p-1 gap-1 overflow-x-auto touch-none select-none z-50 w-full flex-shrink-0"
+      onPointerDown={(e) => e.preventDefault()}
+      onClick={(e) => e.preventDefault()}
+      onDoubleClick={(e) => e.preventDefault()}
+    >
       <button 
-        onPointerDown={(e) => { e.preventDefault(); onCtrlToggle(!isCtrlActive) }}
-        className={`flex-shrink-0 px-3 py-2 rounded font-mono text-xs font-bold transition-colors ${
+        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onCtrlToggle(!isCtrlActive) }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        className={`flex-shrink-0 px-3 py-2 rounded font-mono text-xs font-bold transition-colors select-none touch-none ${
           isCtrlActive ? 'bg-blue-600 text-white' : 'bg-[#333] text-gray-300'
         }`}
       >
@@ -53,27 +60,35 @@ export function MobileKeyboardBar({ onInput, onCtrlToggle, isCtrlActive }: Props
       {keys.map((k, i) => (
         <button
           key={i}
-          onPointerDown={(e) => { e.preventDefault(); k.action() }}
-          className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] active:bg-[#555] rounded text-gray-300 flex items-center justify-center font-mono text-xs min-w-[40px]"
+          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); k.action() }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] active:bg-[#555] rounded text-gray-300 flex items-center justify-center font-mono text-xs min-w-[40px] select-none touch-none"
         >
           {k.icon || k.label}
         </button>
       ))}
       <button 
-        onPointerDown={(e) => { e.preventDefault(); onInput('-') }}
-        className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] rounded text-gray-300 font-mono text-xs"
+        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onInput('-') }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] active:bg-[#555] rounded text-gray-300 font-mono text-xs select-none touch-none"
       >
         -
       </button>
       <button 
-        onPointerDown={(e) => { e.preventDefault(); onInput('/') }}
-        className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] rounded text-gray-300 font-mono text-xs"
+        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onInput('/') }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] active:bg-[#555] rounded text-gray-300 font-mono text-xs select-none touch-none"
       >
         /
       </button>
       <button 
-        onPointerDown={(e) => { e.preventDefault(); onInput('|') }}
-        className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] rounded text-gray-300 font-mono text-xs"
+        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onInput('|') }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        className="flex-shrink-0 px-3 py-2 bg-[#333] hover:bg-[#444] active:bg-[#555] rounded text-gray-300 font-mono text-xs select-none touch-none"
       >
         |
       </button>

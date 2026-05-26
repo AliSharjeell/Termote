@@ -71,7 +71,6 @@ export function XtermPane({ pane }: XtermPaneProps) {
         if (upperChar >= 64 && upperChar <= 95) {
           finalData = String.fromCharCode(upperChar - 64)
         }
-        setIsCtrlActive(false)
       }
       sendInputRef.current(pane.id, finalData)
     },

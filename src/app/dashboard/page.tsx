@@ -515,7 +515,7 @@ function DashboardContent() {
           className="app-topbar relative flex flex-col shrink-0 border-b border-[#252525] bg-[#0d0d0d]"
         >
           {/* Row 1 */}
-          <div className="flex items-center justify-between px-4 py-2">
+          <div className="relative flex items-center px-4 py-2">
             {/* Status + Server Controls */}
             <div className="flex items-center gap-2">
               <div
@@ -537,8 +537,32 @@ function DashboardContent() {
                <span className="text-base font-normal text-[#CCCCCC] tracking-wide">Termote</span>
             </div>
 
+            {/* View mode toggle - centered */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
+              <button
+                onClick={() => setViewMode("tabs")}
+                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
+                  viewMode === "tabs"
+                    ? "bg-white/10 text-white"
+                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                Tabs
+              </button>
+              <button
+                onClick={() => setViewMode("panes")}
+                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
+                  viewMode === "panes"
+                    ? "bg-white/10 text-white"
+                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                Panes
+              </button>
+            </div>
+
             {/* Search */}
-            <div className="flex items-center">
+            <div className="ml-auto flex items-center">
               {searchOpen ? (
                 <div className="relative flex items-center">
                   <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
@@ -567,31 +591,7 @@ function DashboardContent() {
           </div>
 
           {/* Row 2 */}
-          <div className="flex items-center justify-between px-4 pb-2">
-            {/* View mode toggle */}
-            <div className="flex items-center gap-2 p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
-              <button
-                onClick={() => setViewMode("tabs")}
-                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
-                  viewMode === "tabs"
-                    ? "bg-white/10 text-white"
-                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
-                }`}
-              >
-                Tabs
-              </button>
-              <button
-                onClick={() => setViewMode("panes")}
-                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
-                  viewMode === "panes"
-                    ? "bg-white/10 text-white"
-                    : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
-                }`}
-              >
-                Panes
-              </button>
-            </div>
-
+          <div className="flex items-center justify-end px-4 pb-2">
             {/* Focus button */}
             <div className="flex items-center">
               <button
