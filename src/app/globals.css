@@ -79,6 +79,17 @@ html.tauri-mica [data-nextjs-root] {
 .tauri-mica-shell {
   background: rgba(0, 0, 0, 0.80) !important;
   background-color: rgba(0, 0, 0, 0.80) !important;
+  position: relative;
+}
+
+.tauri-mica-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(128, 128, 128, 0.15);
+  filter: grayscale(100%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ============================================
