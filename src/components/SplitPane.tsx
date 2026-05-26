@@ -20,7 +20,7 @@ interface SplitPaneProps {
 
 export function SplitPane({ searchQuery }: SplitPaneProps) {
   // ALL hooks must be at the top - never inside conditionals!
-  const { panes, activePanes, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup, sidebarCollapsed, toggleSidebar, paneActivities } = usePaneStore()
+  const { panes, activePanes, groups, selectedGroupId, selectGroup, deleteGroup, sidebarCollapsed, toggleSidebar, paneActivities } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
@@ -292,9 +292,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             {panes.filter(p => activePanes.includes(p.id)).map((pane) => (
               <div
                 key={pane.id}
-                className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                  selectedTab === pane.id ? "text-[#CCCCCC] font-normal bg-white/[0.08] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
-                }`}
+                className="flex items-center gap-2 px-3 py-1 text-sm cursor-pointer text-[#CCCCCC] hover:text-[#ccc]"
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
                 {pane.url ? (
@@ -369,9 +367,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
               <div
                 key={pane.id}
-                className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                  selectedTab === pane.id ? "text-[#CCCCCC] font-normal bg-white/[0.08] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
-                }`}
+                className="flex items-center gap-2 px-3 py-1 text-sm cursor-pointer text-[#CCCCCC] hover:text-[#ccc]"
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
                 {pane.url ? (
@@ -459,9 +455,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   {groupPanes.map((pane) => (
                     <div
                       key={pane.id}
-                      className={`flex items-center gap-2 px-3 py-1 text-sm cursor-pointer ${
-                        selectedTab === pane.id ? "text-[#CCCCCC] font-normal bg-white/[0.08] rounded" : "text-[#CCCCCC] hover:text-[#ccc]"
-                      }`}
+                      className="flex items-center gap-2 px-3 py-1 text-sm cursor-pointer text-[#CCCCCC] hover:text-[#ccc]"
                       onClick={() => usePaneStore.getState().selectTab(pane.id)}
                     >
                       {pane.url ? (
