@@ -1568,9 +1568,20 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   },
 
   openBrowser: (url) => {
-    const { ws, isAuthenticated } = get()
-    if (ws && isAuthenticated && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ action: "spawn_browser", url }))
+    const { panes } = get()
+    // Check if there's an existing browser pane without a URL to update
+    const browserPane = panes.find(p => p.paneType === "browser" && !p.url)
+    if (browserPane) {
+      // Update existing browser pane with URL
+      const name = (() => { try { return new URL(url).hostname } catch { return "Browser" } })()
+      const proxyUrl = buildBrowserProxyUrl(url)
+      const updatedPanes = panes.map(p =>
+        p.id === browserPane.id
+          ? { ...p, url, name, proxyUrl }
+          : p
+      )
+      set({ panes: updatedPanes })
+      savePanes(updatedPanes)
     }
   },
 

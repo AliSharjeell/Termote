@@ -188,7 +188,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             <span>Open Folder</span>
           </button>
           <button
-            onClick={() => usePaneStore.getState().openBrowserModal()}
+            onClick={() => usePaneStore.getState().spawnBrowserPane("")}
             title="Open browser..."
             className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] hover:rounded font-normal shrink-0"
           >
@@ -295,7 +295,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 className="flex items-center gap-2 px-3 py-1 text-sm cursor-pointer text-[#CCCCCC] hover:text-[#ccc]"
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
-                {pane.url ? (
+                {pane.paneType === "browser" || pane.url ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 ) : pane.shell === "note" ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -370,7 +370,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                 className="flex items-center gap-2 px-3 py-1 text-sm cursor-pointer text-[#CCCCCC] hover:text-[#ccc]"
                 onClick={() => usePaneStore.getState().selectTab(pane.id)}
               >
-                {pane.url ? (
+                {pane.paneType === "browser" || pane.url ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 ) : pane.shell === "note" ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -458,7 +458,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                       className="flex items-center gap-2 px-3 py-1 text-sm cursor-pointer text-[#CCCCCC] hover:text-[#ccc]"
                       onClick={() => usePaneStore.getState().selectTab(pane.id)}
                     >
-                      {pane.url ? (
+                      {pane.paneType === "browser" || pane.url ? (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                       ) : pane.shell === "note" ? (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -526,7 +526,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               className="relative overflow-hidden bg-transparent border border-[#1a1a1a]"
             >
               <div className="h-full w-full">
-                {pane.url ? (
+                {pane.paneType === "browser" || pane.url ? (
                   <BrowserPane pane={pane} />
                 ) : pane.shell === "note" ? (
                   <NotePane pane={pane} />
