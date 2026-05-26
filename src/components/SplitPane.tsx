@@ -261,7 +261,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             className={`text-xs border rounded px-1 shrink-0 ${
               selectedGroupId === null
                 ? "text-[#CCCCCC] border-[#555]"
-                : "text-[#CCCCCC] hover:text-white border-[#252525]"
+                : "text-[#CCCCCC] hover:text-white border-[#444]"
             }`}
             title="Expand"
           >
@@ -336,7 +336,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             className={`text-xs border rounded px-1 shrink-0 ${
               selectedGroupId === "__ungrouped__"
                 ? "text-[#CCCCCC] border-[#555]"
-                : "text-[#CCCCCC] hover:text-white border-[#252525]"
+                : "text-[#CCCCCC] hover:text-white border-[#444]"
             }`}
             title="Expand"
           >
@@ -416,7 +416,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   className={`text-xs border rounded px-1 shrink-0 ${
                     selectedGroupId === group.id
                       ? "text-[#CCCCCC] border-[#555]"
-                      : "text-[#CCCCCC] hover:text-white border-[#252525]"
+                      : "text-[#CCCCCC] hover:text-white border-[#444]"
                   }`}
                   title={isExpanded ? "Collapse" : "Expand"}
                 >
