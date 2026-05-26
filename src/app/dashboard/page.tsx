@@ -18,6 +18,7 @@ import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { useIsTauri } from "@/hooks/useIsTauri"
+import { useFocusDevice } from "@/hooks/useFocusDevice"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { fitAllTerminals } from "@/lib/terminalRegistry"
 import { resizeAllWhiteboards } from "@/lib/whiteboardRegistry"
@@ -27,65 +28,6 @@ function nextFrame(): Promise<void> {
   return new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve())
   })
-}
-
-// Focus This Device - refits all panes and optimizes layout for current device
-function createFocusThisDevice(opts: {
-  setViewMode: (mode: "tabs" | "panes") => void
-  setTabsSidebarCollapsed: (collapsed: boolean) => void
-  setTabsProfileSidebarCollapsed: (collapsed: boolean) => void
-  setProfileSidebarCollapsed: (collapsed: boolean) => void
-}) {
-  return async function focusThisDevice() {
-    const { setViewMode, setTabsSidebarCollapsed, setTabsProfileSidebarCollapsed, setProfileSidebarCollapsed } = opts
-    const isTauriApp = isTauriBuild()
-    const isMobile =
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 768px)").matches
-
-    const targetMode = isTauriApp && !isMobile ? "panes" : "tabs"
-    const temporaryMode = targetMode === "tabs" ? "panes" : "tabs"
-
-    console.log("[FOCUS DEVICE] start", {
-      isTauriApp,
-      isMobile,
-      targetMode,
-      temporaryMode,
-    })
-
-    // Step 1: collapse sidebars for clean focused layout
-    if (targetMode === "tabs") {
-      setTabsSidebarCollapsed(true)
-      setTabsProfileSidebarCollapsed(true)
-    }
-    if (targetMode === "panes") {
-      setProfileSidebarCollapsed(true)
-    }
-
-    // Step 2: force the same reflow users are doing manually
-    setViewMode(temporaryMode)
-    await nextFrame()
-    await nextFrame()
-    setViewMode(targetMode)
-    await nextFrame()
-    await nextFrame()
-
-    // Step 3: refit all interactive panes
-    fitAllTerminals("focus-this-device")
-    resizeAllWhiteboards("focus-this-device")
-
-    setTimeout(() => {
-      fitAllTerminals("focus-this-device-delayed-100")
-      resizeAllWhiteboards("focus-this-device-delayed-100")
-    }, 100)
-
-    setTimeout(() => {
-      fitAllTerminals("focus-this-device-delayed-400")
-      resizeAllWhiteboards("focus-this-device-delayed-400")
-    }, 400)
-
-    console.log("[FOCUS DEVICE] done")
-  }
 }
 
 // Tauri backend check interval
@@ -128,13 +70,7 @@ function DashboardContent() {
   const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed, tabsSidebarCollapsed, tabsProfileSidebarCollapsed, hasHydrated, setProfileSidebarCollapsed, setTabsSidebarCollapsed, setTabsProfileSidebarCollapsed, toggleProfileSidebar, toggleTabsSidebar, toggleTabsProfileSidebar } = usePaneStore()
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
 
-  // Create focusThisDevice with access to store setters
-  const focusThisDevice = createFocusThisDevice({
-    setViewMode,
-    setTabsSidebarCollapsed,
-    setTabsProfileSidebarCollapsed,
-    setProfileSidebarCollapsed,
-  })
+  const focusThisDevice = useFocusDevice()
 
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
     setRuntime(snapshot)
@@ -472,10 +408,11 @@ function DashboardContent() {
               <span className="text-sm text-[#CCCCCC]">Termote</span>
               <button
                 onClick={focusThisDevice}
-                title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
-                className="flex h-6 w-6 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                title="Focus"
+                className="flex items-center justify-center rounded p-1.5 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-1.5"
               >
                 <Crosshair className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">Focus</span>
               </button>
               {serverError && (
                 <div data-tauri-no-drag className="flex min-w-0 max-w-80 items-center gap-2 rounded-full bg-[#3b1117] px-3 py-1 text-xs text-[#FCA5A5]" title={serverError}>
@@ -630,10 +567,11 @@ function DashboardContent() {
               <div className="ml-auto mr-2 flex items-center gap-2">
                 <button
                   onClick={focusThisDevice}
-                  title="Optimize this workspace for your current screen and refit terminals, panes, and tools."
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-[#9A9A9A] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                  title="Focus"
+                  className="flex items-center justify-center rounded p-1.5 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-1.5"
                 >
                   <Crosshair className="h-4 w-4" />
+                  <span className="text-xs font-medium">Focus</span>
                 </button>
                 {searchOpen ? (
                   <div className="relative flex items-center">
