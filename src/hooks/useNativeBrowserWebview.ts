@@ -33,6 +33,7 @@ export function useNativeBrowserWebview({
 
   useEffect(() => {
     if (!isTauriBuild()) return
+    console.log(`[NativeBrowserWebview] Effect: enabled=${enabled} url=${!!url} paneId=${paneId}`)
     if (!enabled || !url || !paneId) {
       onPhysicalRect(null)
       void hideNativeBrowserWebview(paneId)

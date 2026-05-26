@@ -36,12 +36,19 @@ async function createNativeWebview(
     import("@tauri-apps/api/window"),
   ])
 
-  const existing = await Webview.getByLabel(label)
-  if (existing) {
-    await existing.close().catch(() => undefined)
+  // Clean up any existing webview with this label
+  try {
+    const existing = await Webview.getByLabel(label)
+    if (existing) {
+      console.log(`[NativeBrowserWebview] Closing existing webview: ${label}`)
+      await existing.close()
+    }
+  } catch (err) {
+    console.warn(`[NativeBrowserWebview] Could not close existing webview: ${err}`)
   }
 
   const appWindow = getCurrentWindow()
+  console.log(`[NativeBrowserWebview] Creating webview: ${label} at (${rect.x}, ${rect.y}) ${rect.width}x${rect.height}`)
   const webview = new Webview(appWindow, label, {
     url,
     x: Math.round(rect.x),
@@ -62,19 +69,23 @@ export async function ensureNativeBrowserWebview(
 ) {
   const label = getNativeBrowserWebviewLabel(paneId)
   const url = normalizeUrl(rawUrl)
+  console.log(`[NativeBrowserWebview] ensure: ${label} url=${url} rect=(${rect.x}, ${rect.y}) ${rect.width}x${rect.height}`)
   const existing = webviews.get(label)
 
   if (!existing || existing.url !== url) {
     if (existing) {
+      console.log(`[NativeBrowserWebview] URL changed, recreating: ${label}`)
       await existing.webview.close().catch(() => undefined)
       webviews.delete(label)
     }
 
+    console.log(`[NativeBrowserWebview] Creating new webview: ${label}`)
     const handle = await createNativeWebview(label, url, rect)
     webviews.set(label, handle)
     return handle.webview
   }
 
+  console.log(`[NativeBrowserWebview] Repositioning existing webview: ${label}`)
   const { LogicalPosition, LogicalSize } = await import("@tauri-apps/api/dpi")
   await Promise.all([
     existing.webview.setPosition(new LogicalPosition(Math.round(rect.x), Math.round(rect.y))),
