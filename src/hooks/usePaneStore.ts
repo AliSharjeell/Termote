@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType } from "@/lib/types"
+import type { Pane, PaneGroup, Shell, DeviceInfo, DirectoryItem, PaneType, PaneActivityState, SystemActivity } from "@/lib/types"
 
 const STORAGE_KEY = "termote-pinned-panes"
 const VIEW_MODE_KEY = "termote-view-mode"
@@ -17,6 +17,7 @@ const SELECTED_TAB_KEY = "termote-selected-tab"
 const GROUPS_KEY = "termote-groups"
 const SOURCE_CONTROL_REPOS_KEY = "termote-source-control-repos"
 const SOURCE_CONTROL_SELECTED_KEY = "termote-source-control-selected"
+const SOUND_ENABLED_KEY = "termote-sound-enabled"
 
 const GROUP_COLORS = [
   "#E44", // red
@@ -206,6 +207,15 @@ interface PaneState {
 
   // AI CLI command
   aiCommand: string
+
+  // CLI Activity and Notifications
+  paneActivities: Record<string, PaneActivityState>
+  systemActivities: Record<string, SystemActivity>
+  soundEnabled: boolean
+  setPaneActivity: (paneId: string, activity: PaneActivityState) => void
+  setSystemActivity: (activity: SystemActivity) => void
+  clearSystemActivity: (activityId: string) => void
+  setSoundEnabled: (enabled: boolean) => void
 
   // Actions
   setWebSocket: (ws: WebSocket | null) => void
@@ -572,6 +582,24 @@ function saveSourceControlSelected(path: string | null) {
   }
 }
 
+function loadSoundEnabled(): boolean {
+  try {
+    const val = localStorage.getItem(SOUND_ENABLED_KEY)
+    if (val === "false") return false
+    return true
+  } catch {
+    return true
+  }
+}
+
+function saveSoundEnabled(enabled: boolean) {
+  try {
+    localStorage.setItem(SOUND_ENABLED_KEY, enabled.toString())
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 // Get pane groupId from localStorage
 export function getPaneGroupIdFromStorage(paneId: string): string | null {
   try {
@@ -619,6 +647,56 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   selectedSourceControlRepo: loadSourceControlSelected(),
   portProcesses: [],
   aiCommand: loadAiCommand(),
+
+  // CLI Activity and Notifications
+  paneActivities: {},
+  systemActivities: {},
+  soundEnabled: loadSoundEnabled(),
+  
+  setPaneActivity: (paneId: string, activity: PaneActivityState) => {
+    set((state) => {
+      // Only update if it changed
+      if (state.paneActivities[paneId] === activity) return state
+      
+      return {
+        paneActivities: {
+          ...state.paneActivities,
+          [paneId]: activity
+        }
+      }
+    })
+  },
+
+  setSystemActivity: (activity: SystemActivity) => {
+    set((state) => {
+      if (activity.state === "idle") {
+        const nextActivities = { ...state.systemActivities }
+        delete nextActivities[activity.id]
+        return { systemActivities: nextActivities }
+      }
+
+      return {
+        systemActivities: {
+          ...state.systemActivities,
+          [activity.id]: activity,
+        },
+      }
+    })
+  },
+
+  clearSystemActivity: (activityId: string) => {
+    set((state) => {
+      if (!state.systemActivities[activityId]) return state
+      const nextActivities = { ...state.systemActivities }
+      delete nextActivities[activityId]
+      return { systemActivities: nextActivities }
+    })
+  },
+  
+  setSoundEnabled: (enabled: boolean) => {
+    saveSoundEnabled(enabled)
+    set({ soundEnabled: enabled })
+  },
 
   setWebSocket: (ws) => set({ ws }),
 
@@ -915,7 +993,13 @@ export const usePaneStore = create<PaneState>((set, get) => ({
 
   selectTab: (tabId) => {
     saveSelectedTab(tabId)
-    set({ selectedTab: tabId })
+    set((state) => ({
+      selectedTab: tabId,
+      paneActivities: {
+        ...state.paneActivities,
+        [tabId]: "idle"
+      }
+    }))
   },
   setViewMode: (mode) => {
     saveViewMode(mode)

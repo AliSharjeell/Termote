@@ -6,6 +6,7 @@ import { QRCodeSVG } from "qrcode.react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { useIsTauri } from "@/hooks/useIsTauri"
 import { invoke } from "@tauri-apps/api/core"
+import { NotificationSoundToggle } from "@/components/NotificationSoundToggle"
 
 interface ProfileSidebarProps {
   isOpen: boolean
@@ -166,7 +167,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
             <div className="relative rounded-xl bg-white p-4">
               {qrBlurred && (
                 <div className="absolute inset-4 z-10 flex items-center justify-center">
-                  <div className="h-4 w-4 animate-ping rounded-full bg-gray-400 opacity-75" />
+                  <div className="h-5 w-5 sm:h-4 sm:w-4 animate-ping rounded-full bg-gray-400 opacity-75" />
                 </div>
               )}
               <div className={`transition-all duration-500 ${qrBlurred ? "blur-md" : "blur-0"}`}>
@@ -177,14 +178,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                 />
               </div>
             </div>
-            <p className="mt-4 max-w-[220px] text-center text-xs text-[#808080]">
+            <p className="mt-4 max-w-[220px] text-center text-sm sm:text-xs text-[#808080]">
               Scan this QR code with your mobile device to instantly connect and auto-login
             </p>
             <button
               onClick={handleCopyLink}
               className="mt-3 flex items-center gap-2 rounded-lg bg-[#27272A] px-4 py-2 text-sm text-white hover:bg-[#333333] transition-colors"
             >
-              {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedLink ? <Check className="h-5 w-5 sm:h-4 sm:w-4" /> : <Copy className="h-5 w-5 sm:h-4 sm:w-4" />}
               {copiedLink ? "Copied!" : "Copy Link"}
             </button>
           </div>
@@ -196,7 +197,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#333333] px-4 py-4">
           <div className="flex items-center gap-1.5">
-            <Settings className="h-4 w-4 text-[#808080] shrink-0" />
+            <Settings className="h-5 w-5 sm:h-4 sm:w-4 text-[#808080] shrink-0" />
             <span className="text-sm font-normal text-white">
               Settings
             </span>
@@ -215,7 +216,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
           {checked && isTauri && (
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 mb-2 pl-2">
-                <RefreshCw className="h-3.5 w-3.5 text-[#CCCCCC] shrink-0" />
+                <RefreshCw className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#CCCCCC] shrink-0" />
                 <span className="text-[10px] text-[#CCCCCC]">Server Controls</span>
               </div>
               <div className="space-y-1">
@@ -224,7 +225,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                   disabled={!!serverAction || !serverRunning}
                   className="flex items-center gap-2 rounded bg-transparent px-2 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
+                  <RefreshCw className={`h-4 w-4 sm:h-3.5 sm:w-3.5 ${serverAction === "restarting" ? "animate-spin" : ""}`} />
                   Restart
                 </button>
                 <button
@@ -232,7 +233,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                   disabled={!!serverAction || !serverRunning}
                   className="flex items-center gap-2 rounded bg-transparent px-2 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full text-left"
                 >
-                  <Square className="h-3.5 w-3.5" />
+                  <Square className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                   Stop
                 </button>
                 <button
@@ -242,14 +243,14 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
                   }}
                   className="flex items-center gap-2 rounded bg-transparent px-2 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] transition-colors w-full text-left"
                 >
-                  <QrCode className="h-3.5 w-3.5" />
+                  <QrCode className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                   Mobile Access
                 </button>
                 <button
                   onClick={handleCopyLink}
                   className="flex items-center gap-2 rounded bg-transparent px-2 py-2 text-sm text-[#CCCCCC] hover:text-white hover:bg-white/[0.06] transition-colors w-full text-left"
                 >
-                  {copiedLink ? <Check className="h-3.5 w-3.5 text-[#16C60C]" /> : <Link2 className="h-3.5 w-3.5" />}
+                  {copiedLink ? <Check className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#16C60C]" /> : <Link2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
                   Copy Link
                 </button>
               </div>
@@ -259,7 +260,7 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
           {/* AI CLI Settings - Both versions */}
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 mb-2 pl-2">
-              <Bot className="h-3.5 w-3.5 text-[#CCCCCC] shrink-0" />
+              <Bot className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#CCCCCC] shrink-0" />
               <span className="text-[10px] text-[#CCCCCC]">Default AI CLI</span>
             </div>
              <div className="space-y-0.5">
@@ -346,6 +347,13 @@ export function ProfileSidebar({ isOpen, onClose, tunnelUrl, authToken, mobileUr
             <p className="text-[10px] text-[#808080] pl-2">
               Quick-launch button in terminal header sends: {aiCommand || "claude"}
             </p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 mb-2 pl-2">
+              <span className="text-[10px] text-[#CCCCCC]">Notifications</span>
+            </div>
+            <NotificationSoundToggle />
           </div>
         </div>
 

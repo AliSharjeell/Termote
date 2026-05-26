@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useCallback, useState } from "react"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { useFocusDevice } from "@/hooks/useFocusDevice"
 import { PaneTitleBar } from "./PaneTitleBar"
 import { MobileKeyboardBar } from "./MobileKeyboardBar"
+import { clearPaneActivity, handleTerminalInput } from "@/lib/activityHeuristics"
 import {
   getOrCreateTerminal,
   openTerminal,
@@ -35,10 +35,9 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const sendInputRef = useRef(usePaneStore.getState().sendInput)
   const sendResizeRef = useRef(usePaneStore.getState().sendResize)
 
-  const { killPane, renamePane, togglePin, uploadFile, aiCommand, spawnAtDirectory, spawnPane, devices } = usePaneStore()
+  const { killPane, renamePane, togglePin, uploadFile, aiCommand, spawnAtDirectory, spawnPane } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
   const [isCtrlActive, setIsCtrlActive] = useState(false)
-  const focusThisDevice = useFocusDevice()
 
   // Smart Clipboard: Ctrl+C = Copy if text selected, SIGINT if not
   const getKeyHandler = useCallback(
@@ -72,6 +71,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
           finalData = String.fromCharCode(upperChar - 64)
         }
       }
+      handleTerminalInput(pane.id, finalData)
       sendInputRef.current(pane.id, finalData)
     },
     [pane.id, isCtrlActive]
@@ -205,7 +205,9 @@ export function XtermPane({ pane }: XtermPaneProps) {
   }, [pane.id, togglePin])
 
   const handleLaunchAI = useCallback(() => {
-    sendInputRef.current(pane.id, `${aiCommand}\r`)
+    const command = `${aiCommand}\r`
+    handleTerminalInput(pane.id, command)
+    sendInputRef.current(pane.id, command)
   }, [pane.id, aiCommand])
 
   const handleDuplicate = useCallback(() => {
@@ -259,6 +261,10 @@ export function XtermPane({ pane }: XtermPaneProps) {
     [pane.id, uploadFile]
   )
 
+  const handleFocus = useCallback(() => {
+    clearPaneActivity(pane.id)
+  }, [pane.id])
+
   return (
     <div 
       className="terminal-pane-root relative flex h-full w-full flex-col bg-[#0C0C0C]"
@@ -281,6 +287,8 @@ export function XtermPane({ pane }: XtermPaneProps) {
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={handleFocus}
+        onFocus={handleFocus}
       >
         {isDragOver && (
           <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 z-50 pointer-events-none">

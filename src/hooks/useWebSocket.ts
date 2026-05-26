@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState } from "react"
 import { usePaneStore } from "./usePaneStore"
 import type { ServerMessage } from "@/lib/types"
 import { setTerminalScrollback, writeOrBufferTerminalOutput, fitAllTerminals } from "@/lib/terminalRegistry"
+import { handleTerminalOutput } from "@/lib/activityHeuristics"
 
 interface UseWebSocketOptions {
   url: string | null
@@ -137,6 +138,7 @@ export function useWebSocket({ url, token }: UseWebSocketOptions) {
           break
         case "output":
           writeOrBufferTerminalOutput(message.pane_id, message.data)
+          handleTerminalOutput(message.pane_id, message.data)
           break
         case "auth_result":
           if (message.success) {

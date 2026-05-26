@@ -16,19 +16,14 @@ const BrowserPickerModal = dynamic(() => import('@/components/BrowserPickerModal
 
 import { Suspense } from "react"
 import { useWebSocket } from "@/hooks/useWebSocket"
-import { useIsLandscape } from "@/hooks/useMediaQuery"
 import { useIsTauri } from "@/hooks/useIsTauri"
+import { MobileAccessButton } from "@/components/MobileAccessButton"
 import { useFocusDevice } from "@/hooks/useFocusDevice"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { fitAllTerminals } from "@/lib/terminalRegistry"
-import { resizeAllWhiteboards } from "@/lib/whiteboardRegistry"
-import { Search, Play, Zap, AlertTriangle, ExternalLink, Loader2, PanelRight, Crosshair } from "lucide-react"
-
-function nextFrame(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve())
-  })
-}
+import { clearSystemActivity, notifySystemActivity } from "@/lib/activityHeuristics"
+import { Loader2, Search, ExternalLink, Crosshair, Zap, Play, AlertTriangle, PanelRight } from "lucide-react"
+import { NotificationDropdown } from "@/components/NotificationDropdown"
 
 // Tauri backend check interval
 const BACKEND_CHECK_INTERVAL = 5000
@@ -44,7 +39,6 @@ type RuntimeSnapshot = {
 }
 
 function DashboardContent() {
-  const isLandscape = useIsLandscape()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [serverRunning, setServerRunning] = useState(false)
@@ -66,6 +60,8 @@ function DashboardContent() {
   } | null>(null)
 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const backendRunningRef = useRef(false)
+  const hasBackendSnapshotRef = useRef(false)
 
   const { isConnected, isAuthenticated, viewMode, setViewMode, profileSidebarCollapsed, tabsSidebarCollapsed, tabsProfileSidebarCollapsed, hasHydrated, setProfileSidebarCollapsed, setTabsSidebarCollapsed, setTabsProfileSidebarCollapsed, toggleProfileSidebar, toggleTabsSidebar, toggleTabsProfileSidebar } = usePaneStore()
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
@@ -73,6 +69,22 @@ function DashboardContent() {
   const focusThisDevice = useFocusDevice()
 
   const applyRuntimeSnapshot = useCallback((snapshot: RuntimeSnapshot) => {
+    if (hasBackendSnapshotRef.current && backendRunningRef.current && !snapshot.backendRunning) {
+      notifySystemActivity(
+        "termote-backend",
+        "Termote backend",
+        "crashed",
+        "Local backend stopped"
+      )
+    }
+
+    if (snapshot.backendRunning) {
+      clearSystemActivity("termote-backend")
+    }
+
+    backendRunningRef.current = snapshot.backendRunning
+    hasBackendSnapshotRef.current = true
+
     setRuntime(snapshot)
     setServerRunning(snapshot.backendRunning)
     // In Tauri mode, ALWAYS connect locally - the snapshot.wsUrl changes to the
@@ -414,6 +426,7 @@ function DashboardContent() {
                 <Crosshair className="h-3.5 w-3.5" />
                 <span className="text-xs font-medium">Focus</span>
               </button>
+              <MobileAccessButton />
               {serverError && (
                 <div data-tauri-no-drag className="flex min-w-0 max-w-80 items-center gap-2 rounded-full bg-[#3b1117] px-3 py-1 text-xs text-[#FCA5A5]" title={serverError}>
                   <AlertTriangle className="h-3 w-3 shrink-0" />
@@ -478,7 +491,8 @@ function DashboardContent() {
             </div>
           }
           right={
-            <div data-tauri-no-drag className="flex items-center mr-2">
+            <div data-tauri-no-drag className="flex items-center mr-2 gap-1">
+              <NotificationDropdown />
               {searchOpen ? (
                 <div className="relative flex items-center">
                   <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
@@ -515,11 +529,11 @@ function DashboardContent() {
           className="app-topbar relative flex flex-col shrink-0 border-b border-[#252525] bg-[#0d0d0d]"
         >
           {/* Row 1 */}
-          <div className="relative flex items-center px-4 py-2">
+          <div className="relative flex items-center px-4 py-3">
             {/* Status + Server Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div
-                className={`h-2 w-2 rounded-full shrink-0 ${
+                className={`h-3 w-3 rounded-full shrink-0 ${
                   isConnected
                     ? isAuthenticated
                       ? "bg-[#16C60C]"
@@ -534,14 +548,14 @@ function DashboardContent() {
                     : tunnelStatus === "connecting" ? "0 0 6px #DCDCAA" : "0 0 6px #E74856"
                 }}
               />
-               <span className="text-base font-normal text-[#CCCCCC] tracking-wide">Termote</span>
+               <span className="text-lg font-normal text-[#CCCCCC] tracking-wide">Termote</span>
             </div>
 
             {/* View mode toggle - centered */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 p-0.5 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 p-1 rounded-full bg-[#1a1a1a]/60 backdrop-blur-md">
               <button
                 onClick={() => setViewMode("tabs")}
-                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
+                className={`rounded-full px-5 py-2.5 text-sm font-normal transition-all duration-150 cursor-pointer ${
                   viewMode === "tabs"
                     ? "bg-white/10 text-white"
                     : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
@@ -551,7 +565,7 @@ function DashboardContent() {
               </button>
               <button
                 onClick={() => setViewMode("panes")}
-                className={`rounded-full px-4 py-1.5 text-xs font-normal transition-all duration-150 cursor-pointer ${
+                className={`rounded-full px-5 py-2.5 text-sm font-normal transition-all duration-150 cursor-pointer ${
                   viewMode === "panes"
                     ? "bg-white/10 text-white"
                     : "text-[#9A9A9A] hover:text-white hover:bg-white/5"
@@ -565,14 +579,14 @@ function DashboardContent() {
             <div className="ml-auto flex items-center">
               {searchOpen ? (
                 <div className="relative flex items-center">
-                  <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400" />
+                  <Search className="absolute left-3 h-5 w-5 text-zinc-400" />
                   <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
-                    className="h-7 w-36 sm:w-48 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-8 pr-3 text-xs text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
+                    className="h-10 w-44 sm:w-56 rounded-full bg-white/5 backdrop-blur-md border border-white/10 pl-10 pr-4 text-sm text-white placeholder-zinc-400 outline-none transition-all focus:bg-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20"
                     onBlur={() => {
                       if (!searchQuery) setSearchOpen(false)
                     }}
@@ -581,26 +595,27 @@ function DashboardContent() {
               ) : (
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                   title="Search"
                 >
-                  <Search className="h-4 w-4" />
+                  <Search className="h-5 w-5" />
                 </button>
               )}
             </div>
           </div>
 
           {/* Row 2 */}
-          <div className="flex items-center justify-end px-4 pb-2">
+          <div className="flex items-center justify-end px-4 pb-3 gap-2">
+            <NotificationDropdown />
             {/* Focus button */}
             <div className="flex items-center">
               <button
                 onClick={focusThisDevice}
                 title="Focus"
-                className="flex items-center justify-center rounded p-1.5 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-1.5"
+                className="flex items-center justify-center rounded-md p-2.5 px-4 text-gray-400 hover:bg-[#333333] hover:text-white transition-colors gap-2"
               >
-                <Crosshair className="h-4 w-4" />
-                <span className="text-xs font-medium">Focus</span>
+                <Crosshair className="h-5 w-5" />
+                <span className="text-sm font-medium">Focus</span>
               </button>
             </div>
           </div>
@@ -620,13 +635,13 @@ function DashboardContent() {
       {/* Profile sidebar - on RIGHT (both panes and tabs mode) */}
       {profileSidebarCollapsed
         ? (
-          <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-10 h-full">
+          <div className="profile-sidebar-collapsed shrink-0 flex flex-col items-center gap-1 p-1 w-12 sm:w-10 h-full">
             <button
               onClick={toggleProfileSidebar}
               title="Expand profile sidebar"
-              className="w-8 h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
+              className="w-10 h-10 sm:w-8 sm:h-8 mt-2 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white cursor-pointer"
             >
-              <PanelRight size={14} className="rotate-180" />
+              <PanelRight size={18} className="rotate-180" />
             </button>
           </div>
         ) : (

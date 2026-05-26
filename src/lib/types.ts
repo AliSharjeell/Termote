@@ -1,5 +1,14 @@
 export type Shell = "powershell" | "cmd" | "wsl" | "note" | "image" | "whiteboard" | "browser"
 export type PaneType = "terminal" | "note" | "image" | "whiteboard" | "browser"
+export type PaneActivityState = "idle" | "running" | "needs_input" | "done" | "crashed"
+
+export interface SystemActivity {
+  id: string
+  name: string
+  state: PaneActivityState
+  detail?: string
+  updatedAt: number
+}
 
 export interface PaneGroup {
   id: string

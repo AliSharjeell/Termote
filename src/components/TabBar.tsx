@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { PanelLeft } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
-import { useFocusDevice } from "@/hooks/useFocusDevice"
 import { refitTerminal, fitAllTerminals, setupVisualViewport, setupWindowResizeHandler } from "@/lib/terminalRegistry"
 import { XtermPane } from "./XtermPane"
 import { PortManager } from "./PortManager"
@@ -12,6 +11,8 @@ import { NotePane } from "./NotePane"
 import { ImagePane } from "./ImagePane"
 import { WhiteboardPane } from "./WhiteboardPane"
 import { useIsTauri } from "@/hooks/useIsTauri"
+import { ActivityIndicator } from "./ActivityIndicator"
+import { getHighestActivityStatus } from "@/lib/activityStatus"
 
 interface TabBarProps {
   searchQuery?: string
@@ -24,16 +25,11 @@ export function TabBar({ searchQuery }: TabBarProps) {
     activePanes,
     selectedTab,
     selectTab,
-    selectGroup,
-    selectedGroupId,
     tabsSidebarCollapsed,
     tabsGitSidebarCollapsed,
     toggleTabsSidebar,
-    toggleTabsGitSidebar,
-    devices,
+    paneActivities,
   } = usePaneStore()
-
-  const focusThisDevice = useFocusDevice()
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
@@ -216,9 +212,10 @@ export function TabBar({ searchQuery }: TabBarProps) {
           {groups.map((group) => {
             const groupPanes = panes.filter(p => p.groupId === group.id && activePanes.includes(p.id))
             const isExpanded = expandedGroups.has(group.id)
+            const groupStatus = getHighestActivityStatus(groupPanes.map(p => paneActivities[p.id]))
             return (
               <div key={group.id} className="group/row">
-                <div className="flex items-center gap-2 px-3 py-1.5 cursor-pointer" onClick={() => {
+                <div className={`flex items-center gap-2 px-3 cursor-pointer ${isTauriApp ? 'py-1.5' : 'py-3'}`} onClick={() => {
                   const newSet = new Set(expandedGroups)
                   if (isExpanded) newSet.delete(group.id)
                   else newSet.add(group.id)
@@ -226,12 +223,15 @@ export function TabBar({ searchQuery }: TabBarProps) {
                 }}>
                   <span className="text-xs text-[#CCCCCC] shrink-0 w-5 h-5 flex items-center justify-center rounded border border-[#444]">{isExpanded ? "▾" : "▸"}</span>
                   <span className="truncate text-sm text-[#CCCCCC]">{group.name}</span>
-                  <span className="ml-auto text-xs text-[#CCCCCC]">{groupPanes.length}</span>
+                  <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                    <ActivityIndicator status={groupStatus} />
+                    <span className="text-xs text-[#CCCCCC]">{groupPanes.length}</span>
+                  </div>
                 </div>
                 {isExpanded && groupPanes.map((pane) => (
                   <div
                     key={pane.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ml-2 ${
+                    className={`flex items-center gap-2 px-3 text-sm cursor-pointer rounded ml-2 ${isTauriApp ? 'py-1.5' : 'py-3'} ${
                       selectedTab === pane.id
                         ? "text-[#CCCCCC] bg-white/[0.08]"
                         : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
@@ -250,7 +250,10 @@ export function TabBar({ searchQuery }: TabBarProps) {
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                     )}
                     <span className="truncate text-[#CCCCCC]">{pane.name}</span>
-                    {pane.pinned && <span className="text-[#CCCCCC] shrink-0">★</span>}
+                    <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                      <ActivityIndicator status={paneActivities[pane.id]} />
+                      {pane.pinned && <span className="text-[#CCCCCC]">★</span>}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -261,7 +264,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
           {panes.filter(p => p.groupId === null && activePanes.includes(p.id)).map((pane) => (
             <div
               key={pane.id}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer rounded ${
+              className={`flex items-center gap-2 px-3 text-sm cursor-pointer rounded ${isTauriApp ? 'py-1.5' : 'py-3'} ${
                 selectedTab === pane.id
                   ? "text-[#CCCCCC] bg-white/[0.08]"
                   : "text-[#CCCCCC] hover:bg-white/[0.06] hover:rounded"
@@ -280,7 +283,10 @@ export function TabBar({ searchQuery }: TabBarProps) {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#CCCCCC] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
               )}
               <span className="truncate text-[#CCCCCC]">{pane.name}</span>
-              {pane.pinned && <span className="text-[#CCCCCC] shrink-0">★</span>}
+              <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                <ActivityIndicator status={paneActivities[pane.id]} />
+                {pane.pinned && <span className="text-[#CCCCCC]">★</span>}
+              </div>
             </div>
           ))}
 

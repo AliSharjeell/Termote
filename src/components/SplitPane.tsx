@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
-import { PanelLeft, PanelRight } from "lucide-react"
+import { PanelLeft } from "lucide-react"
 import { XtermPane } from "./XtermPane"
 import { BrowserPane } from "./BrowserPane"
 import { NotePane } from "./NotePane"
@@ -11,6 +11,8 @@ import { PortManager } from "./PortManager"
 import { useIsTauri } from "@/hooks/useIsTauri"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { fitAllTerminals, setupVisualViewport, setupWindowResizeHandler } from "@/lib/terminalRegistry"
+import { ActivityIndicator } from "./ActivityIndicator"
+import { getHighestActivityStatus } from "@/lib/activityStatus"
 
 interface SplitPaneProps {
   searchQuery?: string
@@ -18,7 +20,7 @@ interface SplitPaneProps {
 
 export function SplitPane({ searchQuery }: SplitPaneProps) {
   // ALL hooks must be at the top - never inside conditionals!
-  const { panes, activePanes, isAuthenticated, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup, sidebarCollapsed, toggleSidebar, toggleProfileSidebar, profileSidebarCollapsed, gitSidebarCollapsed, toggleGitSidebar, portProcesses } = usePaneStore()
+  const { panes, activePanes, groups, selectedGroupId, selectedTab, selectGroup, deleteGroup, sidebarCollapsed, toggleSidebar, paneActivities } = usePaneStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
@@ -132,13 +134,13 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
     <div ref={containerRef} className="flex h-full w-full flex-row">
       {/* Vertical sidebar with group tabs */}
       {sidebarCollapsed ? (
-        <div data-mica-surface className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
+        <div data-mica-surface className={`shrink-0 flex flex-col items-center gap-1 border-r border-[#252525] p-1 w-12 sm:w-10 ${isMica ? "bg-transparent border-r-transparent" : "bg-[#0d0d0d]"}`}>
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
             className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
           >
-            <PanelLeft size={14} />
+            <PanelLeft size={18} />
           </button>
         </div>
       ) : (
@@ -156,7 +158,7 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
               title="Collapse sidebar"
               className="text-[#CCCCCC] hover:text-white"
             >
-              <PanelLeft size={14} />
+              <PanelLeft size={18} />
             </button>
           </div>
           <button
@@ -262,7 +264,18 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             className="flex min-w-0 flex-1 items-center gap-2 text-left"
           >
             <span>All Panes</span>
-            <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => activePanes.includes(p.id)).length}</span>
+            <div className="ml-auto flex items-center gap-1.5 shrink-0">
+              {(() => {
+                const activePanesList = panes.filter(p => activePanes.includes(p.id))
+                const groupStatus = getHighestActivityStatus(activePanesList.map(p => paneActivities[p.id]))
+                return (
+                  <>
+                    <ActivityIndicator status={groupStatus} />
+                    <span className="text-xs text-[#CCCCCC]">{activePanesList.length}</span>
+                  </>
+                )
+              })()}
+            </div>
           </button>
         </div>
         {expandedGroups.has("__all__") && (
@@ -287,7 +300,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                 )}
                 <span className="truncate">{pane.name}</span>
-                {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+                <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                  <ActivityIndicator status={paneActivities[pane.id]} />
+                  {pane.pinned && <span className="text-[#666]">★</span>}
+                </div>
               </div>
             ))}
           </div>
@@ -325,7 +341,18 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
             className="flex min-w-0 flex-1 items-center gap-2 text-left"
           >
             <span>Ungrouped</span>
-            <span className="ml-auto text-xs text-[#CCCCCC]">{panes.filter(p => p.groupId === null && activePanes.includes(p.id)).length}</span>
+            <div className="ml-auto flex items-center gap-1.5 shrink-0">
+              {(() => {
+                const ungroupedPanes = panes.filter(p => p.groupId === null && activePanes.includes(p.id))
+                const groupStatus = getHighestActivityStatus(ungroupedPanes.map(p => paneActivities[p.id]))
+                return (
+                  <>
+                    <ActivityIndicator status={groupStatus} />
+                    <span className="text-xs text-[#CCCCCC]">{ungroupedPanes.length}</span>
+                  </>
+                )
+              })()}
+            </div>
           </button>
         </div>
         {expandedGroups.has("__ungrouped__") && (
@@ -350,7 +377,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                 )}
                 <span className="truncate">{pane.name}</span>
-                {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+                <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                  <ActivityIndicator status={paneActivities[pane.id]} />
+                  {pane.pinned && <span className="text-[#666]">★</span>}
+                </div>
               </div>
             ))}
           </div>
@@ -393,13 +423,23 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                   className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 >
                   <span className="truncate">{group.name}</span>
-                  <span className="ml-auto text-xs text-[#CCCCCC]">{groupPanes.length}</span>
+                  <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                    {(() => {
+                      const groupStatus = getHighestActivityStatus(groupPanes.map(p => paneActivities[p.id]))
+                      return (
+                        <>
+                          <ActivityIndicator status={groupStatus} />
+                          <span className="text-xs text-[#CCCCCC]">{groupPanes.length}</span>
+                        </>
+                      )
+                    })()}
+                  </div>
                 </button>
               </div>
               {hoveredGroupId === group.id && (
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteGroup(group.id) }}
-                  className="absolute right-2 top-2 h-5 w-5 rounded bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[10px] font-bold leading-none shrink-0"
+                  className="absolute right-2 top-2 h-5 w-5 rounded bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[12px] sm:text-[10px] font-bold leading-none shrink-0"
                   title="Delete group"
                 >
                   ×
@@ -427,7 +467,10 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#888] shrink-0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                       )}
                       <span className="truncate">{pane.name}</span>
-                      {pane.pinned && <span className="text-[#666] shrink-0">★</span>}
+                      <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                        <ActivityIndicator status={paneActivities[pane.id]} />
+                        {pane.pinned && <span className="text-[#666]">★</span>}
+                      </div>
                     </div>
                   ))}
                 </div>
