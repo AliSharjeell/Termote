@@ -121,7 +121,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
             title="Expand sidebar (Alt+1)"
             className="w-8 h-8 flex flex-col items-center justify-center text-[#CCCCCC] hover:text-white"
           >
-            <PanelLeft size={14} />
+            <PanelLeft size={18} />
           </button>
         </div>
       ) : (
@@ -140,7 +140,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
                 title="Collapse sidebar (Alt+1)"
                 className="text-[#CCCCCC] hover:text-white"
               >
-                <PanelLeft size={14} />
+                <PanelLeft size={18} />
               </button>
             </div>
             <button
