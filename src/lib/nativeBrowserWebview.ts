@@ -59,6 +59,12 @@ async function createNativeWebview(
     backgroundColor: "#ffffff",
   })
 
+  // Wait for the webview to be fully created on the Rust backend
+  await new Promise<void>((resolve, reject) => {
+    webview.once("tauri://created", () => resolve())
+    webview.once("tauri://error", (e) => reject(new Error(String(e.payload))))
+  })
+
   return { webview, url }
 }
 
@@ -97,13 +103,16 @@ export async function ensureNativeBrowserWebview(
     webviewObj = await Webview.getByLabel(label)
     console.log(`[NativeBrowserWebview] Got fresh webview reference: ${!!webviewObj}`)
   } catch (err) {
-    console.error(`[NativeBrowserWebview] Failed to get webview by label: ${err}`)
-    webviews.delete(label)
-    throw err
+    console.warn(`[NativeBrowserWebview] Failed to get webview by label: ${err}`)
+  }
+
+  // Fallback to cached webview if getByLabel fails (often happens right after creation)
+  if (!webviewObj) {
+    webviewObj = existing.webview
   }
 
   if (!webviewObj) {
-    console.error(`[NativeBrowserWebview] Webview not found by label: ${label}`)
+    console.warn(`[NativeBrowserWebview] Webview not found by label: ${label}`)
     webviews.delete(label)
     throw new Error("webview not found")
   }
@@ -117,7 +126,7 @@ export async function ensureNativeBrowserWebview(
     await webviewObj.show()
     console.log(`[NativeBrowserWebview] Webview shown: ${label}`)
   } catch (err) {
-    console.error(`[NativeBrowserWebview] Failed to reposition webview: ${label}`, err)
+    console.warn(`[NativeBrowserWebview] Failed to reposition webview: ${label}`, err)
     webviews.delete(label)
     throw err
   }

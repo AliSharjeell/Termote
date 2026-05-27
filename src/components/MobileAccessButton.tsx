@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
 import { X, Loader2, AlertTriangle, ExternalLink, Check, Copy, Smartphone } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
+import { usePaneStore } from "@/hooks/usePaneStore"
 
 interface DevtunnelAuthStatus {
   status: string
@@ -131,7 +132,15 @@ async function waitForDevTunnelReady(
 }
 
 export function MobileAccessButton() {
+  const { setMobileAccessModalOpen } = usePaneStore()
   const [showQRModal, setShowQRModal] = useState(false)
+
+  // Sync state to store whenever it changes
+  useEffect(() => {
+    setMobileAccessModalOpen(showQRModal)
+    return () => setMobileAccessModalOpen(false)
+  }, [showQRModal, setMobileAccessModalOpen])
+
   const [qrBlurred, setQrBlurred] = useState(true)
   const [devtunnelStatus, setDevtunnelStatus] = useState<DevtunnelAuthStatus | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState(false)

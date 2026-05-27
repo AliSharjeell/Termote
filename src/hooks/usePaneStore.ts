@@ -238,6 +238,7 @@ interface PaneState {
   imagePickerOpen: boolean
   imagePickerPaneId: string | null
   browserModalOpen: boolean
+  mobileAccessModalOpen: boolean
   explorerCurrentPath: string
   explorerContents: DirectoryItem[]
   // Git status per pane
@@ -385,6 +386,7 @@ interface PaneState {
   fetchDirectory: (path: string) => void
   handleDirectoryContents: (path: string, items: DirectoryItem[]) => void
   spawnAtDirectory: (dir: string) => void
+  setMobileAccessModalOpen: (show: boolean) => void
   // File transfer actions
   uploadFile: (paneId: string, fileName: string, data: string) => void
   handleFileUploaded: (paneId: string, fileName: string) => void
@@ -738,6 +740,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   imagePickerOpen: false,
   imagePickerPaneId: null,
   browserModalOpen: false,
+  mobileAccessModalOpen: false,
   explorerCurrentPath: "",
   explorerContents: [],
   gitStatuses: {},
@@ -1125,6 +1128,7 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const pane = panes.find(p => p.id === paneId)
     // Frontend-only panes: browser, note, image, whiteboard have no backend process
     const isFrontendOnly = pane?.url != null ||
+      pane?.paneType === "browser" ||
       pane?.shell === "note" ||
       pane?.shell === "image" ||
       pane?.shell === "whiteboard"

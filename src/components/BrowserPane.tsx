@@ -22,7 +22,16 @@ function normalizeUrlInput(value: string) {
 }
 
 export function BrowserPane({ pane }: BrowserPaneProps) {
-  const { killPane, renamePane, togglePin, updateBrowserPaneUrl } = usePaneStore()
+  const {
+    killPane,
+    renamePane,
+    togglePin,
+    updateBrowserPaneUrl,
+    explorerOpen,
+    imagePickerOpen,
+    showSecurityModal,
+    mobileAccessModalOpen,
+  } = usePaneStore()
   const { isTauri, checked } = useIsTauri()
   const viewportRef = useRef<HTMLDivElement | null>(null)
   const [showPreview, setShowPreview] = useState(false)
@@ -30,6 +39,9 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [physicalRect, setPhysicalRect] = useState<BrowserPhysicalRect | null>(null)
+
+  const isAnyModalOpen =
+    explorerOpen || imagePickerOpen || showSecurityModal || mobileAccessModalOpen || showPreview
 
   useEffect(() => {
     setUrlInput(pane.url ?? "")
@@ -42,7 +54,7 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
   useNativeBrowserWebview({
     paneId: pane.id,
     url: pane.url,
-    enabled: checked && isTauri && Boolean(pane.url) && !showPreview,
+    enabled: checked && isTauri && Boolean(pane.url) && !isAnyModalOpen,
     viewportRef,
     refreshKey,
     onPhysicalRect: handlePhysicalRect,
@@ -50,7 +62,7 @@ export function BrowserPane({ pane }: BrowserPaneProps) {
 
   useBrowserMirrorHost({
     paneId: pane.id,
-    enabled: checked && isTauri && Boolean(pane.url) && !showPreview,
+    enabled: checked && isTauri && Boolean(pane.url) && !isAnyModalOpen,
     physicalRect,
   })
 
