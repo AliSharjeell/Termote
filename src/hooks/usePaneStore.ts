@@ -1690,6 +1690,10 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     }
   },
 
+  setMobileAccessModalOpen: (show) => {
+    set({ mobileAccessModalOpen: show })
+  },
+
   // File transfer
   uploadFile: (paneId, fileName, data) => {
     const { ws, isAuthenticated } = get()
