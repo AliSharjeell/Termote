@@ -979,9 +979,16 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     let selectedTab = state.selectedTab
 
     // Preserve panes created while offline or before the backend echo arrives.
+    // When fully synced with the backend, treat its pane list as authoritative
+    // and drop any local-only panes it no longer reports (e.g. deleted on another device).
     const sharedPanes = state.panes.filter(p => getSharedPaneType(p) != null)
     const backendPaneIds = new Set(panes.map(p => p.id))
-    const localOnlySharedPanes = sharedPanes.filter(p => !backendPaneIds.has(p.id) && state.activePanes.includes(p.id))
+    const isSyncedWithBackend = state.isConnected && state.isAuthenticated
+    const localOnlySharedPanes = sharedPanes.filter(
+      p => !backendPaneIds.has(p.id) &&
+        state.activePanes.includes(p.id) &&
+        !isSyncedWithBackend
+    )
 
     // Load persisted pinned pane IDs
     const persisted = loadPersistedState()
