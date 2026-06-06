@@ -58,7 +58,7 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl }: ProfilePaneProps
   return (
     <>
       {/* Sidebar content */}
-      <div className={`flex flex-col h-full border-l border-[#353535] overflow-hidden ${isMica ? "bg-transparent border-transparent" : "bg-[#0d0d0d]"}`} style={{ width: 260 }}>
+      <div className={`flex flex-col h-full border-l border-[#353535] overflow-hidden ${isMica ? "bg-transparent border-transparent" : "bg-black"}`} style={{ width: 260 }}>
         {/* Collapse button */}
         <div className={`flex justify-start px-2 py-1 ${isMica ? "border-transparent" : "border-b border-[#1a1a1a]"}`}>
           <button
@@ -82,10 +82,6 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl }: ProfilePaneProps
           {/* Server Controls - Tauri only */}
           {checked && isTauri && (
             <div className={`px-1.5 py-3 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
-              <div className="flex items-center gap-1.5 mb-2 px-1.5">
-                <RefreshCw className="h-3 w-3 text-[#CCCCCC]" />
-                <span className="text-[10px] text-[#CCCCCC]">Server Controls</span>
-              </div>
               <div className="space-y-1">
                 <button
                   onClick={handleRestartServer}
