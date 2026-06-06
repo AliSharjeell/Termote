@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, type RefObject } from "react"
+import { useEffect, useRef, type RefObject } from "react"
 import {
   closeNativeBrowserWebview,
   ensureNativeBrowserWebview,
@@ -128,21 +128,7 @@ export function useNativeBrowserWebview({
       window.removeEventListener("resize", scheduleSync)
       window.removeEventListener("scroll", scheduleSync, true)
       missingLoggedRef.current = false
-      // Note: we don't close the webview on cleanup here
-      // because the pane might remount with the same paneId
-      // and we want to reuse the webview. The parent component
-      // should call closeNativeBrowserWebview explicitly on pane close.
+      void closeNativeBrowserWebview(paneId)
     }
   }, [enabled, paneId, url, refreshKey])
-
-  // Cleanup on pane close - called separately when pane is destroyed
-  const cleanupOnClose = useCallback(() => {
-    createdRef.current = false
-    creatingRef.current = null
-    missingLoggedRef.current = false
-    void closeNativeBrowserWebview(paneId)
-  }, [paneId])
-
-  // Expose cleanup for parent to call on pane close
-  ;(useNativeBrowserWebview as unknown as { cleanup: typeof cleanupOnClose }).cleanup = cleanupOnClose
 }
