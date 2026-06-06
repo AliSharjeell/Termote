@@ -18,11 +18,20 @@ export function DirectoryPickerModal() {
 
   const isImagePickerMode = imagePickerOpen
 
-  const filteredContents = isImagePickerMode
-    ? explorerContents.filter((item) =>
-        item.is_dir || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(item.name)
-      )
-    : explorerContents
+  const filteredContents = (() => {
+    let items = isImagePickerMode
+      ? explorerContents.filter((item) =>
+          item.is_dir || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(item.name)
+        )
+      : explorerContents
+
+    const q = searchQuery.trim().toLowerCase()
+    if (q) {
+      items = items.filter((item) => item.name.toLowerCase().includes(q))
+    }
+
+    return items
+  })()
 
   if (!explorerOpen) return null
 
