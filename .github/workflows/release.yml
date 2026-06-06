@@ -6,7 +6,7 @@ on:
       tag_name:
         description: "Release tag to create."
         required: false
-        default: "termote-v0.1.0"
+        default: "termote-v0.2.0"
       backend_ref:
         description: "Branch, tag, or SHA to checkout from the TermoteBackend repo."
         required: false
@@ -122,8 +122,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TERMOTE_BACKEND_DIR: ${{ github.workspace }}/TermoteBackend
         with:
-          tagName: ${{ github.event_name == 'push' && github.ref_name || inputs.tag_name || 'termote-v0.1.0' }}
-          releaseName: Termote Desktop v0.1.0
+          tagName: ${{ github.event_name == 'push' && github.ref_name || inputs.tag_name || 'termote-v0.2.0' }}
+          releaseName: Termote Desktop v0.2.0
           releaseBody: ${{ steps.release_notes.outputs.body }}
           releaseDraft: ${{ github.event_name == 'workflow_dispatch' && inputs.draft || false }}
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
