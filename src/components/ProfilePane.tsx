@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { PanelRight, RefreshCw, Square, Bot, Settings } from "lucide-react"
+import { PanelRight, RefreshCw, Square, Bot } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { useIsTauri } from "@/hooks/useIsTauri"
 import { invoke } from "@tauri-apps/api/core"
@@ -71,14 +71,6 @@ export function ProfilePane({ tunnelUrl, authToken, shareUrl }: ProfilePaneProps
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {/* Settings header */}
-          <div className={`px-3 py-3 flex items-center gap-1.5 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
-            <Settings className="h-4.5 w-4.5 sm:h-3.5 sm:w-3.5 text-[#808080] shrink-0" />
-            <span className="text-sm sm:text-xs font-normal text-white">
-              Settings
-            </span>
-          </div>
-
           {/* Server Controls - Tauri only */}
           {checked && isTauri && (
             <div className={`px-1.5 py-3 ${isMica ? "border-transparent" : "border-b border-[#252525]"}`}>
