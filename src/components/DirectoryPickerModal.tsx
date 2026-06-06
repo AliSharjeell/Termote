@@ -84,55 +84,60 @@ export function DirectoryPickerModal() {
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70">
       <div className="flex h-[70vh] w-[600px] flex-col rounded-2xl bg-[#161616] shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#333333] px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleGoUp}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#27272A] text-[#CCCCCC] hover:bg-[#333333] transition-colors"
-              title="Go up"
-            >
-              <ChevronUp className="h-5 w-5" />
-            </button>
-            <div className="flex flex-col">
+        <div className="flex flex-col gap-3 border-b border-[#333333] px-4 py-3">
+          {/* Row 1: Go Up + Title + Close */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleGoUp}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#27272A] text-[#CCCCCC] hover:bg-[#333333] transition-colors"
+                title="Go up"
+              >
+                <ChevronUp className="h-5 w-5" />
+              </button>
               <span className="text-xs text-[#808080]">{isImagePickerMode ? "Select image" : "Select folder"}</span>
-              <div className="flex max-w-[420px] flex-wrap items-center gap-x-0.5 gap-y-0.5 text-sm font-mono">
-                {breadcrumbs.length === 0 ? (
-                  <span className="text-[#CCCCCC]">Drives</span>
-                ) : (
-                  breadcrumbs.map((crumb, i, arr) => (
-                    <div key={crumb.path} className="flex items-center">
-                      {i > 0 && <span className="px-1 text-[#808080]">/</span>}
-                      <button
-                        onClick={() => fetchDirectory(crumb.path)}
-                        title={crumb.path}
-                        className={`max-w-[160px] truncate rounded px-1.5 py-0.5 transition-colors hover:bg-[#27272A] hover:text-white ${
-                          i === arr.length - 1 ? "text-white" : "text-[#CCCCCC]"
-                        }`}
-                      >
-                        {crumb.name}
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
-            <div className="relative flex items-center ml-2">
-              <Search className="absolute left-2.5 h-4 w-4 text-[#808080] pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search folders..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-48 rounded-full bg-[#27272A] pl-8 pr-3 text-xs text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
-              />
-            </div>
+            <button
+              onClick={closeExplorer}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={closeExplorer}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#808080] hover:bg-[#333333] hover:text-white transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+
+          {/* Row 2: Breadcrumbs */}
+          <div className="flex max-w-full flex-wrap items-center gap-x-0.5 gap-y-0.5 text-sm font-mono">
+            {breadcrumbs.length === 0 ? (
+              <span className="text-[#CCCCCC]">Drives</span>
+            ) : (
+              breadcrumbs.map((crumb, i, arr) => (
+                <div key={crumb.path} className="flex items-center">
+                  {i > 0 && <span className="px-1 text-[#808080]">/</span>}
+                  <button
+                    onClick={() => fetchDirectory(crumb.path)}
+                    title={crumb.path}
+                    className={`max-w-[160px] truncate rounded px-1.5 py-0.5 transition-colors hover:bg-[#27272A] hover:text-white ${
+                      i === arr.length - 1 ? "text-white" : "text-[#CCCCCC]"
+                    }`}
+                  >
+                    {crumb.name}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Row 3: Search */}
+          <div className="relative flex items-center">
+            <Search className="absolute left-3 h-4 w-4 text-[#808080] pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search folders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 w-full rounded-full bg-[#27272A] pl-9 pr-3 text-sm text-white placeholder-[#808080] outline-none focus:ring-1 focus:ring-[#52525B]"
+            />
+          </div>
         </div>
 
         {/* Body - File List */}
