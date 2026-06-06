@@ -400,7 +400,12 @@ export function SplitPane({ searchQuery }: SplitPaneProps) {
           const groupPanes = panes.filter(p => p.groupId === group.id && activePanes.includes(p.id))
           const isExpanded = expandedGroups.has(group.id)
           return (
-            <div key={group.id} className="group/row">
+            <div
+              key={group.id}
+              className="group/row relative"
+              onMouseEnter={() => setHoveredGroupId(group.id)}
+              onMouseLeave={() => setHoveredGroupId(null)}
+            >
               <div
                 className={`w-full rounded px-3 py-2 text-sm text-left flex items-center gap-2 ${
                   selectedGroupId === group.id

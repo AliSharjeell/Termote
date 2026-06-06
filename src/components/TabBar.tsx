@@ -25,6 +25,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
     activePanes,
     selectedTab,
     selectTab,
+    deleteGroup,
     tabsSidebarCollapsed,
     tabsGitSidebarCollapsed,
     toggleTabsSidebar,
@@ -34,6 +35,7 @@ export function TabBar({ searchQuery }: TabBarProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [sidebarWidth, setSidebarWidth] = useState(224)
   const [isResizing, setIsResizing] = useState(false)
+  const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
   const { isTauri: isTauriApp, checked: tauriChecked } = useIsTauri()
 
   // Determine Mica-transparent styling for Tauri
@@ -228,7 +230,12 @@ export function TabBar({ searchQuery }: TabBarProps) {
               const isExpanded = expandedGroups.has(group.id)
               const groupStatus = getHighestActivityStatus(groupPanes.map(p => paneActivities[p.id]))
               return (
-                <div key={group.id} className="group/row">
+                <div
+                  key={group.id}
+                  className="group/row relative"
+                  onMouseEnter={() => setHoveredGroupId(group.id)}
+                  onMouseLeave={() => setHoveredGroupId(null)}
+                >
                   <div className={`flex items-center gap-2 px-3 cursor-pointer ${isTauriApp ? 'py-1.5' : 'py-3'}`} onClick={() => {
                     const newSet = new Set(expandedGroups)
                     if (isExpanded) newSet.delete(group.id)
@@ -242,6 +249,15 @@ export function TabBar({ searchQuery }: TabBarProps) {
                       <span className="text-xs text-[#CCCCCC]">{groupPanes.length}</span>
                     </div>
                   </div>
+                  {hoveredGroupId === group.id && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteGroup(group.id) }}
+                      className="absolute right-2 top-2 h-5 w-5 rounded bg-[#E44] hover:bg-[#C33] flex items-center justify-center text-white text-[12px] sm:text-[10px] font-bold leading-none shrink-0"
+                      title="Delete group"
+                    >
+                      ×
+                    </button>
+                  )}
                   {isExpanded && groupPanes.map((pane) => (
                     <div
                       key={pane.id}
