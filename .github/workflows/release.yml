@@ -58,7 +58,7 @@ jobs:
             target: x86_64-apple-darwin
             args: --target x86_64-apple-darwin --bundles dmg
           - name: Linux x64 installers
-            platform: ubuntu-22.04
+            platform: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             args: --target x86_64-unknown-linux-gnu --bundles appimage,deb,rpm
 
@@ -75,7 +75,7 @@ jobs:
           token: ${{ secrets.TERMOTE_BACKEND_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Install Linux build dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-24.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
