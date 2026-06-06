@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback, useState } from "react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { PaneTitleBar } from "./PaneTitleBar"
 import { MobileKeyboardBar } from "./MobileKeyboardBar"
-import { clearPaneActivity, handleTerminalInput } from "@/lib/activityHeuristics"
+import { clearPaneActivity, getPaneKind, handleTerminalInput } from "@/lib/activityHeuristics"
 import {
   getOrCreateTerminal,
   openTerminal,
@@ -34,22 +34,51 @@ export function XtermPane({ pane }: XtermPaneProps) {
   // Use refs for handlers to avoid recreating callbacks on every render
   const sendInputRef = useRef(usePaneStore.getState().sendInput)
   const sendResizeRef = useRef(usePaneStore.getState().sendResize)
+  const paneIdRef = useRef(pane.id)
+  paneIdRef.current = pane.id
 
   const { killPane, renamePane, togglePin, uploadFile, aiCommand, spawnAtDirectory, spawnPane } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
   const [isCtrlActive, setIsCtrlActive] = useState(false)
 
   // Smart Clipboard: Ctrl+C = Copy if text selected, SIGINT if not
+  // Ctrl+V in agent sessions (Claude Code, Codex, etc.) is mapped to a
+  // bracketed-paste sequence because those TUIs bind paste to
+  // \x1b[200~...\x1b[201~, not the \x16 byte xterm normally emits for Ctrl+V.
   const getKeyHandler = useCallback(
     (terminal: import("@xterm/xterm").Terminal) => {
       return (arg: unknown) => {
-        const keyEvent = arg as { type: string; ctrlKey: boolean; code: string }
+        const keyEvent = arg as { type: string; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; metaKey: boolean; code: string }
         if (keyEvent.type !== "keydown") return true
 
         if (keyEvent.ctrlKey && keyEvent.code === "KeyC") {
           const selection = terminal.getSelection()
           if (selection) {
             navigator.clipboard.writeText(selection)
+            return false
+          }
+          return true
+        }
+
+        if (
+          keyEvent.ctrlKey &&
+          !keyEvent.shiftKey &&
+          !keyEvent.altKey &&
+          !keyEvent.metaKey &&
+          keyEvent.code === "KeyV"
+        ) {
+          if (getPaneKind(paneIdRef.current) === "agent") {
+            const paneId = paneIdRef.current
+            navigator.clipboard
+              .readText()
+              .then((text) => {
+                if (text) {
+                  sendInputRef.current(paneId, `\x1b[200~${text}\x1b[201~`)
+                }
+              })
+              .catch((err) => {
+                console.warn("[XtermPane] clipboard read failed:", err)
+              })
             return false
           }
           return true

@@ -431,6 +431,10 @@ export function handleTerminalInput(paneId: string, data: string) {
   appendInput(paneId, data)
 }
 
+export function getPaneKind(paneId: string): ActivityKind | null {
+  return paneRuntimes.get(paneId)?.kind ?? null
+}
+
 export function handleTerminalOutput(paneId: string, data: string) {
   const runtime = getRuntime(paneId)
   runtime.buffer = `${runtime.buffer}${data}`.slice(-4000)
