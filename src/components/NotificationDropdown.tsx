@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useLayoutEffect } from "react"
+import { createPortal } from "react-dom"
 import { Bell, CheckCircle2, AlertCircle, HelpCircle, Loader2, Trash2 } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { activityPriority, isVisibleActivityStatus } from "@/lib/activityStatus"
@@ -18,10 +19,20 @@ interface NotificationDropdownProps {
   compact?: boolean
 }
 
+interface DropdownPosition {
+  top: number
+  left: number
+  width: number
+}
+
+const VIEWPORT_PADDING = 8
+
 export function NotificationDropdown({ compact }: NotificationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [now, setNow] = useState(0)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<DropdownPosition | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const {
     panes,
     paneActivities,
@@ -32,16 +43,44 @@ export function NotificationDropdown({ compact }: NotificationDropdownProps) {
     clearNotificationHistory,
   } = usePaneStore()
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setPosition(null)
+      return
     }
+    function update() {
+      const btn = buttonRef.current
+      if (!btn) return
+      const rect = btn.getBoundingClientRect()
+      const vw = window.innerWidth
+      const width = Math.min(320, vw - VIEWPORT_PADDING * 2)
+      const minLeft = VIEWPORT_PADDING
+      const maxLeft = vw - width - VIEWPORT_PADDING
+      const desiredLeft = rect.right - width
+      const left = Math.min(maxLeft, Math.max(minLeft, desiredLeft))
+      const top = rect.bottom + 8
+      setPosition({ top, left, width })
+    }
+    update()
+    window.addEventListener("resize", update)
+    window.addEventListener("scroll", update, true)
+    return () => {
+      window.removeEventListener("resize", update)
+      window.removeEventListener("scroll", update, true)
+    }
+  }, [isOpen])
 
+  useEffect(() => {
+    if (!isOpen) return
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node
+      if (buttonRef.current?.contains(target)) return
+      if (contentRef.current?.contains(target)) return
+      setIsOpen(false)
+    }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -180,9 +219,60 @@ export function NotificationDropdown({ compact }: NotificationDropdownProps) {
     )
   }
 
+  const dropdownContent = isOpen && position ? (
+    <div
+      ref={contentRef}
+      className="fixed z-[9999] overflow-hidden rounded-md border border-[#333333] bg-[#1E1E1E] py-1 shadow-lg"
+      style={{ top: position.top, left: position.left, width: position.width }}
+    >
+      <div className="flex items-center justify-between border-b border-[#333333] px-3 py-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Activity</span>
+        {pastItems.length > 0 && (
+          <button
+            onClick={clearNotificationHistory}
+            className="rounded p-1 text-gray-500 transition-colors hover:bg-[#333333] hover:text-gray-200"
+            title="Clear past notifications"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+      <div className="max-h-96 overflow-y-auto">
+        {priorityItems.length === 0 && runningItems.length === 0 && pastItems.length === 0 && (
+          <div className="px-4 py-3 text-center text-sm text-gray-500">No notifications</div>
+        )}
+        {priorityItems.length > 0 && (
+          <div>
+            <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              Needs Attention
+            </div>
+            {priorityItems.map(renderNotificationItem)}
+          </div>
+        )}
+        {runningItems.length > 0 && (
+          <div>
+            <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              Running
+            </div>
+            {runningItems.map(renderNotificationItem)}
+          </div>
+        )}
+        {pastItems.length > 0 && (
+          <div className="border-t border-[#333333]">
+            <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              Past
+            </div>
+            {pastItems.map(renderHistoryItem)}
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
-    <div ref={dropdownRef}>
+    <>
       <button
+        ref={buttonRef}
         onClick={() => {
           const nextOpen = !isOpen
           if (nextOpen) setNow(Date.now())
@@ -201,52 +291,7 @@ export function NotificationDropdown({ compact }: NotificationDropdownProps) {
           </span>
         )}
       </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-md border border-[#333333] bg-[#1E1E1E] py-1 shadow-lg" style={{ minWidth: '16rem' }}>
-          <div className="flex items-center justify-between border-b border-[#333333] px-3 py-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Activity</span>
-            {pastItems.length > 0 && (
-              <button
-                onClick={clearNotificationHistory}
-                className="rounded p-1 text-gray-500 transition-colors hover:bg-[#333333] hover:text-gray-200"
-                title="Clear past notifications"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            {priorityItems.length === 0 && runningItems.length === 0 && pastItems.length === 0 && (
-              <div className="px-4 py-3 text-center text-sm text-gray-500">No notifications</div>
-            )}
-            {priorityItems.length > 0 && (
-              <div>
-                <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Needs Attention
-                </div>
-                {priorityItems.map(renderNotificationItem)}
-              </div>
-            )}
-            {runningItems.length > 0 && (
-              <div>
-                <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Running
-                </div>
-                {runningItems.map(renderNotificationItem)}
-              </div>
-            )}
-            {pastItems.length > 0 && (
-              <div className="border-t border-[#333333]">
-                <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                  Past
-                </div>
-                {pastItems.map(renderHistoryItem)}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+      {typeof document !== "undefined" && createPortal(dropdownContent, document.body)}
+    </>
   )
 }
