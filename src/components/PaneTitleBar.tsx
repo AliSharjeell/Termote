@@ -102,7 +102,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
           className={`flex ${isTauriApp ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0`}
           title="Rename terminal"
         >
-          <Pencil className={`${isTauriApp ? 'h-3 w-3' : 'h-4 w-4'} text-[#CCCCCC]`} />
+          <Pencil className={`${isTauriApp ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
         </button>
 
         {/* Duplicate button */}
@@ -120,13 +120,13 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
         {onPin && (
           <button
             onClick={onPin}
-            className={`flex ${isTauriApp ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded hover:bg-[#27272A] shrink-0`}
+            className={`flex ${isTauriApp ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0`}
             title={pinned ? "Unpin terminal" : "Pin terminal"}
           >
             {pinned ? (
-              <PinOff className={`${isTauriApp ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-[#CCCCCC]`} />
+              <PinOff className={`${isTauriApp ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-white`} />
             ) : (
-              <Pin className={`${isTauriApp ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-[#808080] hover:text-white`} />
+              <Pin className={`${isTauriApp ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-white`} />
             )}
           </button>
         )}
@@ -135,12 +135,10 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
         <div className="relative" ref={groupMenuRef}>
           <button
             onClick={() => setShowGroupMenu(!showGroupMenu)}
-            className={`flex ${isTauriApp ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0 ${
-              groupId ? "text-[#4A4]" : "text-[#808080]"
-            }`}
+            className={`flex ${isTauriApp ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0`}
             title="Add to group"
           >
-            <FolderInput className="h-4 w-4" />
+            <FolderInput className={`${isTauriApp ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
           </button>
           {showGroupMenu && (
             <div className="absolute top-full left-0 mt-1 w-48 rounded-lg bg-[#27272A] border border-[#3B3B3B] py-1 shadow-lg z-50">
@@ -254,10 +252,10 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
         {onLaunchAI && (
           <button
             onClick={onLaunchAI}
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0 text-[#808080] hover:text-white transition-colors"
+            className={`flex ${isTauriApp ? 'h-6 w-6' : 'h-8 w-8'} items-center justify-center rounded-full bg-[#27272A] hover:bg-[#333333] shrink-0 transition-colors`}
             title="Launch AI CLI"
           >
-            <Bot className="h-4 w-4" />
+            <Bot className={`${isTauriApp ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
           </button>
         )}
 
