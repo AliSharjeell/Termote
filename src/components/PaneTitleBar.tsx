@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Pencil, Pin, PinOff, FolderInput, X, Plus, Bot, Copy } from "lucide-react"
 import { usePaneStore } from "@/hooks/usePaneStore"
 import { useIsTauri } from "@/hooks/useIsTauri"
+import { isNotificationActivityStatus } from "@/lib/activityStatus"
 
 interface PaneTitleBarProps {
   title: string
@@ -27,8 +28,9 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
   const inputRef = useRef<HTMLInputElement>(null)
   const groupMenuRef = useRef<HTMLDivElement>(null)
   const newGroupInputRef = useRef<HTMLInputElement>(null)
-  const { groups, setPaneGroup, createGroup } = usePaneStore()
+  const { groups, setPaneGroup, createGroup, paneActivities } = usePaneStore()
   const { isTauri: isTauriApp } = useIsTauri()
+  const hasNotification = isNotificationActivityStatus(paneActivities[paneId])
 
   useEffect(() => {
     if (isCreatingGroup && newGroupInputRef.current) {
@@ -83,7 +85,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
   }
 
   return (
-    <div className={`flex ${isTauriApp ? 'h-8' : 'h-11'} items-center justify-between bg-[#161616] px-2`}>
+    <div className={`flex ${isTauriApp ? 'h-8' : 'h-11'} items-center justify-between ${hasNotification ? 'bg-blue-600' : 'bg-[#161616]'} px-2 transition-colors`}>
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {/* Close button */}
         <button
