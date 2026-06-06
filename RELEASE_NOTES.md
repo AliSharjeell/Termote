@@ -1,3 +1,5 @@
+![Termote Cover](https://raw.githubusercontent.com/AliSharjeell/Termote/termote-v0.2.0/public/maincover.png)
+
 # Termote Desktop v0.2.0
 
 Termote v0.2.0 builds on the v0.1.0 desktop shell with a richer notification system, native browser panes, a polished Mica desktop look, mobile keyboard improvements, and dozens of pane management and accessibility fixes. Installers ship for the same platforms as v0.1.0.
