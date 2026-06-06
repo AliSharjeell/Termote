@@ -18,6 +18,20 @@ export function DirectoryPickerModal() {
 
   const isImagePickerMode = imagePickerOpen
 
+  const breadcrumbs = (() => {
+    if (!explorerCurrentPath) return []
+    const sep = explorerCurrentPath.includes("\\") ? "\\" : "/"
+    const segments = explorerCurrentPath.split(/[/\\]/).filter(Boolean)
+    const crumbs: { name: string; path: string }[] = []
+    let cumulative = ""
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i]
+      cumulative = i === 0 ? segment : cumulative + sep + segment
+      crumbs.push({ name: segment, path: cumulative })
+    }
+    return crumbs
+  })()
+
   const filteredContents = (() => {
     let items = isImagePickerMode
       ? explorerContents.filter((item) =>
@@ -81,9 +95,26 @@ export function DirectoryPickerModal() {
             </button>
             <div className="flex flex-col">
               <span className="text-xs text-[#808080]">{isImagePickerMode ? "Select image" : "Select folder"}</span>
-              <span className="max-w-[400px] truncate text-sm text-[#CCCCCC] font-mono">
-                {explorerCurrentPath || "Drives"}
-              </span>
+              <div className="flex max-w-[420px] flex-wrap items-center gap-x-0.5 gap-y-0.5 text-sm font-mono">
+                {breadcrumbs.length === 0 ? (
+                  <span className="text-[#CCCCCC]">Drives</span>
+                ) : (
+                  breadcrumbs.map((crumb, i, arr) => (
+                    <div key={crumb.path} className="flex items-center">
+                      {i > 0 && <span className="px-1 text-[#808080]">/</span>}
+                      <button
+                        onClick={() => fetchDirectory(crumb.path)}
+                        title={crumb.path}
+                        className={`max-w-[160px] truncate rounded px-1.5 py-0.5 transition-colors hover:bg-[#27272A] hover:text-white ${
+                          i === arr.length - 1 ? "text-white" : "text-[#CCCCCC]"
+                        }`}
+                      >
+                        {crumb.name}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
             <div className="relative flex items-center ml-2">
               <Search className="absolute left-2.5 h-4 w-4 text-[#808080] pointer-events-none" />
