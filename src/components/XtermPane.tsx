@@ -36,6 +36,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const sendResizeRef = useRef(usePaneStore.getState().sendResize)
   const paneIdRef = useRef(pane.id)
   paneIdRef.current = pane.id
+  const lastAgentPasteAtRef = useRef(0)
 
   const { killPane, renamePane, togglePin, uploadFile, aiCommand, spawnAtDirectory, spawnPane } = usePaneStore()
   const [isDragOver, setIsDragOver] = useState(false)
@@ -48,7 +49,7 @@ export function XtermPane({ pane }: XtermPaneProps) {
   const getKeyHandler = useCallback(
     (terminal: import("@xterm/xterm").Terminal) => {
       return (arg: unknown) => {
-        const keyEvent = arg as { type: string; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; metaKey: boolean; code: string }
+        const keyEvent = arg as { type: string; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; metaKey: boolean; code: string; repeat?: boolean }
         if (keyEvent.type !== "keydown") return true
 
         if (keyEvent.ctrlKey && keyEvent.code === "KeyC") {
@@ -68,6 +69,20 @@ export function XtermPane({ pane }: XtermPaneProps) {
           keyEvent.code === "KeyV"
         ) {
           if (getPaneKind(paneIdRef.current) === "agent") {
+            const keyEvt = arg as KeyboardEvent
+            keyEvt.preventDefault()
+            keyEvt.stopPropagation()
+
+            // Debounce: skip rapid duplicate pastes. Some browsers/IMEs can
+            // re-fire keydown for a single physical keypress, and xterm may
+            // also process the same key, so we suppress anything within 500ms
+            // of the previous bracketed paste we sent.
+            const now = Date.now()
+            if (now - lastAgentPasteAtRef.current < 500) {
+              return false
+            }
+            lastAgentPasteAtRef.current = now
+
             const paneId = paneIdRef.current
             navigator.clipboard
               .readText()
