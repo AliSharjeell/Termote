@@ -181,7 +181,7 @@ export function NotificationDropdown({ compact }: NotificationDropdownProps) {
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div ref={dropdownRef}>
       <button
         onClick={() => {
           const nextOpen = !isOpen

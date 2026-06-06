@@ -50,7 +50,7 @@ export function TauriTitlebar({ left, center, right }: TauriTitlebarProps) {
         </div>
       )}
 
-      <div className="flex h-full items-center z-10">
+      <div className="relative flex h-full items-center z-10">
         {right}
         <div className="titlebar-controls flex h-full">
           <button
