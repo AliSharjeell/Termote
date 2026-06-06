@@ -85,7 +85,7 @@ export function PaneTitleBar({ title, paneId, pinned, groupId, onRename, onClose
   }
 
   return (
-    <div className={`flex ${isTauriApp ? 'h-8' : 'h-11'} items-center justify-between ${hasNotification ? 'bg-blue-600' : 'bg-[#161616]'} px-2 transition-colors`}>
+    <div className={`flex ${isTauriApp ? 'h-8' : 'h-11'} items-center justify-between ${hasNotification ? 'bg-blue-500' : 'bg-[#161616]'} px-2 transition-colors`}>
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {/* Close button */}
         <button
