@@ -21,6 +21,7 @@ const GROUPS_KEY = "termote-groups"
 const SOURCE_CONTROL_REPOS_KEY = "termote-source-control-repos"
 const SOURCE_CONTROL_SELECTED_KEY = "termote-source-control-selected"
 const SOUND_ENABLED_KEY = "termote-sound-enabled"
+const RECENT_EXPLORER_PATH_KEY = "termote-recent-explorer-path"
 const MAX_NOTIFICATION_HISTORY = 50
 const NOTIFICATION_CLIENT_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 const seenNotificationEventIds = new Set<string>()
@@ -697,6 +698,24 @@ function loadSoundEnabled(): boolean {
 function saveSoundEnabled(enabled: boolean) {
   try {
     localStorage.setItem(SOUND_ENABLED_KEY, enabled.toString())
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+function loadRecentExplorerPath(): string {
+  try {
+    return localStorage.getItem(RECENT_EXPLORER_PATH_KEY) || ""
+  } catch {
+    return ""
+  }
+}
+
+function saveRecentExplorerPath(path: string) {
+  try {
+    if (path) {
+      localStorage.setItem(RECENT_EXPLORER_PATH_KEY, path)
+    }
   } catch {
     // Storage full or unavailable
   }
@@ -1564,9 +1583,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
   // File explorer actions
   openExplorer: () => {
     const { ws } = get()
-    if (sendIfSocketOpen(ws, { action: "list_directory", path: "" }, "list_directory")) {
-      // Reset state and request root/drill contents
-      set({ explorerOpen: true, explorerCurrentPath: "", explorerContents: [] })
+    const recentPath = loadRecentExplorerPath()
+    if (sendIfSocketOpen(ws, { action: "list_directory", path: recentPath }, "list_directory")) {
+      set({ explorerOpen: true, explorerCurrentPath: recentPath, explorerContents: [] })
     }
   },
 
@@ -1669,6 +1688,9 @@ export const usePaneStore = create<PaneState>((set, get) => ({
     const { ws } = get()
     if (sendIfSocketOpen(ws, { action: "list_directory", path }, "list_directory")) {
       set({ explorerCurrentPath: path })
+      if (path) {
+        saveRecentExplorerPath(path)
+      }
     }
   },
 
